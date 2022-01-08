@@ -56,65 +56,103 @@ class Board_Scorer:
                          [4, 4, 4, 4, 4, 4, 4, 4],
                          [4, 4, 4, 4, 4, 4, 4, 4]]
 
-    def get_score_of_board(self, board : chess.Board, move2, phase = "default"):
+    def get_score_of_piece(self, piece_type, location):
+        score = 0
+        col, row = location
+        if piece_type.upper() == piece_type:
+            # white scores should be inversed, as well as map.
+            if piece_type == 'P':
+                score += self.pawn_map[row][col]
+            elif piece_type == 'R':
+                score += self.rook_map[row][col]
+            elif piece_type == 'N':
+                score += self.knight_map[row][col]
+            elif piece_type == 'B':
+                score += self.bishop_map[row][col]
+            elif piece_type == 'Q':
+                score += self.queen_map[row][col]
+            elif piece_type == 'K':
+                score += self.king_map[row][col]
+        else:
+            # white scores should be inversed. the map should be as well.
+            if piece_type == 'p':
+                score -= self.pawn_map[7-row][col]
+            elif piece_type == 'r':
+                score -= self.rook_map[7-row][col]
+            elif piece_type == 'n':
+                score -= self.knight_map[7-row][col]
+            elif piece_type == 'b':
+                score -= self.bishop_map[7-row][col]
+            elif piece_type == 'q':
+                score -= self.queen_map[7-row][col]
+            elif piece_type == 'k':
+                score -= self.king_map[7-row][col]
+
+        #print(f"Scored piece {piece_type} as {score} at the location {location}.")
+        return score
+            
+    def convert_chesspos_to_gridpos(self, chess_pos):
+        row = chess_pos % 8
+        col = chess_pos // 8
+
+        return (row, col)
+
+    def get_piece_map_scores(self, board):
+        piece_map = board.piece_map()
         score = 0
         row = 0
-                       #q  r  b  n  p
-        black_pieces = [0, 0, 0, 0, 0]
-        white_pieces = [0, 0, 0, 0, 0]
+
+        for key in range(64):
+            try:
+                piece = piece_map[key]
+                piece_type = piece.symbol()
+                row, col = self.convert_chesspos_to_gridpos(key)
+                score += self.get_score_of_piece(piece_type, (row, col))
+            except KeyError:
+                pass
+        
+        return score
+
+    def get_base_score(self, board):
         fen = board.board_fen()
+        score = 0
 
         for character in fen:
-            if character.isnumeric():
-                continue
-
-            if character == "/":
-                row += 1
+            if character.isnumeric() or character == "/":
                 continue
 
             if character.islower():
-                if move2 < 15:
-                    row_bonus = (row - 1) * 0.075
-                else:
-                    row_bonus = 0
-
                 if character == 'p':
-                    score -= 1 + row_bonus * 2
-                    black_pieces[4] += 1
+                    score -= 1
                 elif character == 'n':
-                    score -= 3 + row_bonus
-                    black_pieces[3] += 1
+                    score -= 3
                 elif character == 'b':
-                    score -= 3 + row_bonus
-                    black_pieces[2] += 1
+                    score -= 3
                 elif character == 'r':
-                    score -= 5 + row_bonus
-                    black_pieces[1] += 1
+                    score -= 5
                 elif character == 'q':
-                    score -= 8 + row_bonus
-                    black_pieces[0] += 1
+                    score -= 8
             else:
-                if move2 < 15:
-                    row_bonus = (row - 7) * -0.15
-                else:
-                    row_bonus = 0
-
                 if character == 'P':
-                    score += 1 + row_bonus * 2
-                    white_pieces[4] += 1
+                    score += 1
                 elif character == 'N':
-                    score += 3 + row_bonus
-                    white_pieces[3] += 1
+                    score += 3
                 elif character == 'B':
-                    score += 3 + row_bonus
-                    white_pieces[2] += 1
+                    score += 3
                 elif character == 'R':
-                    score += 5 + row_bonus
-                    white_pieces[1] += 1
+                    score += 5
                 elif character == 'Q':
-                    score += 8 + row_bonus
-                    white_pieces[0] += 1  
+                    score += 8
 
+        return score
+    
+    def get_score_of_board(self, board : chess.Board, move2, phase = "default"):
+        score = 0
+        row = 0
+
+        score += self.get_base_score(board)
+        score += self.get_piece_map_scores(board)
+        
         og_color = board.turn
         
         board.turn = chess.WHITE
