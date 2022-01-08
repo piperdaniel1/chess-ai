@@ -5,7 +5,7 @@ import numpy as np
 '''
 TODO for Minimax:
     - Rework board scoring to include a lot of stuff
-        - stuff like this
+        - |x| add piece maps to try to make the computer put its pieces in the best places at the beginning
     - Add iterative deepening
     - Add a transposition table
     - Sort the moves way more efficiently so that the best moves are always at the top

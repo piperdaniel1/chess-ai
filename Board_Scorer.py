@@ -55,8 +55,32 @@ class Board_Scorer:
                          [0, 0, 1, 2, 2, 1, 0, 0],
                          [4, 4, 4, 4, 4, 4, 4, 4],
                          [4, 4, 4, 4, 4, 4, 4, 4]]
+        
+        self.endgame_king_map = [[-2,-2,-2,-2,-2,-2,-2,-2],
+                                 [-2,-1,-1,-1,-1,-1,-1,-2],
+                                 [-2,-1, 0, 0, 0, 0,-1,-2],
+                                 [-2,-1, 0, 1, 1, 0,-1,-2],
+                                 [-2,-1, 0, 1, 1, 0,-1,-2],
+                                 [-2,-1, 0, 0, 0, 0,-1,-2],
+                                 [-2,-1,-1,-1,-1,-1,-1,-2],
+                                 [-2,-2,-2,-2,-2,-2,-2,-2]]
 
     def get_score_of_piece(self, piece_type, location):
+        score = 0
+        col, row = location
+        if piece_type.upper() == piece_type:
+            # white scores should be inversed, as well as map.
+            if piece_type == 'K':
+                score += self.endgame_king_map[row][col]
+        else:
+            # white scores should be inversed. the map should be as well.
+            if piece_type == 'k':
+                score -= self.endgame_king_map[7-row][col]
+
+        #print(f"Scored piece {piece_type} as {score} at the location {location}.")
+        return score
+    
+    def get_endgame_score_of_piece(self, piece_type, location):
         score = 0
         col, row = location
         if piece_type.upper() == piece_type:
@@ -112,6 +136,22 @@ class Board_Scorer:
                 pass
         
         return score
+    
+    def get_endgame_piece_map_scores(self, board):
+        piece_map = board.piece_map()
+        score = 0
+        row = 0
+
+        for key in range(64):
+            try:
+                piece = piece_map[key]
+                piece_type = piece.symbol()
+                row, col = self.convert_chesspos_to_gridpos(key)
+                score += self.get_score_of_piece(piece_type, (row, col))
+            except KeyError:
+                pass
+        
+        return score
 
     def get_base_score(self, board):
         fen = board.board_fen()
@@ -146,26 +186,38 @@ class Board_Scorer:
 
         return score
     
+    def is_endgame(self, board):
+        list_of_pieces = list(board.piece_map())
+        if len(list_of_pieces) <= 10:
+            return True
+        
+        return False
+    
     def get_score_of_board(self, board : chess.Board, move2, phase = "default"):
+        # score starts at a tie.
         score = 0
-        row = 0
+        is_endgame = self.is_endgame(board)
 
+        # add the base scores of each piece.
         score += self.get_base_score(board)
-        score += self.get_piece_map_scores(board)
+
+        # add scores based on where the pieces are and if it is endgame
+        if is_endgame:
+            score += self.get_endgame_piece_map_scores(board)
+        else:
+            score += self.get_piece_map_scores(board)
         
+        # add score based on how many moves each player has
         og_color = board.turn
-        
         board.turn = chess.WHITE
         white_legal_moves = board.legal_moves.count()
-
         board.turn = chess.BLACK
         black_legal_moves = board.legal_moves.count()
-
         board.turn = og_color
-
         score += white_legal_moves / 15
         score -= black_legal_moves / 15
 
+        # hard set score if one player has won
         if board.is_checkmate() == True:
             if board.outcome().result()[0] == "0":
                 score = -1000
