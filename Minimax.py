@@ -1,6 +1,7 @@
 from Board_Scorer import Board_Scorer
 import chess
 import numpy as np
+import random
 
 '''
 TODO for Minimax:
@@ -14,12 +15,61 @@ TODO for Minimax:
     - Dynamically increase search depth using iterative deepening
 '''
 
+'''
+TODO for iterative deepening:
+    - Refactor so another function calls find_best_move
+    - This function should get the sorted moves for depth 1,
+'''
+
 class Minimax:
     def __init__(self):
         self.eval = Board_Scorer()
         self.max_depth = 4
         self.starting_eval = 0
+        self.zorbist_table = [[random.randint(1,2**64 - 1) for i in range(12)] for j in range(64)]
         pass
+
+    def get_index_of_piece(self, piece):
+        if (piece=='P'):
+            return 0
+        if (piece=='N'):
+            return 1
+        if (piece=='B'):
+            return 2
+        if (piece=='R'):
+            return 3
+        if (piece=='Q'):
+            return 4
+        if (piece=='K'):
+            return 5
+        if (piece=='p'):
+            return 6
+        if (piece=='n'):
+            return 7
+        if (piece=='b'):
+            return 8
+        if (piece=='r'):
+            return 9
+        if (piece=='q'):
+            return 10
+        if (piece=='k'):
+            return 11
+        else:
+            return -1
+    
+    def get_zorbist_hash(self, board):
+        piece_map = board.piece_map()
+        zorbist_hash = 0
+
+        for key in range(64):
+            try:
+                piece = piece_map[key]
+                piece_index = self.get_index_of_piece(piece.symbol())
+                zorbist_hash ^= self.zorbist_table[key][piece_index]
+            except KeyError:
+                pass
+        
+        return zorbist_hash
 
     def get_score_of_move(self, move_to_rate : chess.Move, board : chess.Board):
         uci = move_to_rate.uci()
