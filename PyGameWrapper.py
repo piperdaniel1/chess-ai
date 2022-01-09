@@ -89,7 +89,9 @@ class ChessWindow:
 
         while running == False:
             if not self.player_move:
+                self.minimax.tt.successful_uses = 0
                 move = self.get_move_from_minimax(True)
+                print(f"The transposition table has been used {self.minimax.tt.successful_uses} times. {self.minimax.tt.indexes_used} total entries.")
                 self.internal_board.push(move)
                 self.draw_board()
                 pygame.display.flip()

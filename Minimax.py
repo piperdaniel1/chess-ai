@@ -1,5 +1,5 @@
 from Board_Scorer import Board_Scorer
-from transposition_table import Transposition_Table
+from transposition_table import Transposition_Table, Entry
 import chess
 import numpy as np
 import random
@@ -78,6 +78,22 @@ class Minimax:
                 pass
         
         return zorbist_hash
+    
+    def transpose_zorbist_hash(self, og_hash, board, captured_piece=None):
+        last_move = board.move_stack[-1]
+        from_square = last_move.from_square
+        to_square = last_move.to_square
+        piece = board.piece_at(to_square)
+        piece_index = self.get_index_of_piece(piece.symbol())
+
+        if captured_piece != None:
+            captured_index = self.get_index_of_piece(captured_piece)
+            og_hash ^= self.zorbist_table[to_square][captured_index]
+
+        og_hash ^= self.zorbist_table[from_square][piece_index]
+        og_hash ^= self.zorbist_table[to_square][piece_index]
+
+        return og_hash
 
     def get_score_of_move(self, move_to_rate : chess.Move, board : chess.Board):
         uci = move_to_rate.uci()
@@ -98,32 +114,62 @@ class Minimax:
 
         moves_to_sort = moves_to_sort_np[score_of_moves_np.argsort()].tolist()
 
-    def find_best_move(self, board : chess.Board, depth, maximize, alpha, beta, move2):        
+    def find_best_move(self, board : chess.Board, depth, maximize, alpha, beta, move2, current_hash=None):
+        if current_hash == None:
+            current_hash = self.get_zorbist_hash(board)
+        
         if depth == 0 or board.is_checkmate() or board.is_stalemate():
             return None, self.eval.get_score_of_board(board, move2)
         
         best_move = None
+        captured_piece = None
 
+        # computer is trying to maximize the eval with this move
         if maximize:
+            # init eval to -inf
             max_eval = -1000
 
+            # init debug values for printing (only on highest level)
             if depth == self.max_depth:
                 total = board.legal_moves.count()
 
                 anaylsis = 0
 
+            # loop through all legal moves
             for move in board.legal_moves:
+                # again print debug values on highest level
                 if depth == self.max_depth:
                     anaylsis += 1
                     print(f"Anaylzing move {anaylsis} out of {total}", end="\r")
 
+                captured_piece = board.piece_at(move.to_square)
+
+                # push move onto board
                 board.push(move)
-                eval_of_branch = self.find_best_move(board, depth-1, False, alpha, beta, move2)[1]
+                # check score of move
+                new_hash = self.transpose_zorbist_hash(current_hash, board, captured_piece)
+                tt_entry = self.tt.decode(new_hash)
+                if tt_entry != None:
+                    if tt_entry.depth >= depth:
+                        eval_of_branch = tt_entry.eval
+                    else:
+                        eval_of_branch = self.find_best_move(board, depth-1, False, alpha, beta, move2, new_hash)[1]
+                        new_entry = Entry(new_hash, eval_of_branch, depth)
+                        self.tt.encode(new_entry)
+                else:
+                    eval_of_branch = self.find_best_move(board, depth-1, False, alpha, beta, move2, new_hash)[1]
+                    new_entry = Entry(new_hash, eval_of_branch, depth)
+                    self.tt.encode(new_entry)
+                    
+                # pop move off board to make room for the next move
                 board.pop()
 
+                # check if that move is better than the current best move
                 if eval_of_branch > max_eval:
                     max_eval = eval_of_branch
                     best_move = move
+                '''
+                # i think this is some kind of tie breaker system but I don't remember making it at all
                 elif eval_of_branch == max_eval and depth == self.max_depth:
                     current_eval = self.eval.get_score_of_board(board, move2)
                     board.push(move)
@@ -133,6 +179,7 @@ class Minimax:
                     if next_eval > current_eval:
                         best_move = move
                         max_eval = eval_of_branch
+                '''
 
                 alpha = max(alpha, eval_of_branch)
                 if beta < alpha:
@@ -159,12 +206,27 @@ class Minimax:
                     print(f"Anaylzing move {anaylsis} out of {total} with depth {depth}", end="\r")
 
                 board.push(move)
-                eval_of_branch = self.find_best_move(board, depth-1, True, alpha, beta, move2)[1]
+
+                new_hash = self.transpose_zorbist_hash(current_hash, board, captured_piece)
+                tt_entry = self.tt.decode(new_hash)
+                if tt_entry != None:
+                    if tt_entry.depth >= depth:
+                        eval_of_branch = tt_entry.eval
+                    else:
+                        eval_of_branch = self.find_best_move(board, depth-1, True, alpha, beta, move2, new_hash)[1]
+                        new_entry = Entry(new_hash, eval_of_branch, depth)
+                        self.tt.encode(new_entry)
+                else:
+                    eval_of_branch = self.find_best_move(board, depth-1, True, alpha, beta, move2, new_hash)[1]
+                    new_entry = Entry(new_hash, eval_of_branch, depth)
+                    self.tt.encode(new_entry)
+
                 board.pop()
 
                 if eval_of_branch < min_eval:
                     min_eval = eval_of_branch
                     best_move = move
+                '''
                 elif eval_of_branch == min_eval and depth == self.max_depth:
                     current_eval = self.eval.get_score_of_board(board, move2)
                     board.push(move)
@@ -174,6 +236,7 @@ class Minimax:
                     if next_eval < current_eval:
                         best_move = move
                         min_eval = eval_of_branch
+                '''
                 
                 beta = min(beta, eval_of_branch)
                 if beta < alpha:
