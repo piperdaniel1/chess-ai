@@ -1,7 +1,9 @@
 from Board_Scorer import Board_Scorer
+from transposition_table import Transposition_Table
 import chess
 import numpy as np
 import random
+
 
 '''
 TODO for Minimax:
@@ -24,6 +26,7 @@ TODO for iterative deepening:
 class Minimax:
     def __init__(self):
         self.eval = Board_Scorer()
+        self.tt = Transposition_Table()
         self.max_depth = 4
         self.starting_eval = 0
         self.zorbist_table = [[random.randint(1,2**64 - 1) for i in range(12)] for j in range(64)]
@@ -56,7 +59,12 @@ class Minimax:
             return 11
         else:
             return -1
-    
+    #
+    # steps to simulate this hash
+    # 1. get prev hash of board
+    # 2. run xor of value of where piece used to be and where it is now
+    # 3. you end up with a new hash value that is the new board state
+    #
     def get_zorbist_hash(self, board):
         piece_map = board.piece_map()
         zorbist_hash = 0
