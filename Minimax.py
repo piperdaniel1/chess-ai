@@ -9,19 +9,15 @@ import time
 TODO for Minimax:
     - Rework board scoring to include a lot of stuff
         - |x| add piece maps to try to make the computer put its pieces in the best places at the beginning
-    - Add iterative deepening
+    - Make sure the eval doesn't end on a capture
+    - |x| Add iterative deepening
     - |x| Add a transposition table
-    - Sort the moves way more efficiently so that the best moves are always at the top
+    - |x| Sort the moves way more efficiently so that the best moves are always at the top
     - Add opening book
     - Add endgame strategies
-    - Dynamically increase search depth using iterative deepening
+    - |x| Dynamically increase search depth using iterative deepening
 '''
 
-'''
-TODO for iterative deepening:
-    - Refactor so another function calls find_best_move
-    - This function should get the sorted moves for depth 1,
-'''
 
 class Minimax:
     def __init__(self):
