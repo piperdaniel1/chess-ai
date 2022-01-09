@@ -29,15 +29,11 @@ class ChessWindow:
         depth = 4
         
         while True:
-            self.minimax.max_depth = depth
-
-            educated_move = self.minimax.find_best_move(self.internal_board, depth, False, -1000, 1000, self.moves_made)[0]
+            educated_move = self.minimax.find_best_move(self.internal_board, False, -1000, 1000, self.moves_made)
             end_time = time.time()
             print(f"Found the move {educated_move.uci()} in {round(end_time - curr_time, 1)} seconds. (d={depth})                   ")
-            depth += 1
 
-            if (end_time - curr_time) * 18 > 30:
-                break
+            break
 
         return educated_move
 
@@ -89,9 +85,8 @@ class ChessWindow:
 
         while running == False:
             if not self.player_move:
-                self.minimax.tt.successful_uses = 0
+                self.minimax.positions_searched = 0
                 move = self.get_move_from_minimax(True)
-                print(f"The transposition table has been used {self.minimax.tt.successful_uses} times. {self.minimax.tt.indexes_used} total entries.")
                 self.internal_board.push(move)
                 self.draw_board()
                 pygame.display.flip()
@@ -151,7 +146,6 @@ class ChessWindow:
                             self.selected_square = None
                             self.draw_board()
                             pygame.display.flip()
-                            print("potential new move")
                 if event.type == pygame.QUIT:
                     running = True
                     pygame.quit()

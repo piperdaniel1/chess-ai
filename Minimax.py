@@ -3,14 +3,14 @@ from transposition_table import Transposition_Table, Entry
 import chess
 import numpy as np
 import random
-
+import time
 
 '''
 TODO for Minimax:
     - Rework board scoring to include a lot of stuff
         - |x| add piece maps to try to make the computer put its pieces in the best places at the beginning
     - Add iterative deepening
-    - Add a transposition table
+    - |x| Add a transposition table
     - Sort the moves way more efficiently so that the best moves are always at the top
     - Add opening book
     - Add endgame strategies
@@ -30,6 +30,7 @@ class Minimax:
         self.max_depth = 4
         self.starting_eval = 0
         self.zorbist_table = [[random.randint(1,2**64 - 1) for i in range(12)] for j in range(64)]
+        self.positions_searched = 0
         pass
 
     def get_index_of_piece(self, piece):
@@ -114,7 +115,47 @@ class Minimax:
 
         moves_to_sort = moves_to_sort_np[score_of_moves_np.argsort()].tolist()
 
-    def find_best_move(self, board : chess.Board, depth, maximize, alpha, beta, move2, current_hash=None):
+    def find_best_move(self, board : chess.Board, maximizing_player : bool, alpha : int, beta : int, move2):
+        start_time = time.time()
+        depth = 1
+        self.max_depth = depth
+        while True:
+            best_move = self.rec_minimax(board, depth, maximizing_player, alpha, beta, move2)[0]
+
+            if time.time() - start_time > 1:
+                break
+                
+            depth += 1
+            self.max_depth = depth
+        
+        print(f"Returning {best_move} after searching {self.positions_searched} positions")
+        
+        return best_move
+
+    def sort(self, moves_to_sort, score_of_moves):
+        score_of_moves_np = np.array(score_of_moves)
+        moves_to_sort_np = np.array(moves_to_sort)
+
+        return moves_to_sort_np[score_of_moves_np.argsort()].tolist()
+
+    def sort_moves_by_probable_score(self, board, current_hash, depth):
+        moves_to_sort = list(board.legal_moves)
+        score_of_moves = []
+        for move in moves_to_sort:
+            captured_piece = board.piece_at(move.to_square)
+            board.push(move)
+            new_hash = self.transpose_zorbist_hash(current_hash, board, captured_piece)
+            tt_entry = self.tt.decode(new_hash)
+            if tt_entry != None:
+                score_of_moves.append(tt_entry.eval)
+            else:
+                score_of_moves.append(0)
+            board.pop()
+        
+        moves_to_sort = self.sort(moves_to_sort, score_of_moves)
+        return moves_to_sort
+
+    def rec_minimax(self, board : chess.Board, depth, maximize, alpha, beta, move2, current_hash=None):
         if current_hash == None:
             current_hash = self.get_zorbist_hash(board)
         
@@ -135,8 +176,13 @@ class Minimax:
 
                 anaylsis = 0
 
+            if depth == self.max_depth:
+                legal_moves = self.sort_moves_by_probable_score(board, current_hash, depth)
+            else:
+                legal_moves = list(board.legal_moves)
+
             # loop through all legal moves
-            for move in board.legal_moves:
+            for move in legal_moves:
                 # again print debug values on highest level
                 if depth == self.max_depth:
                     anaylsis += 1
@@ -146,6 +192,7 @@ class Minimax:
 
                 # push move onto board
                 board.push(move)
+                self.positions_searched += 1
                 # check score of move
                 new_hash = self.transpose_zorbist_hash(current_hash, board, captured_piece)
                 tt_entry = self.tt.decode(new_hash)
@@ -153,11 +200,11 @@ class Minimax:
                     if tt_entry.depth >= depth:
                         eval_of_branch = tt_entry.eval
                     else:
-                        eval_of_branch = self.find_best_move(board, depth-1, False, alpha, beta, move2, new_hash)[1]
+                        eval_of_branch = self.rec_minimax(board, depth-1, False, alpha, beta, move2, new_hash)[1]
                         new_entry = Entry(new_hash, eval_of_branch, depth)
                         self.tt.encode(new_entry)
                 else:
-                    eval_of_branch = self.find_best_move(board, depth-1, False, alpha, beta, move2, new_hash)[1]
+                    eval_of_branch = self.rec_minimax(board, depth-1, False, alpha, beta, move2, new_hash)[1]
                     new_entry = Entry(new_hash, eval_of_branch, depth)
                     self.tt.encode(new_entry)
                     
@@ -184,9 +231,6 @@ class Minimax:
                 alpha = max(alpha, eval_of_branch)
                 if beta < alpha:
                     break
-
-            if depth == self.max_depth:
-                print(f"Returning {best_move} after checking {anaylsis} out of {total} moves")
                 
             return best_move, max_eval
         else:
@@ -197,27 +241,33 @@ class Minimax:
 
                 anaylsis = 0
 
-            last_move = board.pop()
-            board.push(last_move)
+            
+            if depth == self.max_depth:
+                legal_moves = self.sort_moves_by_probable_score(board, current_hash, depth)
+            else:
+                legal_moves = list(board.legal_moves)
+            #last_move = board.pop()
+            #board.push(last_move)
 
-            for move in board.legal_moves:
+            for move in legal_moves:
                 if depth == self.max_depth:
                     anaylsis += 1
                     print(f"Anaylzing move {anaylsis} out of {total} with depth {depth}", end="\r")
 
                 board.push(move)
-
+                self.positions_searched += 1
                 new_hash = self.transpose_zorbist_hash(current_hash, board, captured_piece)
                 tt_entry = self.tt.decode(new_hash)
                 if tt_entry != None:
                     if tt_entry.depth >= depth:
                         eval_of_branch = tt_entry.eval
                     else:
-                        eval_of_branch = self.find_best_move(board, depth-1, True, alpha, beta, move2, new_hash)[1]
+                        eval_of_branch = self.rec_minimax(board, depth-1, True, alpha, beta, move2, new_hash)[1]
+                        
                         new_entry = Entry(new_hash, eval_of_branch, depth)
                         self.tt.encode(new_entry)
                 else:
-                    eval_of_branch = self.find_best_move(board, depth-1, True, alpha, beta, move2, new_hash)[1]
+                    eval_of_branch = self.rec_minimax(board, depth-1, True, alpha, beta, move2, new_hash)[1]
                     new_entry = Entry(new_hash, eval_of_branch, depth)
                     self.tt.encode(new_entry)
 
@@ -241,8 +291,5 @@ class Minimax:
                 beta = min(beta, eval_of_branch)
                 if beta < alpha:
                     break
-
-            if depth == self.max_depth:
-                print(f"Returning {best_move} after checking {anaylsis} out of {total} moves")
 
             return best_move, min_eval
