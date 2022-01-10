@@ -4,6 +4,7 @@ import chess
 import numpy as np
 import random
 import time
+from Opening_Book import Opening_Book, Opening_Entry
 
 '''
 TODO for Minimax:
@@ -23,6 +24,7 @@ class Minimax:
     def __init__(self):
         self.eval = Board_Scorer()
         self.tt = Transposition_Table()
+        self.opening_book = Opening_Book()
         self.max_depth = 4
         self.starting_eval = 0
         self.zorbist_table = [[random.randint(1,2**64 - 1) for i in range(12)] for j in range(64)]
@@ -112,6 +114,12 @@ class Minimax:
         moves_to_sort = moves_to_sort_np[score_of_moves_np.argsort()].tolist()
 
     def find_best_move(self, board : chess.Board, maximizing_player : bool, alpha : int, beta : int, move2):
+        if move2 < 10:
+            book_move = self.opening_book.decode(self.opening_book.get_zorbist_hash(board))
+            if book_move != None:
+                print("Returning book move " + str(book_move) + " from opening book")
+                return book_move
+
         start_time = time.time()
         depth = 1
         self.max_depth = depth

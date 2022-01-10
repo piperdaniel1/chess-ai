@@ -7,6 +7,7 @@ import threading
 
 from Minimax import Minimax
 from Board_Scorer import Board_Scorer
+from Opening_Book import Opening_Book, Opening_Entry
 
 class ChessWindow:
     def __init__(self):
@@ -31,7 +32,7 @@ class ChessWindow:
         while True:
             educated_move = self.minimax.find_best_move(self.internal_board, False, -1000, 1000, self.moves_made)
             end_time = time.time()
-            print(f"Found the move {educated_move.uci()} in {round(end_time - curr_time, 1)} seconds. (d={depth})                   ")
+            print(f"Found the move {educated_move.uci()} in {round(end_time - curr_time, 1)} seconds. (d={self.minimax.max_depth})                   ")
 
             break
 
