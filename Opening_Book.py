@@ -150,51 +150,54 @@ class Opening_Book:
             skip = False
             while line < endl:
                 try:
-                    curr_line = f.readline()
+                    try:
+                        curr_line = f.readline()
 
-                    if curr_line == '':
-                        break
-                    line += 1
-                    if line % 500 == 0:
-                        print(f"Reading line {line}...")
+                        if curr_line == '':
+                            break
+                        line += 1
+                        if line % 500 == 0:
+                            print(f"Reading line {line}...")
 
-                    # skip until next event
-                    if mode == "skipping" and '[Event "' not in curr_line:
-                        continue
-                    elif mode == "skipping" and '[Event "' in curr_line:
-                        mode = "discovery"
-                        continue
-
-                    # skip empty lines
-                    if curr_line == "\n":
-                        continue
-
-                    # discover game, skip if neccessary
-                    if mode == "discovery":
-                        if '[Black Elo ' in curr_line or '[White Elo ' in curr_line:
-                            if int(curr_line[11:14]) < 2200:
-                                mode = "skipping"
-                                continue
-                        try:
-                            int(curr_line[0])
-                            board = chess.Board()
-
-                            # extract moves from game
-                            while True:
-                                status = self.interpret_move_line(board, curr_line)
-
-                                if status == -1:
-                                    mode = "skipping"
-                                    break
-
-                                curr_line = f.readline()
-                        except ValueError:
+                        # skip until next event
+                        if mode == "skipping" and '[Event "' not in curr_line:
                             continue
-                except Exception:
-                    print("Error in line " + str(line))
-                    mode = 'skipping'
-                    continue
-        
+                        elif mode == "skipping" and '[Event "' in curr_line:
+                            mode = "discovery"
+                            continue
+
+                        # skip empty lines
+                        if curr_line == "\n":
+                            continue
+
+                        # discover game, skip if neccessary
+                        if mode == "discovery":
+                            if '[Black Elo ' in curr_line or '[White Elo ' in curr_line:
+                                if int(curr_line[11:14]) < 2200:
+                                    mode = "skipping"
+                                    continue
+                            try:
+                                int(curr_line[0])
+                                board = chess.Board()
+
+                                # extract moves from game
+                                while True:
+                                    status = self.interpret_move_line(board, curr_line)
+
+                                    if status == -1:
+                                        mode = "skipping"
+                                        break
+
+                                    curr_line = f.readline()
+                            except ValueError:
+                                continue
+                    except Exception:
+                        print("Error in line " + str(line))
+                        mode = 'skipping'
+                        continue
+                except KeyboardInterrupt:
+                    print("Caught keyboard interrupt, non-destructively exiting...")
+                    break
     
     def decode(self, key):
         index = key % len(self.book_tt)
