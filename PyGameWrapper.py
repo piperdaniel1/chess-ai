@@ -52,7 +52,7 @@ class ChessWindow:
                         raise AssertionError
                     self.draw_board()
                     pygame.display.flip()
-                    time.sleep(1.5)
+                    time.sleep(2.5)
 
                 self.internal_board = anim_board
 
