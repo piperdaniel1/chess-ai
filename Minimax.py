@@ -1,4 +1,4 @@
-from Board_Scorer import Board_Scorer
+from Board_Scorer import *
 from transposition_table import Transposition_Table, Entry
 import chess
 import numpy as np
@@ -22,7 +22,6 @@ TODO for Minimax:
 
 class Minimax:
     def __init__(self):
-        self.eval = Board_Scorer()
         self.tt = Transposition_Table()
         self.opening_book = Opening_Book()
         self.max_depth = 4
@@ -165,7 +164,7 @@ class Minimax:
         
         if depth == 0 or board.is_checkmate() or board.is_stalemate():
             #print(f"1: returning {[]}")
-            return None, (self.eval.get_score_of_board(board, move2), [])
+            return None, (get_score_of_board(board, board.piece_map()), [])
         
         best_move = None
         captured_piece = None
@@ -239,7 +238,7 @@ class Minimax:
             
             if max_eval == -1000:
                 #print(f"2: returning {[]}")
-                return None, (self.eval.get_score_of_board(board, move2), [])
+                return None, (get_score_of_board(board, board.piece_map()), [])
 
             #print(f"3: returning {current_best_chain}")
             return best_move, (max_eval, current_best_chain)
@@ -305,7 +304,7 @@ class Minimax:
             
             if min_eval == 1000:
                 #print(f"4: returning {[]}")
-                return None, (self.eval.get_score_of_board(board, move2), [])
+                return None, (get_score_of_board(board, board.piece_map()), [])
 
             #print(f"5: returning {current_best_chain}")
             return best_move, (min_eval, current_best_chain)

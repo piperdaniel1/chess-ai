@@ -8,7 +8,6 @@ import threading
 import cProfile
 
 from Minimax import Minimax
-from Board_Scorer import Board_Scorer
 from Opening_Book import Opening_Book, Opening_Entry
 
 class ChessWindow:
