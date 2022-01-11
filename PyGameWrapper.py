@@ -35,10 +35,19 @@ class ChessWindow:
             end_time = time.time()
 
             if move_chain != None:
-                anim_board = deepcopy(self.internal_board)
+                anim_board = self.internal_board.copy()
 
                 for move in move_chain:
-                    self.internal_board.push(move)
+                    try:
+                        self.internal_board.push(move)
+                    except AssertionError:
+                        print("board started with this fen: " + anim_board.fen())
+                        print("this move is somehow illegal")
+                        print("move:", move)
+                        print(self.internal_board)
+                        print("board fen:", self.internal_board.fen())
+                        print("move stack:", self.internal_board.move_stack)
+                        raise AssertionError
                     self.draw_board()
                     pygame.display.flip()
                     time.sleep(1.5)
