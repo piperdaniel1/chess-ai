@@ -38,6 +38,8 @@ class ChessWindow:
                 anim_board = self.internal_board.copy()
 
                 for move in move_chain:
+                    if move == "used tt":
+                        continue
                     try:
                         self.internal_board.push(move)
                     except AssertionError:

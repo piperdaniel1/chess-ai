@@ -276,6 +276,7 @@ class Minimax:
                     if tt_entry.depth >= depth:
                         eval_of_branch = tt_entry.eval
                         move_chain = tt_entry.move_chain
+                        move_chain.append("used tt")
                         #print("created move_chain from tt")
                     else:
                         eval_of_branch, move_chain = self.rec_minimax(board, depth-1, True, alpha, beta, move2, new_hash)[1]
