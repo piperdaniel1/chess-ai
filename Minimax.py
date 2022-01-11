@@ -29,6 +29,7 @@ class Minimax:
         self.starting_eval = 0
         self.zorbist_table = [[random.randint(1,2**64 - 1) for i in range(12)] for j in range(64)]
         self.positions_searched = 0
+        self.move_chaining = False
         pass
 
     def get_index_of_piece(self, piece):
@@ -123,11 +124,8 @@ class Minimax:
         start_time = time.time()
         depth = 1
         self.max_depth = depth
-        while True:
+        while depth <= 6:
             best_move, (eval, move_chain) = self.rec_minimax(board, depth, maximizing_player, alpha, beta, move2)
-
-            if time.time() - start_time > 1:
-                break
                 
             depth += 1
             self.max_depth = depth
@@ -165,7 +163,7 @@ class Minimax:
         if current_hash == None:
             current_hash = self.get_zorbist_hash(board)
         
-        if board.is_checkmate() or board.is_stalemate():
+        if depth == 0 or board.is_checkmate() or board.is_stalemate():
             #print(f"1: returning {[]}")
             return None, (self.eval.get_score_of_board(board, move2), [])
         
@@ -209,17 +207,17 @@ class Minimax:
                 if tt_entry != None:
                     if tt_entry.depth >= depth:
                         eval_of_branch = tt_entry.eval
-                        move_chain = tt_entry.move_chain
-                        #print("created move_chain from tt")
+                        if self.move_chaining:
+                            move_chain = ['tt_root']
                     else:
                         eval_of_branch, move_chain = self.rec_minimax(board, depth-1, False, alpha, beta, move2, new_hash)[1]
                         #print(f"created move chain from recursion: {move_chain}")
-                        new_entry = Entry(new_hash, eval_of_branch, depth, move_chain)
+                        new_entry = Entry(new_hash, eval_of_branch, depth)
                         self.tt.encode(new_entry)
                 else:
                     eval_of_branch, move_chain = self.rec_minimax(board, depth-1, False, alpha, beta, move2, new_hash)[1]
                     #print(f"created move chain from recursion: {move_chain}")
-                    new_entry = Entry(new_hash, eval_of_branch, depth, move_chain)
+                    new_entry = Entry(new_hash, eval_of_branch, depth)
                     self.tt.encode(new_entry)
                     
                 # pop move off board to make room for the next move
@@ -230,8 +228,9 @@ class Minimax:
                 if eval_of_branch > max_eval:
                     max_eval = eval_of_branch
                     best_move = move
-                    move_chain.append(move)
-                    current_best_chain = move_chain
+                    if self.move_chaining:
+                        move_chain.append(move)
+                        current_best_chain = move_chain
                     #print(f"appended successfully {move} appended to {move_chain} equaling {current_best_chain}")
 
                 alpha = max(alpha, eval_of_branch)
@@ -275,18 +274,18 @@ class Minimax:
                 if tt_entry != None:
                     if tt_entry.depth >= depth:
                         eval_of_branch = tt_entry.eval
-                        move_chain = tt_entry.move_chain
-                        move_chain.append("used tt")
+                        if self.move_chaining:
+                            move_chain = ['tt root']
                         #print("created move_chain from tt")
                     else:
                         eval_of_branch, move_chain = self.rec_minimax(board, depth-1, True, alpha, beta, move2, new_hash)[1]
                         #print(f"created move chain from recursion: {move_chain}")
-                        new_entry = Entry(new_hash, eval_of_branch, depth, move_chain)
+                        new_entry = Entry(new_hash, eval_of_branch, depth)
                         self.tt.encode(new_entry)
                 else:
                     eval_of_branch, move_chain = self.rec_minimax(board, depth-1, True, alpha, beta, move2, new_hash)[1]
                     #print(f"created move chain from recursion: {move_chain}")
-                    new_entry = Entry(new_hash, eval_of_branch, depth, move_chain)
+                    new_entry = Entry(new_hash, eval_of_branch, depth)
                     self.tt.encode(new_entry)
 
                 board.pop()
@@ -295,8 +294,9 @@ class Minimax:
                 if eval_of_branch < min_eval:
                     min_eval = eval_of_branch
                     best_move = move
-                    move_chain.append(move)
-                    current_best_chain = move_chain
+                    if self.move_chaining:
+                        move_chain.append(move)
+                        current_best_chain = move_chain
                     #print(f"appended successfully {move} appended to {move_chain} equaling {current_best_chain}")
                 
                 beta = min(beta, eval_of_branch)

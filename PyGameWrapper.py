@@ -38,7 +38,7 @@ class ChessWindow:
                 anim_board = self.internal_board.copy()
 
                 for move in move_chain:
-                    if move == "used tt":
+                    if type(move) == str:
                         continue
                     try:
                         self.internal_board.push(move)
@@ -56,7 +56,7 @@ class ChessWindow:
 
                 self.internal_board = anim_board
 
-            print(f"Found the move {educated_move.uci()} in {round(end_time - curr_time, 1)} seconds. (d={self.minimax.max_depth})                   ")
+            print(f"Found the move {educated_move.uci()} in {round(end_time - curr_time, 1)} seconds. (d={self.minimax.max_depth-1})                   ")
 
             break
 
