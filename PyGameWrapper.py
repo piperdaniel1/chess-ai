@@ -1,4 +1,5 @@
 # this will abstract away everything related to pygame
+from copy import copy, deepcopy
 import pygame
 import chess
 import time
@@ -30,8 +31,20 @@ class ChessWindow:
         depth = 4
         
         while True:
-            educated_move = self.minimax.find_best_move(self.internal_board, False, -1000, 1000, self.moves_made)
+            educated_move, move_chain = self.minimax.find_best_move(self.internal_board, False, -1000, 1000, self.moves_made)
             end_time = time.time()
+
+            if move_chain != None:
+                anim_board = deepcopy(self.internal_board)
+
+                for move in move_chain:
+                    self.internal_board.push(move)
+                    self.draw_board()
+                    pygame.display.flip()
+                    time.sleep(1.5)
+
+                self.internal_board = anim_board
+
             print(f"Found the move {educated_move.uci()} in {round(end_time - curr_time, 1)} seconds. (d={self.minimax.max_depth})                   ")
 
             break

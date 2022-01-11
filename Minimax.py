@@ -118,23 +118,25 @@ class Minimax:
             book_move = self.opening_book.decode(self.opening_book.get_zorbist_hash(board))
             if book_move != None:
                 print("Returning book move " + str(book_move) + " from opening book")
-                return book_move
+                return book_move, None
 
         start_time = time.time()
         depth = 1
         self.max_depth = depth
         while True:
-            best_move = self.rec_minimax(board, depth, maximizing_player, alpha, beta, move2)[0]
+            best_move, (eval, move_chain) = self.rec_minimax(board, depth, maximizing_player, alpha, beta, move2)
 
             if time.time() - start_time > 1:
                 break
                 
             depth += 1
             self.max_depth = depth
-        
+
+        move_chain.reverse()
         print(f"Returning {best_move} after searching {self.positions_searched} positions")
+        print(f"Predicted move chain: {move_chain}")
         
-        return best_move
+        return best_move, move_chain
 
     def sort(self, moves_to_sort, score_of_moves):
         score_of_moves_np = np.array(score_of_moves)
@@ -163,8 +165,9 @@ class Minimax:
         if current_hash == None:
             current_hash = self.get_zorbist_hash(board)
         
-        if depth == 0 or board.is_checkmate() or board.is_stalemate():
-            return None, self.eval.get_score_of_board(board, move2)
+        if board.is_checkmate() or board.is_stalemate():
+            #print(f"1: returning {[]}")
+            return None, (self.eval.get_score_of_board(board, move2), [])
         
         best_move = None
         captured_piece = None
@@ -184,10 +187,13 @@ class Minimax:
                 legal_moves = self.sort_moves_by_probable_score(board, current_hash, depth)
             else:
                 legal_moves = list(board.legal_moves)
-
+            current_best_chain = []
             # loop through all legal moves
             for move in legal_moves:
-                # again print debug values on highest level
+                if depth <= 0:
+                    if board.is_capture(move) == False:
+                        continue
+                # print debug values on highest level
                 if depth == self.max_depth:
                     anaylsis += 1
                     print(f"Anaylzing move {anaylsis} out of {total}", end="\r")
@@ -203,40 +209,41 @@ class Minimax:
                 if tt_entry != None:
                     if tt_entry.depth >= depth:
                         eval_of_branch = tt_entry.eval
+                        move_chain = tt_entry.move_chain
+                        #print("created move_chain from tt")
                     else:
-                        eval_of_branch = self.rec_minimax(board, depth-1, False, alpha, beta, move2, new_hash)[1]
-                        new_entry = Entry(new_hash, eval_of_branch, depth)
+                        eval_of_branch, move_chain = self.rec_minimax(board, depth-1, False, alpha, beta, move2, new_hash)[1]
+                        #print(f"created move chain from recursion: {move_chain}")
+                        new_entry = Entry(new_hash, eval_of_branch, depth, move_chain)
                         self.tt.encode(new_entry)
                 else:
-                    eval_of_branch = self.rec_minimax(board, depth-1, False, alpha, beta, move2, new_hash)[1]
-                    new_entry = Entry(new_hash, eval_of_branch, depth)
+                    eval_of_branch, move_chain = self.rec_minimax(board, depth-1, False, alpha, beta, move2, new_hash)[1]
+                    #print(f"created move chain from recursion: {move_chain}")
+                    new_entry = Entry(new_hash, eval_of_branch, depth, move_chain)
                     self.tt.encode(new_entry)
                     
                 # pop move off board to make room for the next move
                 board.pop()
 
+                #print(f"tested one move successfully at depth {depth}")
                 # check if that move is better than the current best move
                 if eval_of_branch > max_eval:
                     max_eval = eval_of_branch
                     best_move = move
-                '''
-                # i think this is some kind of tie breaker system but I don't remember making it at all
-                elif eval_of_branch == max_eval and depth == self.max_depth:
-                    current_eval = self.eval.get_score_of_board(board, move2)
-                    board.push(move)
-                    next_eval = self.eval.get_score_of_board(board, move2)
-                    board.pop()
-
-                    if next_eval > current_eval:
-                        best_move = move
-                        max_eval = eval_of_branch
-                '''
+                    move_chain.append(move)
+                    current_best_chain = move_chain
+                    #print(f"appended successfully {move} appended to {move_chain} equaling {current_best_chain}")
 
                 alpha = max(alpha, eval_of_branch)
-                if beta < alpha:
+                if beta <= alpha:
                     break
-                
-            return best_move, max_eval
+            
+            if max_eval == -1000:
+                #print(f"2: returning {[]}")
+                return None, (self.eval.get_score_of_board(board, move2), [])
+
+            #print(f"3: returning {current_best_chain}")
+            return best_move, (max_eval, current_best_chain)
         else:
             min_eval = 1000
 
@@ -244,16 +251,19 @@ class Minimax:
                 total = board.legal_moves.count()
 
                 anaylsis = 0
-
             
             if depth == self.max_depth:
                 legal_moves = self.sort_moves_by_probable_score(board, current_hash, depth)
             else:
                 legal_moves = list(board.legal_moves)
-            #last_move = board.pop()
-            #board.push(last_move)
+            
+            current_best_chain = []
 
             for move in legal_moves:
+                if depth <= 0:
+                    if board.is_capture(move) == False:
+                        continue
+
                 if depth == self.max_depth:
                     anaylsis += 1
                     print(f"Anaylzing move {anaylsis} out of {total} with depth {depth}", end="\r")
@@ -265,35 +275,36 @@ class Minimax:
                 if tt_entry != None:
                     if tt_entry.depth >= depth:
                         eval_of_branch = tt_entry.eval
+                        move_chain = tt_entry.move_chain
+                        #print("created move_chain from tt")
                     else:
-                        eval_of_branch = self.rec_minimax(board, depth-1, True, alpha, beta, move2, new_hash)[1]
-                        
-                        new_entry = Entry(new_hash, eval_of_branch, depth)
+                        eval_of_branch, move_chain = self.rec_minimax(board, depth-1, True, alpha, beta, move2, new_hash)[1]
+                        #print(f"created move chain from recursion: {move_chain}")
+                        new_entry = Entry(new_hash, eval_of_branch, depth, move_chain)
                         self.tt.encode(new_entry)
                 else:
-                    eval_of_branch = self.rec_minimax(board, depth-1, True, alpha, beta, move2, new_hash)[1]
-                    new_entry = Entry(new_hash, eval_of_branch, depth)
+                    eval_of_branch, move_chain = self.rec_minimax(board, depth-1, True, alpha, beta, move2, new_hash)[1]
+                    #print(f"created move chain from recursion: {move_chain}")
+                    new_entry = Entry(new_hash, eval_of_branch, depth, move_chain)
                     self.tt.encode(new_entry)
 
                 board.pop()
 
+                #print(f"tested one move successfully at depth {depth}")
                 if eval_of_branch < min_eval:
                     min_eval = eval_of_branch
                     best_move = move
-                '''
-                elif eval_of_branch == min_eval and depth == self.max_depth:
-                    current_eval = self.eval.get_score_of_board(board, move2)
-                    board.push(move)
-                    next_eval = self.eval.get_score_of_board(board, move2)
-                    board.pop()
-                    
-                    if next_eval < current_eval:
-                        best_move = move
-                        min_eval = eval_of_branch
-                '''
+                    move_chain.append(move)
+                    current_best_chain = move_chain
+                    #print(f"appended successfully {move} appended to {move_chain} equaling {current_best_chain}")
                 
                 beta = min(beta, eval_of_branch)
-                if beta < alpha:
+                if beta <= alpha:
                     break
+            
+            if min_eval == 1000:
+                #print(f"4: returning {[]}")
+                return None, (self.eval.get_score_of_board(board, move2), [])
 
-            return best_move, min_eval
+            #print(f"5: returning {current_best_chain}")
+            return best_move, (min_eval, current_best_chain)

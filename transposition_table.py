@@ -1,8 +1,9 @@
 class Entry:
-    def __init__(self, key, eval_, depth):
+    def __init__(self, key, eval_, depth, move_chain):
         self.key = key
         self.eval = eval_
         self.depth = depth
+        self.move_chain = move_chain
 
 class Transposition_Table:
     def __init__(self):
