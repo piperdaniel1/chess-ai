@@ -65,55 +65,75 @@ class Board_Scorer:
                                  [-2,-1,-1,-1,-1,-1,-1,-2],
                                  [-2,-2,-2,-2,-2,-2,-2,-2]]
 
-    def get_score_of_piece(self, piece_type, location):
-        score = 0
-        col, row = location
-        if piece_type.upper() == piece_type:
-            # white scores should be inversed, as well as map.
-            if piece_type == 'K':
-                score += self.endgame_king_map[row][col]
-        else:
-            # white scores should be inversed. the map should be as well.
-            if piece_type == 'k':
-                score -= self.endgame_king_map[7-row][col]
 
-        #print(f"Scored piece {piece_type} as {score} at the location {location}.")
-        return score
-    
+        self.white_rook = chess.Piece.from_symbol('R')
+        self.black_rook = chess.Piece.from_symbol('r')
+
+        self.white_knight = chess.Piece.from_symbol('N')
+        self.black_knight = chess.Piece.from_symbol('n')
+
+        self.white_king = chess.Piece.from_symbol('K')
+        self.black_king = chess.Piece.from_symbol('k')
+
+        self.white_queen = chess.Piece.from_symbol('Q')
+        self.black_queen = chess.Piece.from_symbol('q')
+
+        self.white_bishop = chess.Piece.from_symbol('B')
+        self.black_bishop = chess.Piece.from_symbol('b')
+
+        self.white_pawn = chess.Piece.from_symbol('P')
+        self.black_pawn = chess.Piece.from_symbol('p')        
+        
+        self.cached_piece_map = None
+
+        self.piece_dict = {self.white_rook: self.rook_map, 
+                           self.black_rook: self.rook_map,
+                           self.white_knight: self.knight_map,
+                           self.black_knight: self.knight_map,
+                           self.white_king: self.king_map,
+                           self.black_king: self.king_map,
+                           self.white_queen: self.queen_map,
+                           self.black_queen: self.queen_map,
+                           self.white_bishop: self.bishop_map,
+                           self.black_bishop: self.bishop_map,
+                           self.white_pawn: self.pawn_map,
+                           self.black_pawn: self.pawn_map}
+
+        self.endgame_piece_dict = {self.white_rook: self.rook_map, 
+                   self.black_rook: self.rook_map,
+                   self.white_knight: self.endgame_king_map,
+                   self.black_knight: self.endgame_king_map,
+                   self.white_king: self.king_map,
+                   self.black_king: self.king_map,
+                   self.white_queen: self.queen_map,
+                   self.black_queen: self.queen_map,
+                   self.white_bishop: self.bishop_map,
+                   self.black_bishop: self.bishop_map,
+                   self.white_pawn: self.pawn_map,
+                   self.black_pawn: self.pawn_map}
+
+        self.piece_value_dict = {self.white_rook: 5,
+                                 self.black_rook: -5,
+                                 self.white_knight: 3,
+                                 self.black_knight: -3,
+                                 self.white_king: 0,
+                                 self.black_king: 0,
+                                 self.white_queen: 9,
+                                 self.black_queen: -9,
+                                 self.white_bishop: 3,
+                                 self.black_bishop: -3,
+                                 self.white_pawn: 1,
+                                 self.black_pawn: -1}
+
     def get_endgame_score_of_piece(self, piece_type, location):
-        score = 0
         col, row = location
-        if piece_type.upper() == piece_type:
-            # white scores should be inversed, as well as map.
-            if piece_type == 'P':
-                score += self.pawn_map[row][col]
-            elif piece_type == 'R':
-                score += self.rook_map[row][col]
-            elif piece_type == 'N':
-                score += self.knight_map[row][col]
-            elif piece_type == 'B':
-                score += self.bishop_map[row][col]
-            elif piece_type == 'Q':
-                score += self.queen_map[row][col]
-            elif piece_type == 'K':
-                score += self.king_map[row][col]
-        else:
-            # white scores should be inversed. the map should be as well.
-            if piece_type == 'p':
-                score -= self.pawn_map[7-row][col]
-            elif piece_type == 'r':
-                score -= self.rook_map[7-row][col]
-            elif piece_type == 'n':
-                score -= self.knight_map[7-row][col]
-            elif piece_type == 'b':
-                score -= self.bishop_map[7-row][col]
-            elif piece_type == 'q':
-                score -= self.queen_map[7-row][col]
-            elif piece_type == 'k':
-                score -= self.king_map[7-row][col]
 
-        #print(f"Scored piece {piece_type} as {score} at the location {location}.")
-        return score
+        return self.endgame_piece_dict[piece_type][row][col]
+    
+    def get_score_of_piece(self, piece_type, location):
+        col, row = location
+
+        return self.piece_dict[piece_type][row][col]
             
     def convert_chesspos_to_gridpos(self, chess_pos):
         row = chess_pos % 8
@@ -122,14 +142,13 @@ class Board_Scorer:
         return (row, col)
 
     def get_piece_map_scores(self, board):
-        piece_map = board.piece_map()
+        piece_map = self.cached_piece_map
         score = 0
         row = 0
 
         for key in range(64):
             try:
-                piece = piece_map[key]
-                piece_type = piece.symbol()
+                piece_type = piece_map[key]
                 row, col = self.convert_chesspos_to_gridpos(key)
                 score += self.get_score_of_piece(piece_type, (row, col))
             except KeyError:
@@ -138,62 +157,38 @@ class Board_Scorer:
         return score
     
     def get_endgame_piece_map_scores(self, board):
-        piece_map = board.piece_map()
+        piece_map = self.cached_piece_map
         score = 0
         row = 0
 
         for key in range(64):
             try:
-                piece = piece_map[key]
-                piece_type = piece.symbol()
+                piece_type = piece_map[key]
                 row, col = self.convert_chesspos_to_gridpos(key)
-                score += self.get_score_of_piece(piece_type, (row, col))
+                score += self.get_endgame_score_of_piece(piece_type, (row, col))
             except KeyError:
                 pass
         
         return score
 
-    def get_base_score(self, board):
-        fen = board.board_fen()
+    def get_base_score(self, board):            
         score = 0
 
-        for character in fen:
-            if character.isnumeric() or character == "/":
+        for key in range(64):
+            try:
+                character = self.cached_piece_map[key]
+            except KeyError:
                 continue
 
-            if character.islower():
-                if character == 'p':
-                    score -= 1
-                elif character == 'n':
-                    score -= 3
-                elif character == 'b':
-                    score -= 3
-                elif character == 'r':
-                    score -= 5
-                elif character == 'q':
-                    score -= 8
-            else:
-                if character == 'P':
-                    score += 1
-                elif character == 'N':
-                    score += 3
-                elif character == 'B':
-                    score += 3
-                elif character == 'R':
-                    score += 5
-                elif character == 'Q':
-                    score += 8
+            score += self.piece_value_dict[character]
 
         return score
     
     def is_endgame(self, board):
-        list_of_pieces = list(board.piece_map())
-        if len(list_of_pieces) <= 10:
-            return True
-        
-        return False
+        return len(self.cached_piece_map) <= 10
     
     def get_score_of_board(self, board : chess.Board, move2, phase = "default"):
+        self.cached_piece_map = board.piece_map()
         # score starts at a tie.
         score = 0
         is_endgame = self.is_endgame(board)
@@ -206,16 +201,6 @@ class Board_Scorer:
             score += self.get_endgame_piece_map_scores(board)
         else:
             score += self.get_piece_map_scores(board)
-        
-        # add score based on how many moves each player has
-        og_color = board.turn
-        board.turn = chess.WHITE
-        white_legal_moves = board.legal_moves.count()
-        board.turn = chess.BLACK
-        black_legal_moves = board.legal_moves.count()
-        board.turn = og_color
-        score += white_legal_moves / 15
-        score -= black_legal_moves / 15
 
         # hard set score if one player has won
         if board.is_checkmate() == True:

@@ -8,7 +8,6 @@ class Transposition_Table:
     def __init__(self):
         self.table = [None] * 10000000
 
-    
     def decode(self, key):
         index = key % len(self.table)
         if self.table[index] != None:

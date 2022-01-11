@@ -5,6 +5,7 @@ import chess
 import time
 import pygame
 import threading
+import cProfile
 
 from Minimax import Minimax
 from Board_Scorer import Board_Scorer
@@ -235,4 +236,5 @@ class ChessWindow:
                 time.sleep(500 / 1000)
 
 window = ChessWindow()
-window.run_game()
+
+cProfile.run('window.run_game()', filename='profile.prof')
