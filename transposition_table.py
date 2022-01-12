@@ -6,7 +6,7 @@ class Entry:
 
 class Transposition_Table:
     def __init__(self):
-        self.table = [None] * 10000000
+        self.table = [None] * 40000000
 
     def decode(self, key):
         index = key % len(self.table)

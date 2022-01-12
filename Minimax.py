@@ -1,3 +1,4 @@
+from re import sub
 from Board_Scorer import Board_Scorer
 from transposition_table import Transposition_Table, Entry
 import chess
@@ -114,6 +115,18 @@ class Minimax:
 
         moves_to_sort = moves_to_sort_np[score_of_moves_np.argsort()].tolist()
 
+    def get_multiplier_for_depth(self, depth):
+        if depth >= 7:
+            return 14
+        if depth == 6:
+            return 14        
+        if depth == 5:
+            return 14
+        if depth == 4:
+            return 5
+
+        return 1           
+
     def find_best_move(self, board : chess.Board, maximizing_player : bool, alpha : int, beta : int, move2):
         if move2 < 10:
             book_move = self.opening_book.decode(self.opening_book.get_zorbist_hash(board))
@@ -121,14 +134,25 @@ class Minimax:
                 print("Returning book move " + str(book_move) + " from opening book")
                 return book_move, None
 
+        MAX_SECONDS = 25
+
         start_time = time.time()
         depth = 1
         self.max_depth = depth
-        while depth <= 6:
+        times = []
+        while depth <= 15:
+            sub_start = time.time()
             best_move, (eval, move_chain) = self.rec_minimax(board, depth, maximizing_player, alpha, beta, move2)
-                
+            sub_end = time.time()
+            multiplier = self.get_multiplier_for_depth(depth+1)
+
+            next_predicted_time = (time.time() - sub_start)*multiplier
+
             depth += 1
             self.max_depth = depth
+
+            if (time.time() - start_time) + next_predicted_time > MAX_SECONDS:
+                break
 
         move_chain.reverse()
         print(f"Returning {best_move} after searching {self.positions_searched} positions")

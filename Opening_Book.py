@@ -199,7 +199,7 @@ class Opening_Book:
                     print("Caught keyboard interrupt, non-destructively exiting...")
                     break
     
-    def decode(self, key) -> chess.Move:
+    def decode(self, key) -> chess.Move:        
         index = key % len(self.book_tt)
         if self.book_tt[index][0] != None:
             random.shuffle(self.book_tt[index])
