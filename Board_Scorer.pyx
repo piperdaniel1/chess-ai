@@ -1,7 +1,7 @@
 #cython: language_level=3
 
 import chess
-knight_map = [[0, 1, 2, 2, 2, 2, 1, 0],
+cdef int[8][8] knight_map = [[0, 1, 2, 2, 2, 2, 1, 0],
                    [1, 2, 3, 3, 3, 3, 2, 1],
                    [2, 3, 4, 4, 4, 4, 3, 2],
                    [2, 3, 4, 4, 4, 4, 3, 2],
@@ -10,7 +10,7 @@ knight_map = [[0, 1, 2, 2, 2, 2, 1, 0],
                    [1, 2, 3, 3, 3, 3, 2, 1],
                    [0, 1, 2, 2, 2, 2, 1, 0]]
 
-king_map =   [[3, 4, 2, 1, 1, 2, 4, 3],
+cdef int[8][8] king_map =   [[3, 4, 2, 1, 1, 2, 4, 3],
                    [3, 3, 2, 1, 1, 2, 3, 3],
                    [2, 1, 1, 1, 1, 1, 1, 2],
                    [1, 0, 0,-1,-1, 0, 0, 1],
@@ -19,7 +19,7 @@ king_map =   [[3, 4, 2, 1, 1, 2, 4, 3],
                   [-2,-3,-3,-4,-4,-3,-3,-2],
                   [-3,-4,-4,-5,-5,-4,-4,-3]]
 
-queen_map = [[-3,-2,-2,-1,-1,-2,-2,-3],
+cdef int[8][8] queen_map = [[-3,-2,-2,-1,-1,-2,-2,-3],
                   [-2,-1, 1, 2, 2, 1,-1,-2],
                    [0, 1, 2, 2, 2, 2, 1, 0],
                    [1, 2, 2, 2, 2, 2, 2, 1],
@@ -28,7 +28,7 @@ queen_map = [[-3,-2,-2,-1,-1,-2,-2,-3],
                   [-2,-1, 1, 2, 2, 1,-1,-2],
                   [-3,-2,-2,-1,-1,-2,-2,-3]]
 
-rook_map = [[-1,-1,0, 1, 1, 0,-1,-1],
+cdef int[8][8] rook_map = [[-1,-1,0, 1, 1, 0,-1,-1],
                   [-1,0, 0, 0, 0, 0, 0,-1],
                   [-1,0, 0, 0, 0, 0, 0,-1],
                   [-1,0, 0, 0, 0, 0, 0,-1],
@@ -37,7 +37,7 @@ rook_map = [[-1,-1,0, 1, 1, 0,-1,-1],
                   [0, 2, 2, 2, 2, 2, 2, 0],
                   [-1,-1,-1,-1,-1,-1,-1,-1]]
 
-bishop_map = [[1, 0, 0, 0, 0, 0, 0, 1],
+cdef int[8][8] bishop_map = [[1, 0, 0, 0, 0, 0, 0, 1],
                    [0, 3, 1, 1, 1, 1, 3, 0],
                    [0, 1, 1, 1, 1, 1, 1, 0],
                    [0, 1, 2, 1, 1, 2, 1, 0],
@@ -46,7 +46,7 @@ bishop_map = [[1, 0, 0, 0, 0, 0, 0, 1],
                    [0, 1, 1, 1, 1, 1, 1, 0],
                    [-1,0, 0, 0, 0, 0, 0,-1]]
 
-pawn_map = [[0, 0, 0, 0, 0, 0, 0, 0],
+cdef int[8][8] pawn_map = [[0, 0, 0, 0, 0, 0, 0, 0],
                  [0, 1, 1,-2,-2, 1, 1, 0],
                  [0,-1,-1, 0, 0,-1,-1, 0],
                  [0, 0, 0, 1, 1, 0, 0, 0],
@@ -55,7 +55,7 @@ pawn_map = [[0, 0, 0, 0, 0, 0, 0, 0],
                  [4, 4, 4, 4, 4, 4, 4, 4],
                  [4, 4, 4, 4, 4, 4, 4, 4]]
 
-endgame_king_map = [[-2,-2,-2,-2,-2,-2,-2,-2],
+cdef int[8][8] endgame_king_map = [[-2,-2,-2,-2,-2,-2,-2,-2],
                          [-2,-1,-1,-1,-1,-1,-1,-2],
                          [-2,-1, 0, 0, 0, 0,-1,-2],
                          [-2,-1, 0, 1, 1, 0,-1,-2],
@@ -75,10 +75,10 @@ black_queen = chess.Piece.from_symbol('q')
 white_bishop = chess.Piece.from_symbol('B')
 black_bishop = chess.Piece.from_symbol('b')
 white_pawn = chess.Piece.from_symbol('P')
-black_pawn = chess.Piece.from_symbol('p')        
-
-cached_piece_map = None
-piece_dict = {white_rook: rook_map, 
+black_pawn = chess.Piece.from_symbol('p')    
+    
+cdef dict cached_piece_map = {}
+cdef dict piece_dict = {white_rook: rook_map, 
                    black_rook: rook_map,
                    white_knight: knight_map,
                    black_knight: knight_map,
@@ -91,7 +91,7 @@ piece_dict = {white_rook: rook_map,
                    white_pawn: pawn_map,
                    black_pawn: pawn_map}
 
-endgame_piece_dict = {white_rook: rook_map, 
+cdef dict endgame_piece_dict = {white_rook: rook_map, 
            black_rook: rook_map,
            white_knight: endgame_king_map,
            black_knight: endgame_king_map,
@@ -104,7 +104,7 @@ endgame_piece_dict = {white_rook: rook_map,
            white_pawn: pawn_map,
            black_pawn: pawn_map}
            
-piece_value_dict = {white_rook: 5,
+cdef dict piece_value_dict = {white_rook: 5,
                          black_rook: -5,
                          white_knight: 3,
                          black_knight: -3,
@@ -117,48 +117,45 @@ piece_value_dict = {white_rook: 5,
                          white_pawn: 1,
                          black_pawn: -1}
 
-def get_endgame_score_of_piece(piece_type, location):
-    col, row = location
-    return endgame_piece_dict[piece_type][row][col]
+cpdef int get_endgame_score_of_piece(piece_type, int row, int col):
+    return endgame_piece_dict[piece_type][col][row]
 
-def get_score_of_piece(piece_type, location):
-    col, row = location
-    return piece_dict[piece_type][row][col]
+cpdef int get_score_of_piece(piece_type, int row, int col):
+    return piece_dict[piece_type][col][row]
         
 def convert_chesspos_to_gridpos(chess_pos):
     row = chess_pos % 8
     col = chess_pos // 8
     return (row, col)
 
-def get_piece_map_scores(cached_piece_map : dict):
-    piece_map = cached_piece_map
-    score = 0
-    row = 0
-    for key in range(64):
-        try:
-            piece_type = piece_map[key]
-            row, col = convert_chesspos_to_gridpos(key)
-            score += get_score_of_piece(piece_type, (row, col))
-        except KeyError:
-            pass
-    
-    return score
-
-def get_endgame_piece_map_scores(cached_piece_map : dict):
-    score = 0
-    row = 0
+cpdef int get_piece_map_scores(cached_piece_map : dict):
+    cdef int score = 0
+    cdef int row = 0
     for key in range(64):
         try:
             piece_type = cached_piece_map[key]
             row, col = convert_chesspos_to_gridpos(key)
-            score += get_endgame_score_of_piece(piece_type, (row, col))
+            score += get_score_of_piece(piece_type, row, col)
         except KeyError:
             pass
     
     return score
 
-def get_base_score(cached_piece_map : dict):            
-    score = 0
+cpdef int get_endgame_piece_map_scores(cached_piece_map : dict):
+    cdef int score = 0
+    cdef int key = 0
+    for key in range(64):
+        try:
+            piece_type = cached_piece_map[key]
+            row, col = convert_chesspos_to_gridpos(key)
+            score += get_endgame_score_of_piece(piece_type, row, col)
+        except KeyError:
+            pass
+    
+    return score
+
+cpdef int get_base_score(cached_piece_map : dict):            
+    cdef int score = 0
     for key in range(64):
         try:
             character = cached_piece_map[key]
@@ -170,9 +167,9 @@ def get_base_score(cached_piece_map : dict):
 def is_endgame(cached_piece_map : dict):
     return len(cached_piece_map) <= 10
 
-def get_score_of_board(board : chess.Board, cached_piece_map : dict):
+cpdef int get_score_of_board(board : chess.Board, cached_piece_map : dict):
     # score starts at a tie.
-    score = 0
+    cdef int score = 0
     endgame = is_endgame(cached_piece_map)
     # add the base scores of each piece.
     score += get_base_score(cached_piece_map)

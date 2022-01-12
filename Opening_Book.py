@@ -200,6 +200,7 @@ class Opening_Book:
                     break
     
     def decode(self, key) -> chess.Move:
+        return None
         index = key % len(self.book_tt)
         if self.book_tt[index][0] != None:
             random.shuffle(self.book_tt[index])
