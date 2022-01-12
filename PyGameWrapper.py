@@ -56,8 +56,11 @@ class ChessWindow:
 
                 self.internal_board = anim_board
 
-            print(f"Found the move {educated_move.uci()} in {round(end_time - curr_time, 1)} seconds. (d={self.minimax.max_depth-1})                   ")
-
+            try:
+                print(f"Found the move {educated_move.uci()} in {round(end_time - curr_time, 1)} seconds. (d={self.minimax.max_depth-1})                   ")
+            except AttributeError:
+                print("MiniMax couldn't find a move")
+                
             break
 
         return educated_move

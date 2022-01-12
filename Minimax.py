@@ -123,7 +123,7 @@ class Minimax:
         start_time = time.time()
         depth = 1
         self.max_depth = depth
-        while depth <= 6:
+        while depth <= 4:
             best_move, (eval, move_chain) = self.rec_minimax(board, depth, maximizing_player, alpha, beta, move2)
                 
             depth += 1
