@@ -30,7 +30,7 @@ class Minimax:
         self.starting_eval = 0
         self.zorbist_table = [[random.randint(1,2**64 - 1) for i in range(12)] for j in range(64)]
         self.positions_searched = 0
-        self.move_chaining = False
+        self.move_chaining = True
         pass
 
     def get_index_of_piece(self, piece):
@@ -209,6 +209,7 @@ class Minimax:
                 legal_moves = self.sort_moves_by_probable_score(board, current_hash, depth)
             else:
                 legal_moves = list(board.legal_moves)
+            
             current_best_chain = []
             # loop through all legal moves
             for move in legal_moves:
@@ -249,12 +250,13 @@ class Minimax:
 
                 #print(f"tested one move successfully at depth {depth}")
                 # check if that move is better than the current best move
-                if eval_of_branch > max_eval:
+                if eval_of_branch > max_eval or (eval_of_branch == max_eval and random.randint(0,2) <= 1):
                     max_eval = eval_of_branch
                     best_move = move
                     if self.move_chaining:
                         move_chain.append(move)
                         current_best_chain = move_chain
+
                     #print(f"appended successfully {move} appended to {move_chain} equaling {current_best_chain}")
 
                 alpha = max(alpha, eval_of_branch)
@@ -289,7 +291,7 @@ class Minimax:
 
                 if depth == self.max_depth:
                     anaylsis += 1
-                    print(f"Anaylzing move {anaylsis} out of {total} with depth {depth}", end="\r")
+                    print(f"Anaylzing move {anaylsis} out of {total} with depth {depth}           ", end="\r")
 
                 board.push(move)
                 self.positions_searched += 1
@@ -315,7 +317,7 @@ class Minimax:
                 board.pop()
 
                 #print(f"tested one move successfully at depth {depth}")
-                if eval_of_branch < min_eval:
+                if eval_of_branch < min_eval or (eval_of_branch == min_eval and random.randint(0,2) <= 1):
                     min_eval = eval_of_branch
                     best_move = move
                     if self.move_chaining:

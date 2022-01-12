@@ -108,6 +108,11 @@ class ChessWindow:
         pygame.display.flip()
 
         running = False
+        self.player_move = False
+        self.internal_board.set_fen("rn1qkbnr/ppp2p1p/3pp1p1/8/2PP2b1/1P3N1P/P3PPP1/RNBQKB1R")
+        self.internal_board.turn = chess.BLACK
+        self.draw_board()
+        pygame.display.flip()
 
         while running == False:
             if not self.player_move:
@@ -240,4 +245,4 @@ class ChessWindow:
 
 window = ChessWindow()
 
-cProfile.run('window.run_game()', filename='profile.prof')
+window.run_game()
