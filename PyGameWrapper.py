@@ -118,6 +118,9 @@ class ChessWindow:
                 pygame.display.flip()
                 self.player_move = True
                 self.moves_made += 1
+
+                print("")
+                self.minimax.eval.get_score_of_board(self.internal_board, verbose=True)
                 
             for event in pygame.event.get():
                 if event.type == pygame.MOUSEBUTTONUP and self.player_move == True:

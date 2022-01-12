@@ -98,6 +98,19 @@ class Board_Scorer:
                            self.black_bishop: self.bishop_map,
                            self.white_pawn: self.pawn_map,
                            self.black_pawn: self.pawn_map}
+        
+        self.minimax_multiplier = {self.white_rook: 1,
+                                   self.black_rook: -1,
+                                   self.white_knight: 1,
+                                   self.black_knight: -1,
+                                   self.white_king: 1,
+                                   self.black_king: -1,
+                                   self.white_queen: 1,
+                                   self.black_queen: -1,
+                                   self.white_bishop: 1,
+                                   self.black_bishop: -1,
+                                   self.white_pawn: 1,
+                                   self.black_pawn: -1}
 
         self.endgame_piece_dict = {self.white_rook: self.rook_map, 
                    self.black_rook: self.rook_map,
@@ -124,16 +137,28 @@ class Board_Scorer:
                                  self.black_bishop: -3,
                                  self.white_pawn: 1,
                                  self.black_pawn: -1}
+        
+        self.verbose = False
 
     def get_endgame_score_of_piece(self, piece_type, location):
         col, row = location
 
-        return self.endgame_piece_dict[piece_type][row][col]
+        m = self.minimax_multiplier[piece_type]
+
+        if m == 1:
+            return self.endgame_piece_dict[piece_type][row][col] * m
+        else:
+            return self.endgame_piece_dict[piece_type][7-row][col] * m
     
     def get_score_of_piece(self, piece_type, location):
         col, row = location
 
-        return self.piece_dict[piece_type][row][col]
+        m = self.minimax_multiplier[piece_type]
+
+        if m == 1:
+            return self.piece_dict[piece_type][row][col] * m
+        else:
+            return self.piece_dict[piece_type][7-row][col] * m
             
     def convert_chesspos_to_gridpos(self, chess_pos):
         row = chess_pos % 8
@@ -187,28 +212,46 @@ class Board_Scorer:
     def is_endgame(self, board):
         return len(self.cached_piece_map) <= 10
     
-    def get_score_of_board(self, board : chess.Board, move2, phase = "default"):
+    def get_score_of_board(self, board : chess.Board, move2=0, phase = "default", verbose = False):
+        self.verbose = verbose
+        # hard set score if one player has won
+        if board.is_checkmate() == True:
+            if self.verbose:
+                print("Evaluating board:")
+                print("Checkmate.")
+            if board.outcome().result()[0] == "0":
+                score = -1000
+                return score
+            else:
+                score = 1000
+                return score
+        elif board.is_stalemate() == True or board.is_repetition():
+            print("Evaluating board:")
+            print("Stalemate.")
+            score = 0
+            return score
+
         self.cached_piece_map = board.piece_map()
         # score starts at a tie.
         score = 0
         is_endgame = self.is_endgame(board)
 
         # add the base scores of each piece.
-        score += self.get_base_score(board)
+        score += self.get_base_score(board) * 10
+        if self.verbose:
+            print("Evaluating board:")
+            print("Base score: " + str(score))
 
+        if self.verbose:
+            old_score = score
         # add scores based on where the pieces are and if it is endgame
         if is_endgame:
             score += self.get_endgame_piece_map_scores(board)
         else:
             score += self.get_piece_map_scores(board)
-
-        # hard set score if one player has won
-        if board.is_checkmate() == True:
-            if board.outcome().result()[0] == "0":
-                score = -1000
-            else:
-                score = 1000
-        elif board.is_stalemate() == True or board.is_repetition():
-            score = 0
+        
+        if self.verbose:
+            print("Piece map score: " + str(score - old_score))
+            print("\n")
             
         return score
