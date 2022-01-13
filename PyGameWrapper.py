@@ -1,5 +1,6 @@
 # this will abstract away everything related to pygame
 from copy import copy, deepcopy
+from re import T
 import pygame
 import chess
 import time
@@ -32,7 +33,7 @@ class ChessWindow:
         depth = 4
         
         while True:
-            educated_move, move_chain = self.minimax.find_best_move(self.internal_board, False, -1000, 1000, self.moves_made)
+            educated_move, move_chain = self.minimax.find_best_move(deepcopy(self.internal_board), False, -1000, 1000, self.moves_made)
             end_time = time.time()
 
             if move_chain != None:
@@ -115,7 +116,7 @@ class ChessWindow:
         pygame.display.flip()
 
         running = False
-        self.player_move = False
+        self.player_move = True
         # rn1qkbnr/ppp2p1p/3pp1p1/8/2PP2b1/1P3N1P/P3PPP1/RNBQKB1R bishop does not avoid capture? (fixed)
         # 4k2r/p4ppp/n1p1pn2/q2pN3/P2P4/b1P1P3/3N1PPP/1Q3RK1 king does not castle?
         #self.internal_board.set_fen("4k2r/p1q2ppp/n1pbpn2/P2pN3/3P4/1QP1P3/3N1PPP/R5K1 b k - 0 1")
@@ -135,12 +136,16 @@ class ChessWindow:
                 pygame.display.flip()
                 self.player_move = True
                 self.moves_made += 1
+                
+                print("current FEN:", self.internal_board.fen())
 
                 print("")
                 if self.minimax.eval.get_score_of_board(self.internal_board, verbose=True) in [-1000, 1000]:
                     print("Looks like the game is over.")
                     print("Here's the move stack in case you want to look back:")
                     print(self.internal_board.move_stack)
+                    print(self.internal_board)
+                    print(self.internal_board.fen())
                 
             for event in pygame.event.get():
                 if event.type == pygame.MOUSEBUTTONUP and self.player_move == True:
@@ -260,4 +265,13 @@ class ChessWindow:
 
 window = ChessWindow()
 
-window.run_game()
+try:
+    window.run_game()
+except Exception:
+    print("Oh no... looks like we hit an unhandled exception.")
+    print("Current board:")
+    print(window.internal_board)
+    print("Current move stack:")
+    print(window.internal_board.move_stack)
+    print("FEN:", window.internal_board.fen())
+    raise Exception

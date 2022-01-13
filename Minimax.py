@@ -46,6 +46,13 @@ class Minimax:
         self.positions_searched = 0
         self.move_chaining = False
         self.dump_minimax_tree = False
+        # index 0: 1 -> 2
+        # index 1: 2 -> 3
+        # index 2: 3 -> 4
+        # index 3: 4 -> 5
+        # index 4: 5 -> 6
+        # and so on
+        self.prev_multipliers = [[], [], [], [], [], [], [], []]
 
         self.tree = MinimaxTree()
 
@@ -176,8 +183,18 @@ class Minimax:
 
         moves_to_sort = moves_to_sort_np[score_of_moves_np.argsort()].tolist()
 
-    def get_multiplier_for_depth(self, depth):
-        return 12
+    def get_multiplier_for_depth(self, depth, times):
+        # index 0: 1 -> 2
+        # index 1: 2 -> 3
+        # index 2: 3 -> 4
+        # index 3: 4 -> 5
+        # index 4: 5 -> 6
+        # and so on
+
+        if len(times) == 1 or len(self.prev_multipliers[depth-1]) == 0:
+            return 15
+        else:
+            return sum(self.prev_multipliers[depth-1]) / len(self.prev_multipliers[depth-1])
 
     def find_best_move(self, board : chess.Board, maximizing_player : bool, alpha : int, beta : int, move2):
         if move2 < 10:
@@ -186,13 +203,16 @@ class Minimax:
                 print("Returning book move " + str(book_move) + " from opening book")
                 return book_move, None
 
-        MAX_SECONDS = 25
+        MAX_SECONDS = 5 # not a hard limit, the program will do its best to end near this number though
 
         start_time = time.time()
         depth = 1
         self.max_depth = depth
         times = []
         self.tree = MinimaxTree(root=TreeNode())
+        sub_time = 0
+        prev_sub_time = 0
+        full_pred_time = 0
 
         while depth <= 15:
             sub_start = time.time()
@@ -201,15 +221,24 @@ class Minimax:
             else:
                 best_move, (eval, move_chain) = self.rec_minimax(board, depth, maximizing_player, alpha, beta, move2)
 
-            sub_end = time.time()
-            multiplier = self.get_multiplier_for_depth(depth+1)
+            sub_time = time.time() - sub_start
+
+            if depth > 3:
+                print(f"Predicted time for depth 1-{depth}: {round(full_pred_time,1)}, Actual: {round(time.time() - start_time, 1)}")
+
+            if depth - 2 >= 0:
+                self.prev_multipliers[depth-2].append(sub_time / times[-1])
+
+            times.append(sub_time)
+            multiplier = self.get_multiplier_for_depth(depth, times)
 
             next_predicted_time = (time.time() - sub_start)*multiplier
+            full_pred_time = next_predicted_time + (time.time() - start_time)
 
             depth += 1
             self.max_depth = depth
 
-            if (time.time() - start_time) + next_predicted_time > MAX_SECONDS:
+            if full_pred_time > MAX_SECONDS:
                 break
 
         move_chain.reverse()
