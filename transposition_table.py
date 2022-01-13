@@ -1,12 +1,16 @@
 class Entry:
-    def __init__(self, key, eval_, depth):
+    def __init__(self, key, eval_, depth, board):
         self.key = key
         self.eval = eval_
         self.depth = depth
+        self.board = board
+    
+    def __str__(self):
+        return f"Entry(key: {self.key}, eval: {self.eval}, depth: {self.depth}\n{self.board}"
 
 class Transposition_Table:
     def __init__(self):
-        self.table = [None] * 40000000
+        self.table = [None] * 10000000
 
     def decode(self, key):
         index = key % len(self.table)

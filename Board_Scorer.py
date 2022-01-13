@@ -151,18 +151,19 @@ class Board_Scorer:
             return self.endgame_piece_dict[piece_type][7-row][col] * m
     
     def get_score_of_piece(self, piece_type, location):
-        col, row = location
+        row, col = location
 
         m = self.minimax_multiplier[piece_type]
-
+        
         if m == 1:
+            
             return self.piece_dict[piece_type][row][col] * m
         else:
             return self.piece_dict[piece_type][7-row][col] * m
             
     def convert_chesspos_to_gridpos(self, chess_pos):
-        row = chess_pos % 8
-        col = chess_pos // 8
+        row = chess_pos // 8
+        col = chess_pos % 8
 
         return (row, col)
 
@@ -175,7 +176,8 @@ class Board_Scorer:
             try:
                 piece_type = piece_map[key]
                 row, col = self.convert_chesspos_to_gridpos(key)
-                score += self.get_score_of_piece(piece_type, (row, col))
+                score_to_add = self.get_score_of_piece(piece_type, (row, col))
+                score += score_to_add
             except KeyError:
                 pass
         
@@ -226,8 +228,9 @@ class Board_Scorer:
                 score = 1000
                 return score
         elif board.is_stalemate() == True or board.is_repetition():
-            print("Evaluating board:")
-            print("Stalemate.")
+            if self.verbose:
+                print("Evaluating board:")
+                print("Stalemate.")
             score = 0
             return score
 

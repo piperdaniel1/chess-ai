@@ -1,3 +1,4 @@
+import os
 from re import sub
 from Board_Scorer import Board_Scorer
 from transposition_table import Transposition_Table, Entry
@@ -19,7 +20,18 @@ TODO for Minimax:
     - Add endgame strategies
     - |x| Dynamically increase search depth using iterative deepening
 '''
+class TreeNode:
+    def __init__(self, board = None, eval = None, children : list = None, parent = None, depth = 5):
+        self.parent = parent
+        self.children = children
+        self.best_child = None
+        self.board = board
+        self.eval = eval
+        self.depth = depth
 
+class MinimaxTree:
+    def __init__(self, root = None):
+        self.root = root
 
 class Minimax:
     def __init__(self):
@@ -30,8 +42,47 @@ class Minimax:
         self.starting_eval = 0
         self.zorbist_table = [[random.randint(1,2**64 - 1) for i in range(12)] for j in range(64)]
         self.positions_searched = 0
-        self.move_chaining = True
-        pass
+        self.move_chaining = False
+        self.dump_minimax_tree = False
+
+        self.tree = MinimaxTree()
+
+    def view_tree(self, current_board : TreeNode=None):
+        if current_board == None:
+            current_board = self.tree.root
+        os.system('clear')
+        print("CURRENT BOARD:")
+        print(current_board.board)
+        print(f"Eval: {current_board.eval}\n")
+
+        print("\nParent of board:")
+        if current_board.parent == None:
+            print("This is the root board.")
+        else:
+            print(current_board.parent.board)
+            print(f"Eval: {current_board.parent.eval}")
+        
+        print(f"Depth: {current_board.depth}\n")
+
+        print("Children:")
+        for i, child in enumerate(current_board.children):
+            print(f"#{i} child:")
+            print(child.board)
+            print(f"Eval: {child.eval}\n")
+        
+        while True:
+            choice = input("enter a number to select one of the children (or -1 of parent, or 'exit' to exit): ")
+
+            try:
+                if choice == 'exit':
+                    return
+                elif int(choice) == -1:
+                    return self.view_tree(current_board.parent)
+                else:
+                    return self.view_tree(current_board.children[int(choice)])
+            except:
+                print("That's an input error, try again!")
+
 
     def get_index_of_piece(self, piece):
         if (piece=='P'):
@@ -109,7 +160,7 @@ class Minimax:
         
         return score
 
-    def sort_moves_ideally(self, moves_to_sort, score_of_moves, verbose = False):
+    def sort_moves_ideally(self, moves_to_sort, score_of_moves, maximize, verbose = False):
         score_of_moves_np = np.array(score_of_moves)
         moves_to_sort_np = np.array(moves_to_sort)
 
@@ -140,9 +191,15 @@ class Minimax:
         depth = 1
         self.max_depth = depth
         times = []
-        while depth <= 15:
+        self.tree = MinimaxTree(root=TreeNode())
+
+        while depth <= 5:
             sub_start = time.time()
-            best_move, (eval, move_chain) = self.rec_minimax(board, depth, maximizing_player, alpha, beta, move2)
+            if depth == 5 and self.dump_minimax_tree == True:
+                best_move, (eval, move_chain) = self.rec_minimax(board, depth, maximizing_player, alpha, beta, move2, current_root=self.tree.root)
+            else:
+                best_move, (eval, move_chain) = self.rec_minimax(board, depth, maximizing_player, alpha, beta, move2)
+
             sub_end = time.time()
             multiplier = self.get_multiplier_for_depth(depth+1)
 
@@ -152,7 +209,7 @@ class Minimax:
             self.max_depth = depth
 
             if (time.time() - start_time) + next_predicted_time > MAX_SECONDS:
-                break
+                pass
 
         move_chain.reverse()
         print(f"Returning {best_move} after searching {self.positions_searched} positions")
@@ -160,13 +217,18 @@ class Minimax:
         
         return best_move, move_chain
 
-    def sort(self, moves_to_sort, score_of_moves):
+    def sort(self, moves_to_sort, score_of_moves, maximize):
         score_of_moves_np = np.array(score_of_moves)
         moves_to_sort_np = np.array(moves_to_sort)
+        sorted_list = moves_to_sort_np[score_of_moves_np.argsort()].tolist()
 
-        return moves_to_sort_np[score_of_moves_np.argsort()].tolist()
+        if maximize:
+            return sorted_list 
+        else:
+            sorted_list.reverse()
+            return sorted_list
 
-    def sort_moves_by_probable_score(self, board, current_hash, depth):
+    def sort_moves_by_probable_score(self, board, current_hash, depth, maximize):
         moves_to_sort = list(board.legal_moves)
         score_of_moves = []
         for move in moves_to_sort:
@@ -180,19 +242,34 @@ class Minimax:
                 score_of_moves.append(0)
             board.pop()
         
-        moves_to_sort = self.sort(moves_to_sort, score_of_moves)
+        moves_to_sort = self.sort(moves_to_sort, score_of_moves, maximize)
         return moves_to_sort
 
-    def rec_minimax(self, board : chess.Board, depth, maximize, alpha, beta, move2, current_hash=None):
+    def rec_minimax(self, board : chess.Board, depth, maximize, alpha, beta, move2, current_hash=None, current_root : TreeNode = None):
         if current_hash == None:
             current_hash = self.get_zorbist_hash(board)
         
-        if depth == 0 or board.is_checkmate() or board.is_stalemate():
+        if depth == 0:
             #print(f"1: returning {[]}")
-            return None, (self.eval.get_score_of_board(board, move2), [])
+            eval = self.eval.get_score_of_board(board, move2)
+            if current_root != None:
+                current_root.board = str(board)
+                current_root.eval = eval
+            return None, (eval, [])
+
+        if board.is_checkmate() or board.is_stalemate():
+            #print(f"1: returning {[]}")
+            eval = self.eval.get_score_of_board(board, move2)
+            if current_root != None:
+                current_root.board = str(board)
+                current_root.eval = eval
+            return None, (eval, [])
         
         best_move = None
         captured_piece = None
+
+        if current_root != None:
+            current_root.children = []
 
         # computer is trying to maximize the eval with this move
         if maximize:
@@ -205,14 +282,16 @@ class Minimax:
 
                 anaylsis = 0
 
-            if depth == self.max_depth:
-                legal_moves = self.sort_moves_by_probable_score(board, current_hash, depth)
+            if depth > 3:
+                legal_moves = self.sort_moves_by_probable_score(board, current_hash, depth, maximize)
             else:
                 legal_moves = list(board.legal_moves)
             
             current_best_chain = []
+            if current_root != None:
+                current_root.board = str(board)
             # loop through all legal moves
-            for move in legal_moves:
+            for index, move in enumerate(legal_moves):
                 if depth <= 0:
                     if board.is_capture(move) == False:
                         continue
@@ -225,6 +304,10 @@ class Minimax:
 
                 # push move onto board
                 board.push(move)
+
+                if current_root != None:
+                    current_root.children.append(TreeNode(parent=current_root, depth=depth-1))
+
                 self.positions_searched += 1
                 # check score of move
                 new_hash = self.transpose_zorbist_hash(current_hash, board, captured_piece)
@@ -232,40 +315,55 @@ class Minimax:
                 if tt_entry != None:
                     if tt_entry.depth >= depth:
                         eval_of_branch = tt_entry.eval
+                        if current_root != None:
+                            current_root.children[-1].board = str(board)
+                            current_root.children[-1].eval = str(eval_of_branch) + " (from tt table)"
                         if self.move_chaining:
-                            move_chain = ['tt_root']
+                            move_chain = [f'tt_root with eval {eval_of_branch}']
                     else:
-                        eval_of_branch, move_chain = self.rec_minimax(board, depth-1, False, alpha, beta, move2, new_hash)[1]
+                        if current_root != None:
+                            eval_of_branch, move_chain = self.rec_minimax(board, depth-1, False, alpha, beta, move2, new_hash, current_root=current_root.children[-1])[1]
+                        else:
+                            eval_of_branch, move_chain = self.rec_minimax(board, depth-1, False, alpha, beta, move2, new_hash)[1]
+
                         #print(f"created move chain from recursion: {move_chain}")
-                        new_entry = Entry(new_hash, eval_of_branch, depth)
+                        new_entry = Entry(new_hash, eval_of_branch, depth, board)
                         self.tt.encode(new_entry)
                 else:
-                    eval_of_branch, move_chain = self.rec_minimax(board, depth-1, False, alpha, beta, move2, new_hash)[1]
+                    if current_root != None:
+                        eval_of_branch, move_chain = self.rec_minimax(board, depth-1, False, alpha, beta, move2, new_hash, current_root=current_root.children[-1])[1]
+                    else:
+                        eval_of_branch, move_chain = self.rec_minimax(board, depth-1, False, alpha, beta, move2, new_hash)[1]
+
                     #print(f"created move chain from recursion: {move_chain}")
-                    new_entry = Entry(new_hash, eval_of_branch, depth)
+                    new_entry = Entry(new_hash, eval_of_branch, depth, board)
                     self.tt.encode(new_entry)
-                    
+
                 # pop move off board to make room for the next move
                 board.pop()
 
-                #print(f"tested one move successfully at depth {depth}")
                 # check if that move is better than the current best move
                 if eval_of_branch > max_eval or (eval_of_branch == max_eval and random.randint(0,2) <= 1):
                     max_eval = eval_of_branch
+                    if current_root != None:
+                        current_root.best_child = index
                     best_move = move
                     if self.move_chaining:
-                        move_chain.append(move)
+                        move_chain.append((move, f"Eval: {eval_of_branch}"))
                         current_best_chain = move_chain
 
                     #print(f"appended successfully {move} appended to {move_chain} equaling {current_best_chain}")
 
                 alpha = max(alpha, eval_of_branch)
-                if beta <= alpha:
+                if beta < alpha:
                     break
             
             if max_eval == -1000:
                 #print(f"2: returning {[]}")
                 return None, (self.eval.get_score_of_board(board, move2), [])
+
+            if current_root != None:
+                current_root.eval = max_eval
 
             #print(f"3: returning {current_best_chain}")
             return best_move, (max_eval, current_best_chain)
@@ -277,14 +375,16 @@ class Minimax:
 
                 anaylsis = 0
             
-            if depth == self.max_depth:
-                legal_moves = self.sort_moves_by_probable_score(board, current_hash, depth)
+            if depth > 3:
+                legal_moves = self.sort_moves_by_probable_score(board, current_hash, depth, maximize)
             else:
                 legal_moves = list(board.legal_moves)
             
             current_best_chain = []
+            if current_root != None:
+                current_root.board = str(board)
 
-            for move in legal_moves:
+            for index, move in enumerate(legal_moves):
                 if depth <= 0:
                     if board.is_capture(move) == False:
                         continue
@@ -294,24 +394,36 @@ class Minimax:
                     print(f"Anaylzing move {anaylsis} out of {total} with depth {depth}           ", end="\r")
 
                 board.push(move)
+                if current_root != None:
+                    current_root.children.append(TreeNode(parent=current_root, depth=depth-1))
                 self.positions_searched += 1
                 new_hash = self.transpose_zorbist_hash(current_hash, board, captured_piece)
                 tt_entry = self.tt.decode(new_hash)
                 if tt_entry != None:
                     if tt_entry.depth >= depth:
                         eval_of_branch = tt_entry.eval
+                        if current_root != None:
+                            current_root.children[-1].board = str(board)
+                            current_root.children[-1].eval = str(eval_of_branch) + " (from tt table)"
                         if self.move_chaining:
-                            move_chain = ['tt root']
+                            move_chain = [f'tt_root with entry {tt_entry}']
                         #print("created move_chain from tt")
                     else:
-                        eval_of_branch, move_chain = self.rec_minimax(board, depth-1, True, alpha, beta, move2, new_hash)[1]
+                        if current_root != None:
+                            eval_of_branch, move_chain = self.rec_minimax(board, depth-1, True, alpha, beta, move2, new_hash, current_root=current_root.children[-1])[1]
+                        else:
+                            eval_of_branch, move_chain = self.rec_minimax(board, depth-1, True, alpha, beta, move2, new_hash)[1]
                         #print(f"created move chain from recursion: {move_chain}")
-                        new_entry = Entry(new_hash, eval_of_branch, depth)
+                        new_entry = Entry(new_hash, eval_of_branch, depth, board)
                         self.tt.encode(new_entry)
                 else:
-                    eval_of_branch, move_chain = self.rec_minimax(board, depth-1, True, alpha, beta, move2, new_hash)[1]
+                    if current_root != None:
+                        eval_of_branch, move_chain = self.rec_minimax(board, depth-1, True, alpha, beta, move2, new_hash, current_root=current_root.children[-1])[1]
+                    else:
+                        eval_of_branch, move_chain = self.rec_minimax(board, depth-1, True, alpha, beta, move2, new_hash)[1]
+
                     #print(f"created move chain from recursion: {move_chain}")
-                    new_entry = Entry(new_hash, eval_of_branch, depth)
+                    new_entry = Entry(new_hash, eval_of_branch, depth, board)
                     self.tt.encode(new_entry)
 
                 board.pop()
@@ -319,19 +431,24 @@ class Minimax:
                 #print(f"tested one move successfully at depth {depth}")
                 if eval_of_branch < min_eval or (eval_of_branch == min_eval and random.randint(0,2) <= 1):
                     min_eval = eval_of_branch
+                    if current_root != None:
+                        current_root.best_child = index
                     best_move = move
                     if self.move_chaining:
-                        move_chain.append(move)
+                        move_chain.append((move, f"Eval: {eval_of_branch}"))
                         current_best_chain = move_chain
                     #print(f"appended successfully {move} appended to {move_chain} equaling {current_best_chain}")
                 
                 beta = min(beta, eval_of_branch)
-                if beta <= alpha:
+                if alpha > beta:
                     break
             
             if min_eval == 1000:
                 #print(f"4: returning {[]}")
                 return None, (self.eval.get_score_of_board(board, move2), [])
+
+            if current_root != None:
+                current_root.eval = min_eval
 
             #print(f"5: returning {current_best_chain}")
             return best_move, (min_eval, current_best_chain)

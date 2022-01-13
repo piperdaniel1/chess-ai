@@ -39,6 +39,11 @@ class ChessWindow:
                 anim_board = self.internal_board.copy()
 
                 for move in move_chain:
+                    try:
+                        move = move[0]
+                    except:
+                        pass
+
                     if type(move) == str:
                         continue
                     try:
@@ -58,7 +63,9 @@ class ChessWindow:
                 self.internal_board = anim_board
 
             print(f"Found the move {educated_move.uci()} in {round(end_time - curr_time, 1)} seconds. (d={self.minimax.max_depth-1})                   ")
-
+            if self.minimax.dump_minimax_tree == True:
+                print("entering debug mode")
+                self.minimax.view_tree()
             break
 
         return educated_move
@@ -109,8 +116,13 @@ class ChessWindow:
 
         running = False
         self.player_move = False
-        self.internal_board.set_fen("rn1qkbnr/ppp2p1p/3pp1p1/8/2PP2b1/1P3N1P/P3PPP1/RNBQKB1R")
+        # rn1qkbnr/ppp2p1p/3pp1p1/8/2PP2b1/1P3N1P/P3PPP1/RNBQKB1R bishop does not avoid capture? (fixed)
+        # 4k2r/p4ppp/n1p1pn2/q2pN3/P2P4/b1P1P3/3N1PPP/1Q3RK1 king does not castle?
+        self.internal_board.set_fen("4k2r/p4ppp/n1p1pn2/q2pN3/P2P4/b1P1P3/3N1PPP/1Q3RK1")
+        self.internal_board.set_castling_fen("k")
         self.internal_board.turn = chess.BLACK
+        self.minimax.dump_minimax_tree = True
+        self.minimax.move_chaining = False
         self.draw_board()
         pygame.display.flip()
 
@@ -125,7 +137,10 @@ class ChessWindow:
                 self.moves_made += 1
 
                 print("")
-                self.minimax.eval.get_score_of_board(self.internal_board, verbose=True)
+                if self.minimax.eval.get_score_of_board(self.internal_board, verbose=True) in [-1000, 1000]:
+                    print("Looks like the game is over.")
+                    print("Here's the move stack in case you want to look back:")
+                    print(self.internal_board.move_stack)
                 
             for event in pygame.event.get():
                 if event.type == pygame.MOUSEBUTTONUP and self.player_move == True:
