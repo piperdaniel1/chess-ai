@@ -1,5 +1,8 @@
 import os
 from re import sub
+from colored import fg, bg, attr
+
+from numpy.core.fromnumeric import sort
 from Board_Scorer import Board_Scorer
 from transposition_table import Transposition_Table, Entry
 import chess
@@ -7,7 +10,6 @@ import numpy as np
 import random
 import time
 from Opening_Book import Opening_Book, Opening_Entry
-
 '''
 TODO for Minimax:
     - Rework board scoring to include a lot of stuff
@@ -53,7 +55,8 @@ class Minimax:
         os.system('clear')
         print("CURRENT BOARD:")
         print(current_board.board)
-        print(f"Eval: {current_board.eval}\n")
+        print(f"Eval: {current_board.eval}")
+        print(f"Depth: {current_board.depth}\n")
 
         print("\nParent of board:")
         if current_board.parent == None:
@@ -61,15 +64,22 @@ class Minimax:
         else:
             print(current_board.parent.board)
             print(f"Eval: {current_board.parent.eval}")
-        
-        print(f"Depth: {current_board.depth}\n")
+            print(f"Depth: {current_board.parent.depth}\n")
 
         print("Children:")
         for i, child in enumerate(current_board.children):
-            print(f"#{i} child:")
-            print(child.board)
-            print(f"Eval: {child.eval}\n")
-        
+            if child.eval == current_board.eval or str(child.eval) == str(current_board.eval) + ' (from tt table)':
+                print(fg('green'),end="")
+                print(f"#{i} child:")
+                print(child.board)
+                print(f"Eval: {child.eval}")
+                print(f"Depth: {child.depth}\n")
+                print(attr('reset'), end="")
+            else:
+                print(f"#{i} child:")
+                print(child.board)
+                print(f"Eval: {child.eval}")
+                print(f"Depth: {child.depth}\n")
         while True:
             choice = input("enter a number to select one of the children (or -1 of parent, or 'exit' to exit): ")
 
@@ -167,16 +177,7 @@ class Minimax:
         moves_to_sort = moves_to_sort_np[score_of_moves_np.argsort()].tolist()
 
     def get_multiplier_for_depth(self, depth):
-        if depth >= 7:
-            return 14
-        if depth == 6:
-            return 14        
-        if depth == 5:
-            return 14
-        if depth == 4:
-            return 5
-
-        return 1           
+        return 12
 
     def find_best_move(self, board : chess.Board, maximizing_player : bool, alpha : int, beta : int, move2):
         if move2 < 10:
@@ -193,9 +194,9 @@ class Minimax:
         times = []
         self.tree = MinimaxTree(root=TreeNode())
 
-        while depth <= 5:
+        while depth <= 15:
             sub_start = time.time()
-            if depth == 5 and self.dump_minimax_tree == True:
+            if depth == 4 and self.dump_minimax_tree == True:
                 best_move, (eval, move_chain) = self.rec_minimax(board, depth, maximizing_player, alpha, beta, move2, current_root=self.tree.root)
             else:
                 best_move, (eval, move_chain) = self.rec_minimax(board, depth, maximizing_player, alpha, beta, move2)
@@ -209,7 +210,7 @@ class Minimax:
             self.max_depth = depth
 
             if (time.time() - start_time) + next_predicted_time > MAX_SECONDS:
-                pass
+                break
 
         move_chain.reverse()
         print(f"Returning {best_move} after searching {self.positions_searched} positions")
@@ -223,9 +224,9 @@ class Minimax:
         sorted_list = moves_to_sort_np[score_of_moves_np.argsort()].tolist()
 
         if maximize:
+            sorted_list.reverse()
             return sorted_list 
         else:
-            sorted_list.reverse()
             return sorted_list
 
     def sort_moves_by_probable_score(self, board, current_hash, depth, maximize):

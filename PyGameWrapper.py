@@ -118,10 +118,10 @@ class ChessWindow:
         self.player_move = False
         # rn1qkbnr/ppp2p1p/3pp1p1/8/2PP2b1/1P3N1P/P3PPP1/RNBQKB1R bishop does not avoid capture? (fixed)
         # 4k2r/p4ppp/n1p1pn2/q2pN3/P2P4/b1P1P3/3N1PPP/1Q3RK1 king does not castle?
-        self.internal_board.set_fen("4k2r/p4ppp/n1p1pn2/q2pN3/P2P4/b1P1P3/3N1PPP/1Q3RK1")
-        self.internal_board.set_castling_fen("k")
-        self.internal_board.turn = chess.BLACK
-        self.minimax.dump_minimax_tree = True
+        #self.internal_board.set_fen("4k2r/p1q2ppp/n1pbpn2/P2pN3/3P4/1QP1P3/3N1PPP/R5K1 b k - 0 1")
+        #self.internal_board.set_castling_fen("k")
+        #self.internal_board.turn = chess.BLACK
+        self.minimax.dump_minimax_tree = False
         self.minimax.move_chaining = False
         self.draw_board()
         pygame.display.flip()
