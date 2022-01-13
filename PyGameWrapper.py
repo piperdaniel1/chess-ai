@@ -5,16 +5,64 @@ import pygame
 import chess
 import time
 import pygame
-import threading
+from threading import Thread, Event
 import cProfile
 
 from Minimax import Minimax
 from Board_Scorer import Board_Scorer
 from Opening_Book import Opening_Book, Opening_Entry
 
+class ChessTimer:
+    def __init__(self, minutes : float = 5, seconds : float = 0):
+        self.minutes = minutes
+        self.seconds = seconds
+    
+    def __str__(self):
+        self.minutes = int(self.minutes)
+        self.seconds = round(self.seconds, 1)
+        if self.minutes >= 10 and self.seconds >= 10:
+            return "{}:{}".format(self.minutes, self.seconds)
+        elif self.minutes < 10 and self.seconds >= 10:
+            return "0{}:{}".format(self.minutes, self.seconds)
+        elif self.minutes >= 10 and self.seconds < 10:
+            return "{}:0{}".format(self.minutes, self.seconds)
+        elif self.minutes < 10 and self.seconds < 10:
+            return "0{}:0{}".format(self.minutes, self.seconds)
+    
+    def tick(self):
+        self.seconds -= 1
+        if self.seconds == -1:
+            self.seconds = 59
+            self.minutes -= 1
+    
+    def tick_accurately(self):
+        self.seconds -= 0.1
+        if self.seconds < 0:
+            self.seconds = 59
+            self.minutes -= 1
+
+class TimerThread(Thread):
+    def __init__(self, event, board: chess.Board):
+        Thread.__init__(self)
+        self.stopped = False
+        self.board = board
+        self.turn = True
+        self.white_clock = ChessTimer(10)
+        self.black_clock = ChessTimer(10)
+
+    def run(self):
+        while self.stopped == False:
+            time.sleep(0.1)
+
+            if self.turn == True:
+                self.white_clock.tick_accurately()
+            else:
+                self.black_clock.tick_accurately()
+
 class ChessWindow:
     def __init__(self):
         # everyone loves magic numbers 
+        pygame.init()
         self.GLOBAL_OFFSET = 25
         self.GRID_SIZE = 900 / 8 - (50 / 8) - 2
         self.LOCAL_OFFSET = -12.5
@@ -22,6 +70,9 @@ class ChessWindow:
         self.selected_square = None
         self.internal_board = chess.Board()
         self.minimax = Minimax()
+        self.stop_timer = Event()
+        self.timer = TimerThread(self.stop_timer, self.internal_board)
+        self.timer.start()
         self.legal_move = pygame.image.load("pieces/legal-move.png")
         self.legal_move = pygame.transform.scale(self.legal_move, (90, 90))
         self.moves_made = 0
@@ -72,6 +123,7 @@ class ChessWindow:
         return educated_move
 
     def draw_board(self):
+        self.screen.fill((255, 255, 255))
         picture = pygame.image.load("pieces/png-versions/board.png")
 
         self.screen.blit(picture, (0,0))
@@ -83,7 +135,12 @@ class ChessWindow:
                 self.draw_piece(key, piece)
             except KeyError:
                 pass
-    
+
+        font = pygame.font.SysFont('Consolas', 100)
+        self.screen.blit(font.render(self.timer.black_clock.__str__(), True, (0, 0, 0)), (930, 300))
+        pygame.draw.line(self.screen, (0, 0, 0), (920, 450), (1330, 450), 5)
+        self.screen.blit(font.render(self.timer.white_clock.__str__(), True, (0, 0, 0)), (930, 500))
+
     def convert_gridpos_to_chesspos(self, grid_pos):
         row, col = grid_pos
 
@@ -132,6 +189,7 @@ class ChessWindow:
                 self.minimax.positions_searched = 0
                 move = self.get_move_from_minimax(True)
                 self.internal_board.push(move)
+                self.timer.turn = True
                 self.draw_board()
                 pygame.display.flip()
                 self.player_move = True
@@ -150,8 +208,11 @@ class ChessWindow:
             for event in pygame.event.get():
                 if event.type == pygame.MOUSEBUTTONUP and self.player_move == True:
                     mouse_pos = pygame.mouse.get_pos()
-                    grid_pos = self.convert_pixel_to_grid(mouse_pos)
-                    chess_pos = self.convert_gridpos_to_chesspos(grid_pos)
+                    try:
+                        grid_pos = self.convert_pixel_to_grid(mouse_pos)
+                        chess_pos = self.convert_gridpos_to_chesspos(grid_pos)
+                    except TypeError:
+                        continue
                     piece_at = self.internal_board.piece_at(chess_pos)
 
                     # case one:
@@ -193,6 +254,7 @@ class ChessWindow:
                             for move in moves:
                                 if move.to_square == chess_pos:
                                     self.internal_board.push(move)
+                                    self.timer.turn = False
                                     self.player_move = not self.player_move
                                     self.moves_made += 1
                                     break
@@ -203,6 +265,7 @@ class ChessWindow:
                 if event.type == pygame.QUIT:
                     running = True
                     pygame.quit()
+                    self.timer.stopped = True
                     quit()
     
     def convert_pixel_to_grid(self, pixel_pos):
@@ -226,7 +289,10 @@ class ChessWindow:
         row = key % 8
         col = key // 8
 
-        piece = pygame.image.load(f"pieces/png-versions/{piece}.png")
+        if str(piece).upper() == str(piece):
+            piece = pygame.image.load(f"pieces/png-versions/{piece}-white.png")
+        else:
+            piece = pygame.image.load(f"pieces/png-versions/{piece}-black.png")
         piece = pygame.transform.scale(piece, (90, 90))
         self.screen.blit(piece, self.convert_grid_to_pixel((row, col)))
 
@@ -243,7 +309,7 @@ class ChessWindow:
 
     def setup_board(self):
         background_colour = (255,255,255)
-        (width, height) = (900, 900)
+        (width, height) = (1350, 900)
         screen = pygame.display.set_mode((width, height))
         pygame.display.set_caption('chess-ai')
         screen.fill(background_colour)
@@ -275,3 +341,7 @@ except Exception:
     print(window.internal_board.move_stack)
     print("FEN:", window.internal_board.fen())
     raise Exception
+
+pygame.quit()
+window.timer.stopped = True
+quit()

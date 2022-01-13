@@ -227,7 +227,10 @@ class Minimax:
                 print(f"Predicted time for depth 1-{depth}: {round(full_pred_time,1)}, Actual: {round(time.time() - start_time, 1)}")
 
             if depth - 2 >= 0:
-                self.prev_multipliers[depth-2].append(sub_time / times[-1])
+                try:
+                    self.prev_multipliers[depth-2].append(sub_time / times[-1])
+                except ZeroDivisionError:
+                    self.prev_multipliers[depth-2].append(20)
 
             times.append(sub_time)
             multiplier = self.get_multiplier_for_depth(depth, times)
