@@ -93,44 +93,44 @@ class ChessWindow:
         end_time = 0
         depth = 4
         
-        while True:
-            self.minimax.time_remaining = self.timer.black_clock.get_seconds_remaining()
-            self.minimax.opponent_time_remaining = self.timer.white_clock.get_seconds_remaining()
-            educated_move, move_chain = self.minimax.find_best_move(deepcopy(self.internal_board), False, -1000, 1000, self.moves_made)
-            end_time = time.time()
+        self.minimax.time_remaining = self.timer.black_clock.get_seconds_remaining()
+        self.minimax.opponent_time_remaining = self.timer.white_clock.get_seconds_remaining()
+        educated_move, move_chain = self.minimax.find_best_move(deepcopy(self.internal_board), False, -1000, 1000, self.moves_made)
+        end_time = time.time()
 
-            if move_chain != None:
-                anim_board = self.internal_board.copy()
+        if move_chain != None:
+            anim_board = self.internal_board.copy()
+            for move in move_chain:
+                try:
+                    move = move[0]
+                except:
+                    pass
 
-                for move in move_chain:
-                    try:
-                        move = move[0]
-                    except:
-                        pass
+                if type(move) == str:
+                    continue
 
-                    if type(move) == str:
-                        continue
-                    try:
-                        self.internal_board.push(move)
-                    except AssertionError:
-                        print("board started with this fen: " + anim_board.fen())
-                        print("this move is somehow illegal")
-                        print("move:", move)
-                        print(self.internal_board)
-                        print("board fen:", self.internal_board.fen())
-                        print("move stack:", self.internal_board.move_stack)
-                        raise AssertionError
-                    self.draw_board()
-                    pygame.display.flip()
-                    time.sleep(2.5)
+                try:
+                    self.internal_board.push(move)
+                except AssertionError:
+                    print("board started with this fen: " + anim_board.fen())
+                    print("this move is somehow illegal")
+                    print("move:", move)
+                    print(self.internal_board)
+                    print("board fen:", self.internal_board.fen())
+                    print("move stack:", self.internal_board.move_stack)
+                    raise AssertionError
 
-                self.internal_board = anim_board
+                self.draw_board()
+                pygame.display.flip()
+                time.sleep(2.5)
 
-            print(f"Found the move {educated_move.uci()} in {round(end_time - curr_time, 1)} seconds. (d={self.minimax.max_depth-1})                   ")
-            if self.minimax.dump_minimax_tree == True:
-                print("entering debug mode")
-                self.minimax.view_tree()
-            break
+            self.internal_board = anim_board
+
+        print(f"Found the move {educated_move} in {round(end_time - curr_time, 1)} seconds. (d={self.minimax.max_depth-1})                   ")
+
+        if self.minimax.dump_minimax_tree == True:
+            print("entering debug mode")
+            self.minimax.view_tree()
 
         return educated_move
 
@@ -149,9 +149,15 @@ class ChessWindow:
                 pass
 
         font = pygame.font.SysFont('Consolas', 100)
-        self.screen.blit(font.render(self.timer.black_clock.__str__(), True, (0, 0, 0)), (920, 300))
-        pygame.draw.line(self.screen, (0, 0, 0), (920, 450), (1330, 450), 5)
-        self.screen.blit(font.render(self.timer.white_clock.__str__(), True, (0, 0, 0)), (920, 500))
+
+        if self.internal_board.turn == True:
+            self.screen.blit(font.render(self.timer.black_clock.__str__(), True, (0, 0, 0)), (920, 300))
+            pygame.draw.line(self.screen, (0, 0, 0), (920, 450), (1330, 450), 5)
+            self.screen.blit(font.render(self.timer.white_clock.__str__(), True, (0, 125, 0)), (920, 500))
+        else:
+            self.screen.blit(font.render(self.timer.black_clock.__str__(), True, (0, 125, 0)), (920, 300))
+            pygame.draw.line(self.screen, (0, 0, 0), (920, 450), (1330, 450), 5)
+            self.screen.blit(font.render(self.timer.white_clock.__str__(), True, (0, 0, 0)), (920, 500))
 
     def convert_gridpos_to_chesspos(self, grid_pos):
         row, col = grid_pos
@@ -266,6 +272,13 @@ class ChessWindow:
                             for move in moves:
                                 if move.to_square == chess_pos:
                                     self.internal_board.push(move)
+
+                                    if self.internal_board.is_checkmate():
+                                        running = True
+                                        pygame.quit()
+                                        self.timer.stopped = True
+                                        print("Game over. You won!")
+                                        quit()
                                     self.timer.turn = False
                                     self.timer.white_clock.apply_move_bonus(self.timer.move_bonus)
                                     self.player_move = not self.player_move
@@ -344,10 +357,10 @@ class ChessWindow:
 
 if __name__ == "__main__":
     window = ChessWindow()
-    window.minimax.dump_minimax_tree = False
+    window.minimax.dump_minimax_tree = True
     window.minimax.move_chaining = False
     #window.internal_board.set_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
-    window.internal_board.set_fen("r1bqkbnr/pp1p1ppp/2n1p3/2P5/1P2P3/2P2N2/P4PPP/RNBQKB1R b KQkq - 0 1")
+    window.internal_board.set_fen("r1b2rk1/1p3p2/1p2p1PQ/2bn4/3p4/2PB4/P4PP1/RNB1K2R b KQ - 0 1")
     window.minimax.MAX_SECONDS = 15
     window.timer.white_clock.minutes = 10
     window.timer.black_clock.minutes = 10

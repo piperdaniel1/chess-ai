@@ -419,9 +419,9 @@ class Minimax:
                 if beta < alpha:
                     break
             
-            if max_eval == -1000:
+            '''if max_eval == -1000:
                 #print(f"2: returning {[]}")
-                return None, (self.eval.get_score_of_board(board, move2), [])
+                return None, (self.eval.get_score_of_board(board, move2), [])'''
 
             if current_root != None:
                 current_root.eval = max_eval
@@ -507,9 +507,9 @@ class Minimax:
                 if alpha > beta:
                     break
             
-            if min_eval == 1000:
+            '''if min_eval == 1000:
                 #print(f"4: returning {[]}")
-                return None, (self.eval.get_score_of_board(board, move2), [])
+                return None, (self.eval.get_score_of_board(board, move2), [])'''
 
             if current_root != None:
                 current_root.eval = min_eval

@@ -18,10 +18,8 @@ class Transposition_Table:
         index = key % len(self.table)
         if self.table[index] != None:
             if self.table[index].key == key:
-                if self.table[index].board == board:
+                if str(self.table[index].board) == str(board):
                     return self.table[index]
     
     def encode(self, entry : Entry):
         self.table[entry.key % len(self.table)] = entry
-
-    
