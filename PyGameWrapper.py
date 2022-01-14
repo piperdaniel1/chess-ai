@@ -223,13 +223,14 @@ class ChessWindow:
                 
                 print("current FEN:", self.internal_board.fen())
 
+                if self.internal_board.is_stalemate() or self.internal_board.is_repetition():
+                    running = True
+                    pygame.quit()
+                    self.timer.stopped = True
+                    print("Game over. It's a draw!")
+                    quit()
+
                 print("")
-                if self.minimax.eval.get_score_of_board(self.internal_board, verbose=True) in [-1000, 1000]:
-                    print("Looks like the game is over.")
-                    print("Here's the move stack in case you want to look back:")
-                    print(self.internal_board.move_stack)
-                    print(self.internal_board)
-                    print(self.internal_board.fen())
             
             if self.timer.white_clock.get_seconds_remaining() <= 0:
                 running = True
@@ -310,6 +311,13 @@ class ChessWindow:
                                         pygame.quit()
                                         self.timer.stopped = True
                                         print("Game over. You won!")
+                                        quit()
+                                    
+                                    if self.internal_board.is_stalemate() or self.internal_board.is_repetition():
+                                        running = True
+                                        pygame.quit()
+                                        self.timer.stopped = True
+                                        print("Game over. It's a draw!")
                                         quit()
                                     self.timer.turn = False
                                     self.timer.white_clock.apply_move_bonus(self.timer.move_bonus)

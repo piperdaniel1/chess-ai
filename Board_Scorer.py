@@ -229,6 +229,18 @@ class Board_Scorer:
         return len(self.cached_piece_map) <= 16
     
     def get_score_of_board(self, board : chess.Board, move2=0, phase = "default", verbose = False):
+        if board.is_checkmate():
+            if board.outcome().result()[0] == "0":
+                score = -100000
+                return score
+            else:
+                score = 100000
+                return score
+        
+        return 0
+        
+
+    def get_score_of_board2(self, board : chess.Board, move2=0, phase = "default", verbose = False):
         self.cached_piece_list = np.empty(64, dtype=object)
         self.cached_key_list = np.empty(64, dtype=object)
         self.piece_ind = 0
@@ -247,7 +259,7 @@ class Board_Scorer:
             else:
                 score = 100000
                 return score
-        elif board.is_stalemate() == True or board.is_repetition():
+        elif board.is_stalemate() == True or board.is_repetition() == True:
             if self.verbose:
                 print("Evaluating board:")
                 print("Stalemate.")
