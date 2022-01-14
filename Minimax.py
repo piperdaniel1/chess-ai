@@ -3,7 +3,7 @@ from re import sub
 from colored import fg, bg, attr
 
 from numpy.core.fromnumeric import sort
-from Board_Scorer import Board_Scorer
+from Board_Scorer_old import Board_Scorer
 from transposition_table import Transposition_Table, Entry
 import chess
 import numpy as np

@@ -9,7 +9,7 @@ from threading import Thread, Event
 import cProfile
 
 from Minimax import Minimax
-from Board_Scorer import Board_Scorer
+from Board_Scorer_old import Board_Scorer
 from Opening_Book import Opening_Book, Opening_Entry
 
 class ChessTimer:
