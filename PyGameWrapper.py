@@ -237,7 +237,19 @@ class ChessWindow:
                 self.timer.stopped = True
                 print("Game over. Black won because you ran out of time!")
                 quit()
-                
+
+            if self.selected_square != None:
+                moves = list(self.internal_board.legal_moves)
+                self.trim_moves(moves, self.selected_square)
+                if len(moves) == 0:
+                    self.selected_square = None
+                self.draw_board()
+                self.render_valid_moves(moves)
+                pygame.display.flip()
+            else:
+                self.draw_board()
+                pygame.display.flip()
+   
             for event in pygame.event.get():
                 if event.type == pygame.MOUSEBUTTONUP and self.player_move == True:
                     mouse_pos = pygame.mouse.get_pos()
@@ -380,7 +392,7 @@ if __name__ == "__main__":
     window.timer.white_clock.minutes = 0
     window.timer.black_clock.minutes = 0
     window.timer.white_clock.seconds = 10
-    window.timer.black_clock.seconds = 0
+    window.timer.black_clock.seconds = 10
     window.timer.move_bonus = 0
 
     try:
