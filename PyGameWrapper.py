@@ -389,10 +389,10 @@ if __name__ == "__main__":
     window.internal_board.set_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
     #window.internal_board.set_fen("r1b2rk1/1p3p2/1p2p1PQ/2bn4/3p4/2PB4/P4PP1/RNB1K2R b KQ - 0 1")
     window.minimax.MAX_SECONDS = 15
-    window.timer.white_clock.minutes = 0
-    window.timer.black_clock.minutes = 0
-    window.timer.white_clock.seconds = 10
-    window.timer.black_clock.seconds = 10
+    window.timer.white_clock.minutes = 10
+    window.timer.black_clock.minutes = 10
+    window.timer.white_clock.seconds = 0
+    window.timer.black_clock.seconds = 0
     window.timer.move_bonus = 0
 
     try:
@@ -404,6 +404,7 @@ if __name__ == "__main__":
         print("Current move stack:")
         print(window.internal_board.move_stack)
         print("FEN:", window.internal_board.fen())
+
         raise Exception
 
     pygame.quit()
