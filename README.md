@@ -13,13 +13,13 @@ git clone https://github.com/piperdaniel1/chess-ai.git
 
 cd chess-ai
 
-sudo apt update
+sudo apt update  
     You will have to enter your password
     
 sudo apt install python3-pip
 
-pip3 install -r requirements.txt
-    If this fails you could try the command $python3 -m pip3 install -r requirements.txt
+pip3 install -r requirements.txt  
+    If this fails you could try the command python3 -m pip3 install -r requirements.txt
 
 ## Running the AI
 Now you have installed the AI. To run it you can easily use these commands:
