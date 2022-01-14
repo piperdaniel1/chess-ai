@@ -1,18 +1,25 @@
 # chess-ai
 
 ## Installation instructions for Ubuntu Linux:
- - Open terminal by pressing CTRL + ALT + T
- - Enter the following commands (do not include the $)
- $python3 --version
-    This command should display a python version. If you do not have python install it from here: https://www.python.org/downloads/
- $cd Documents
- $git clone https://github.com/piperdaniel1/chess-ai.git
- $cd chess-ai
- $sudo apt update
-     You will have to enter your password
- $sudo apt install python3-pip
- $pip3 install -r requirements.txt
-     If this fails you could try the command $python3 -m pip3 install -r requirements.txt
+Open terminal by pressing CTRL + ALT + T
+Enter the following commands (do not include the $)
+
+$python3 --version
+   This command should display a python version. If you do not have python install it from here: https://www.python.org/downloads/
+   
+$cd Documents
+
+$git clone https://github.com/piperdaniel1/chess-ai.git
+
+$cd chess-ai
+
+$sudo apt update
+    You will have to enter your password
+    
+$sudo apt install python3-pip
+
+$pip3 install -r requirements.txt
+    If this fails you could try the command $python3 -m pip3 install -r requirements.txt
 
 ## Running the AI
 Now you have installed the AI. To run it you can easily use these commands:
