@@ -191,7 +191,7 @@ class ChessWindow:
         pygame.display.flip()
 
         running = False
-        self.player_move = True
+        self.player_move = self.internal_board.turn
         # rn1qkbnr/ppp2p1p/3pp1p1/8/2PP2b1/1P3N1P/P3PPP1/RNBQKB1R bishop does not avoid capture? (fixed)
         # 4k2r/p4ppp/n1p1pn2/q2pN3/P2P4/b1P1P3/3N1PPP/1Q3RK1 king does not castle?
         #self.internal_board.set_fen("4k2r/p1q2ppp/n1pbpn2/P2pN3/3P4/1QP1P3/3N1PPP/R5K1 b k - 0 1")
@@ -238,17 +238,18 @@ class ChessWindow:
                 print("Game over. Black won because you ran out of time!")
                 quit()
 
-            if self.selected_square != None:
-                moves = list(self.internal_board.legal_moves)
-                self.trim_moves(moves, self.selected_square)
-                if len(moves) == 0:
-                    self.selected_square = None
-                self.draw_board()
-                self.render_valid_moves(moves)
-                pygame.display.flip()
-            else:
-                self.draw_board()
-                pygame.display.flip()
+            '''if time.time() % 10 < 5:
+                if self.selected_square != None:
+                    moves = list(self.internal_board.legal_moves)
+                    self.trim_moves(moves, self.selected_square)
+                    if len(moves) == 0:
+                        self.selected_square = None
+                    self.draw_board()
+                    self.render_valid_moves(moves)
+                    pygame.display.flip()
+                else:
+                    self.draw_board()
+                    pygame.display.flip()'''
    
             for event in pygame.event.get():
                 if event.type == pygame.MOUSEBUTTONUP and self.player_move == True:
@@ -258,7 +259,11 @@ class ChessWindow:
                         chess_pos = self.convert_gridpos_to_chesspos(grid_pos)
                     except TypeError:
                         continue
-                    piece_at = self.internal_board.piece_at(chess_pos)
+                    
+                    try:
+                        piece_at = self.internal_board.piece_at(chess_pos)
+                    except IndexError:
+                        continue
 
                     # case one:
                     # selected_square is None
@@ -386,14 +391,16 @@ if __name__ == "__main__":
     window = ChessWindow()
     window.minimax.dump_minimax_tree = False
     window.minimax.move_chaining = False
-    window.internal_board.set_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
-    #window.internal_board.set_fen("r1b2rk1/1p3p2/1p2p1PQ/2bn4/3p4/2PB4/P4PP1/RNB1K2R b KQ - 0 1")
+    #window.internal_board.set_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+    #window.internal_board.set_fen("2b5/4k3/8/8/4K3/8/3r4/8 w - - 8 65")
+    window.internal_board.set_fen("6k1/8/8/7K/8/8/8/6r1 w - - 56 89")
     window.minimax.MAX_SECONDS = 15
     window.timer.white_clock.minutes = 10
     window.timer.black_clock.minutes = 10
     window.timer.white_clock.seconds = 0
     window.timer.black_clock.seconds = 0
     window.timer.move_bonus = 0
+    window.timer.turn = window.internal_board.turn
 
     try:
         window.run_game()

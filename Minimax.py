@@ -58,7 +58,7 @@ class Minimax:
         # index 3: 4 -> 5
         # index 4: 5 -> 6
         # and so on
-        self.prev_multipliers = [[], [], [], [], [], [], [], []]
+        self.prev_multipliers = [[], [], [], [], [], [], [], [], [], [], [], [], [], [], []]
 
         self.tree = MinimaxTree()
 
