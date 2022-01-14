@@ -1,4 +1,5 @@
 import chess
+import numpy as np
 
 class Board_Scorer:
     def __init__(self):
@@ -65,7 +66,6 @@ class Board_Scorer:
                                  [-2,-1,-1,-1,-1,-1,-1,-2],
                                  [-2,-2,-2,-2,-2,-2,-2,-2]]
 
-
         self.white_rook = chess.Piece.from_symbol('R')
         self.black_rook = chess.Piece.from_symbol('r')
 
@@ -85,6 +85,7 @@ class Board_Scorer:
         self.black_pawn = chess.Piece.from_symbol('p')        
         
         self.cached_piece_map = None
+        self.cached_piece_list = None
 
         self.piece_dict = {self.white_rook: self.rook_map, 
                            self.black_rook: self.rook_map,
@@ -140,15 +141,81 @@ class Board_Scorer:
         
         self.verbose = False
 
+        self.situation0 = np.array([1, 0, 0, 0, 0,  0, 0, 0, 0, 0])
+        self.situation1 = np.array([0, 0, 0, 0, 1,  0, 0, 0, 0, 0])
+        self.situation2 = np.array([0, 2, 0, 0, 0,  0, 0, 0, 0, 0])
+        self.situation3 = np.array([0, 0, 2, 0, 0,  0, 0, 0, 0, 0])
+        self.situation4 = np.array([0, 1, 1, 0, 0,  0, 0, 0, 0, 0])
+        self.situation5 = np.array([1, 0, 0, 0, 1,  1, 0, 0, 0, 0])
+
+        self.tSituation0 = np.array([0, 0, 0, 0, 0,  1, 0, 0, 0, 0])
+        self.tSituation1 = np.array([0, 0, 0, 0, 0,  0, 0, 0, 0, 1])
+        self.tSituation2 = np.array([0, 0, 0, 0, 0,  0, 2, 0, 0, 0])
+        self.tSituation3 = np.array([0, 0, 0, 0, 0,  0, 0, 2, 0, 0])
+        self.tsituation4 = np.array([0, 0, 0, 0, 0,  0, 1, 1, 0, 0])
+        self.tSituation5 = np.array([1, 0, 0, 0, 0,  1, 0, 0, 0, 1])
+
+        self.endgame_situations = [self.situation0, self.situation1, self.situation2, self.situation3, self.situation4, self.situation5, 
+                                   self.tSituation0, self.tSituation1, self.tSituation2, self.tSituation3, self.tsituation4, self.tSituation5]
+        
+        self.evals = [1, 1, 1, 1, 1, -1, -1, -1, -1, -1]
+
+
+
+
+
+        # rook + king vs king is winning                    0
+        # queen + king vs king is winning                   (transformation of 0)
+        # pawn + king vs king is winning                    1
+
+        # bishop + king vs king is a draw                   2
+        # knight + king vs king is a draw                   3
+        # king vs king is a draw                            4
+        # rook + king vs knight + king is a draw            5
+        # rook + king vs bishop + king is a draw            6
+        # rook + king vs pawn + king is a draw              7
+        # equal material with no pawns is a draw            8
+        
+        # equal material with pawns depends on pawns that can promote
+
+        # trade to get to one of these situations
+    
+    # gets who is expected to win the endgame + eval based on type of endgame
+    def get_endgame_eval(self):
+        white_rooks = len(np.where(self.cached_piece_list == self.white_rook)[0])
+        white_knights = len(np.where(self.cached_piece_list == self.white_knight)[0])
+        white_bishops = len(np.where(self.cached_piece_list == self.white_bishop)[0])
+        white_queens = len(np.where(self.cached_piece_list == self.white_queen)[0])
+        white_pawns = len(np.where(self.cached_piece_list == self.white_pawn)[0])
+
+        black_rooks = len(np.where(self.cached_piece_list == self.black_rook)[0])
+        black_knights = len(np.where(self.cached_piece_list == self.black_knight)[0])
+        black_bishops = len(np.where(self.cached_piece_list == self.black_bishop)[0])
+        black_queens = len(np.where(self.cached_piece_list == self.black_queen)[0])
+        black_pawns = len(np.where(self.cached_piece_list == self.black_pawn)[0])
+
+        arr = np.array([white_rooks, white_knights, white_bishops, white_queens, white_pawns, black_rooks, black_knights, black_bishops, black_queens, black_pawns])
+
+        try:
+            endgame_pos = np.where(self.endgame_situations == arr)[0][0]
+            eval = self.evals[endgame_pos]
+        except IndexError:
+            eval = 0
+        
+        return eval * 50
+
     def get_endgame_score_of_piece(self, piece_type, location):
         col, row = location
 
         m = self.minimax_multiplier[piece_type]
 
-        if m == 1:
-            return self.endgame_piece_dict[piece_type][row][col] * m
+        if piece_type == self.white_king:
+            if m == 1:
+                return self.endgame_piece_dict[piece_type][row][col] * m
+            else:
+                return self.endgame_piece_dict[piece_type][7-row][col] * m
         else:
-            return self.endgame_piece_dict[piece_type][7-row][col] * m
+            return 0
     
     def get_score_of_piece(self, piece_type, location):
         row, col = location
@@ -156,7 +223,6 @@ class Board_Scorer:
         m = self.minimax_multiplier[piece_type]
         
         if m == 1:
-            
             return self.piece_dict[piece_type][row][col] * m
         else:
             return self.piece_dict[piece_type][7-row][col] * m
@@ -207,6 +273,10 @@ class Board_Scorer:
             except KeyError:
                 continue
 
+            if self.is_endgame:
+                self.cached_piece_list[self.piece_ind] = character
+                self.piece_ind += 1
+
             score += self.piece_value_dict[character]
 
         return score
@@ -215,7 +285,11 @@ class Board_Scorer:
         return len(self.cached_piece_map) <= 10
     
     def get_score_of_board(self, board : chess.Board, move2=0, phase = "default", verbose = False):
+        self.cached_piece_list = np.empty(64)
+        self.piece_ind = 0
         self.verbose = verbose
+        self.is_endgame = None
+
         # hard set score if one player has won
         if board.is_checkmate() == True:
             if self.verbose:
@@ -237,7 +311,7 @@ class Board_Scorer:
         self.cached_piece_map = board.piece_map()
         # score starts at a tie.
         score = 0
-        is_endgame = self.is_endgame(board)
+        self.is_endgame = self.is_endgame(board)
 
         # add the base scores of each piece.
         score += self.get_base_score(board) * 10
@@ -248,7 +322,7 @@ class Board_Scorer:
         if self.verbose:
             old_score = score
         # add scores based on where the pieces are and if it is endgame
-        if is_endgame:
+        if self.is_endgame:
             score += self.get_endgame_piece_map_scores(board)
         else:
             score += self.get_piece_map_scores(board)

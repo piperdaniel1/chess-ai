@@ -14,13 +14,15 @@ from Opening_Book import Opening_Book, Opening_Entry
 TODO for Minimax:
     - Rework board scoring to include a lot of stuff
         - |x| add piece maps to try to make the computer put its pieces in the best places at the beginning
-    - Make sure the eval doesn't end on a capture
+    - |x| Make sure the eval doesn't end on a capture
     - |x| Add iterative deepening
     - |x| Add a transposition table
     - |x| Sort the moves way more efficiently so that the best moves are always at the top
-    - Add opening book
+    - |x| Add opening book
     - Add endgame strategies
     - |x| Dynamically increase search depth using iterative deepening
+    - Improve minimax time evaluation for different computers (weaker ones especially)
+    - Run minimax on seperate thread to allow onscreen timer to be updated while minimax is running
 '''
 class TreeNode:
     def __init__(self, board = None, eval = None, children : list = None, parent = None, depth = 5):
