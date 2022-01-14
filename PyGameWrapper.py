@@ -179,7 +179,7 @@ class ChessWindow:
         #self.internal_board.set_fen("4k2r/p1q2ppp/n1pbpn2/P2pN3/3P4/1QP1P3/3N1PPP/R5K1 b k - 0 1")
         #self.internal_board.set_castling_fen("k")
         #self.internal_board.turn = chess.BLACK
-        self.minimax.dump_minimax_tree = False
+        self.minimax.dump_minimax_tree = True
         self.minimax.move_chaining = False
         self.draw_board()
         pygame.display.flip()

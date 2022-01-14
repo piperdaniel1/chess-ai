@@ -59,6 +59,11 @@ class Minimax:
     def view_tree(self, current_board : TreeNode=None):
         if current_board == None:
             current_board = self.tree.root
+
+            if current_board == None:
+                print("No tree to view")
+                return
+                
         os.system('clear')
         print("CURRENT BOARD:")
         print(current_board.board)
