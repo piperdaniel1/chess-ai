@@ -1,8 +1,8 @@
 # chess-ai
 
 ## Installation instructions for Ubuntu Linux:
-Open terminal by pressing CTRL + ALT + T
-Enter the following commands (do not include the $)
+Open terminal by pressing CTRL + ALT + T.
+Enter the following commands (do not include the $).
 
 $python3 --version
    This command should display a python version. If you do not have python install it from here: https://www.python.org/downloads/
