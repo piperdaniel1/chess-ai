@@ -52,6 +52,7 @@ class Minimax:
         self.opponent_time_remaining = 0
         self.one_move_flag = False
         self.MAX_SECONDS = 15
+        self.old_best_eval = 999999
         # index 0: 1 -> 2
         # index 1: 2 -> 3
         # index 2: 3 -> 4
@@ -227,6 +228,8 @@ class Minimax:
             self.MAX_SECONDS = 0.35
         elif self.time_remaining < 20:
             self.MAX_SECONDS = 0.5
+        
+        self.MAX_SECONDS = 90
 
         start_time = time.time()
         depth = 1
@@ -245,6 +248,22 @@ class Minimax:
                 best_move, (eval, move_chain), ties = self.rec_minimax(board, depth, maximizing_player, alpha, beta, move2, current_root=self.tree.root)
             else:
                 best_move, (eval, move_chain), ties = self.rec_minimax(board, depth, maximizing_player, alpha, beta, move2)
+
+            if eval > self.old_best_eval:
+                print("Trying to improve eval from " + str(eval) + " to " + str(self.old_best_eval))
+
+            if eval == self.old_best_eval:
+                print("Eval is plataued at " + str(eval))
+
+            if eval < self.old_best_eval and depth >= 4:
+                # breakthrough found
+                print("Breakthrough found at depth " + str(depth) + " with new best eval " + str(eval))
+                self.old_best_eval = eval
+                return best_move, move_chain
+
+            if eval < self.old_best_eval:
+                if self.old_best_eval == 999999:
+                    self.old_best_eval = eval
             
             if depth >= 2:
                 tied_best_moves.append(ties)
@@ -272,8 +291,8 @@ class Minimax:
             depth += 1
             self.max_depth = depth
 
-            if full_pred_time > self.MAX_SECONDS:
-                break
+            #if full_pred_time > self.MAX_SECONDS:
+            #    break
 
         move_chain.reverse()
         # in theory the best move is tied_best_moves[-1][0]
@@ -311,7 +330,7 @@ class Minimax:
         print(f"Returning {tied_best_moves[-1][random.randint(0,len(tied_best_moves[-1])-1)]} (eval={round(eval, 0)}) after searching {self.positions_searched} positions")
         print(f"Predicted move chain: {move_chain}")
         
-        return best_move, move_chain
+        return tied_best_moves[-1][random.randint(0,len(tied_best_moves[-1])-1)], move_chain
 
     def sort(self, moves_to_sort, score_of_moves, maximize):
         score_of_moves_np = np.array(score_of_moves)
