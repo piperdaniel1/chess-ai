@@ -392,8 +392,8 @@ if __name__ == "__main__":
     window.minimax.dump_minimax_tree = False
     window.minimax.move_chaining = False
     #window.internal_board.set_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
-    #window.internal_board.set_fen("8/4k3/8/8/4K3/8/3r4/8 w - - 8 65")
-    window.internal_board.set_fen("6k1/8/8/7K/8/8/8/6r1 w - - 56 89")
+    window.internal_board.set_fen("8/4k3/8/8/4K3/8/3r4/8 w - - 8 65")
+    #window.internal_board.set_fen("8/8/8/8/5r2/3k4/8/3K4 b - - 86 104")
     window.minimax.MAX_SECONDS = 15
     window.timer.white_clock.minutes = 10
     window.timer.black_clock.minutes = 10

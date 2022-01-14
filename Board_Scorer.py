@@ -117,10 +117,10 @@ class Board_Scorer:
 
         self.endgame_piece_dict = {self.white_rook: self.rook_map, 
                    self.black_rook: self.rook_map,
-                   self.white_knight: self.endgame_king_map,
-                   self.black_knight: self.endgame_king_map,
-                   self.white_king: self.king_map,
-                   self.black_king: self.king_map,
+                   self.white_knight: self.knight_map,
+                   self.black_knight: self.knight_map,
+                   self.white_king: self.endgame_king_map,
+                   self.black_king: self.endgame_king_map,
                    self.white_queen: self.queen_map,
                    self.black_queen: self.queen_map,
                    self.white_bishop: self.bishop_map,
@@ -143,155 +143,36 @@ class Board_Scorer:
         
         self.verbose = False
 
-        self.situation0 = np.array([1, 0, 0, 0, 0,  0, 0, 0, 0, 0])
-        self.situation1 = np.array([0, 0, 0, 0, 1,  0, 0, 0, 0, 0])
-        self.situation2 = np.array([0, 2, 0, 0, 0,  0, 0, 0, 0, 0])
-        self.situation3 = np.array([0, 0, 2, 0, 0,  0, 0, 0, 0, 0])
-        self.situation4 = np.array([0, 1, 1, 0, 0,  0, 0, 0, 0, 0])
-        self.situation5 = np.array([1, 0, 0, 0, 1,  1, 0, 0, 0, 0])
-        self.situation6 = np.array([0, 0, 0, 1, 0,  0, 0, 0, 0, 0])
+    def king_in_corner_eval(self):
+        idx = np.where(self.cached_piece_list == self.white_king)[0][0]
+        key = self.cached_key_list[idx]
+        king_loc = self.convert_chesspos_to_gridpos(key)
 
-        self.tSituation0 = np.array([0, 0, 0, 0, 0,  1, 0, 0, 0, 0])
-        self.tSituation1 = np.array([0, 0, 0, 0, 0,  0, 0, 0, 0, 1])
-        self.tSituation2 = np.array([0, 0, 0, 0, 0,  0, 2, 0, 0, 0])
-        self.tSituation3 = np.array([0, 0, 0, 0, 0,  0, 0, 2, 0, 0])
-        self.tsituation4 = np.array([0, 0, 0, 0, 0,  0, 1, 1, 0, 0])
-        self.tSituation5 = np.array([1, 0, 0, 0, 0,  1, 0, 0, 0, 1])
-        self.tSituation6 = np.array([0, 0, 0, 0, 0,  0, 0, 0, 1, 0])
+        col_eval = min(king_loc[0], 7 - king_loc[0])
+        row_eval = min(king_loc[1], 7 - king_loc[1])
 
-        self.endgame_situations = [self.situation0, self.situation1, self.situation2, self.situation3, self.situation4, self.situation5, 
-                                   self.tSituation0, self.tSituation1, self.tSituation2, self.tSituation3, self.tsituation4, self.tSituation5]
-        
+        idx = np.where(self.cached_piece_list == self.black_king)[0][0]
+        key = self.cached_key_list[idx]
+        bking_loc = self.convert_chesspos_to_gridpos(key)
 
-        self.evals = [1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1]
+        krow_eval = abs(king_loc[1] - bking_loc[1])
+        kcol_eval = abs(king_loc[0] - bking_loc[0])
 
-
-
-
-
-        # rook + king vs king is winning                    0
-        # queen + king vs king is winning                   (transformation of 0)
-        # pawn + king vs king is winning                    1
-
-        # bishop + king vs king is a draw                   2
-        # knight + king vs king is a draw                   3
-        # king vs king is a draw                            4
-        # rook + king vs knight + king is a draw            5
-        # rook + king vs bishop + king is a draw            6
-        # rook + king vs pawn + king is a draw              7
-        # equal material with no pawns is a draw            8
-        
-        # equal material with pawns depends on pawns that can promote
-
-        # trade to get to one of these situations
-    
-    def simplify_situation(self, arr):
-        # white could possibly win
-        if self.cached_base_score < 0:
-            if np.equal(arr[0:5], np.array([0, 0, 0, 0, 0])).all():
-                if arr[5] > 0:
-                    return self.tSituation0
-                elif arr[8] > 0:
-                    return self.tSituation6
-                elif arr[9] > 0:
-                    return self.tSituation5
-        elif self.cached_base_score > 0:
-            if np.equal(arr[5:10], np.array([0, 0, 0, 0, 0])).all():
-                if arr[0] > 0:
-                    return self.situation0
-                elif arr[3] > 0:
-                    return self.situation6
-                elif arr[4] > 0:
-                    return self.situation5
-        
-        return arr
-
-    def endgame_strategy_eval(self, situation):
         if self.verbose:
-            print(f"Evaulating endgame strategy for situation {situation}")
-        # black is winning with at least a rook + king
-        # strategy is to minimize distance between the kings and the rook
-        if situation == 6:
-            b_king_key = np.where(self.cached_piece_list == self.black_king)[0][0]
-            b_king_key = self.cached_key_list[b_king_key]
-            b_king_pos = self.convert_chesspos_to_gridpos(b_king_key)
-
-            b_rook_key = np.where(self.cached_piece_list == self.black_rook)[0][0]
-            b_rook_key = self.cached_key_list[b_rook_key]
-            b_rook_pos = self.convert_chesspos_to_gridpos(b_rook_key)
-
-            w_king_key = np.where(self.cached_piece_list == self.white_king)[0][0]
-            w_king_key = self.cached_key_list[w_king_key]
-            w_king_pos = self.convert_chesspos_to_gridpos(w_king_key)
-
-            king_distance = abs(b_king_pos[1] - w_king_pos[1]) + abs(b_king_pos[0] - w_king_pos[0])
-            rook_distance = abs(b_rook_pos[0] - w_king_pos[1]) + abs(b_rook_pos[0] - w_king_pos[0])
-
-
-            # white king distance from any corner
-            tl_distance = abs(w_king_pos[1] - 0) + abs(w_king_pos[0] - 0)
-            tr_distance = abs(w_king_pos[1] - 0) + abs(w_king_pos[0] - 7)
-            bl_distance = abs(w_king_pos[1] - 7) + abs(w_king_pos[0] - 0)
-            br_distance = abs(w_king_pos[1] - 7) + abs(w_king_pos[0] - 7)
-
-            corner_distance = min(tl_distance, tr_distance, bl_distance, br_distance)
-
-            if corner_distance < 5:
-                rook_king_distance = abs(b_king_pos[1] - b_rook_pos[1]) + abs(b_king_pos[0] - b_rook_pos[0])
-
-                if rook_king_distance > 2:
-                    rook_king_distance = 10
-            else:
-                rook_king_distance = 0
-
-            if self.verbose:
-                print("King distance:", king_distance)
-                print("Rook distance:", rook_distance)
-                print("Corner distance:", corner_distance)
-
-            # bigger distance = better for white
-            return corner_distance * 5 + rook_distance * 5 + rook_king_distance * 5
+            print("col eval: ", col_eval)
+            print("row eval: ", row_eval)
+            print("krow eval: ", krow_eval)
+            print("kcol eval: ", kcol_eval)
         
-        return 0
+        corner_eval = (col_eval + row_eval)
+        k_eval = (kcol_eval + krow_eval)
 
-    # gets who is expected to win the endgame + eval based on type of endgame
-    def get_endgame_eval(self):
-        white_rooks = len(np.where(self.cached_piece_list == self.white_rook)[0])
-        white_knights = len(np.where(self.cached_piece_list == self.white_knight)[0])
-        white_bishops = len(np.where(self.cached_piece_list == self.white_bishop)[0])
-        white_queens = len(np.where(self.cached_piece_list == self.white_queen)[0])
-        white_pawns = len(np.where(self.cached_piece_list == self.white_pawn)[0])
-
-        black_rooks = len(np.where(self.cached_piece_list == self.black_rook)[0])
-        black_knights = len(np.where(self.cached_piece_list == self.black_knight)[0])
-        black_bishops = len(np.where(self.cached_piece_list == self.black_bishop)[0])
-        black_queens = len(np.where(self.cached_piece_list == self.black_queen)[0])
-        black_pawns = len(np.where(self.cached_piece_list == self.black_pawn)[0])
-
-        arr = np.array([white_rooks, white_knights, white_bishops, white_queens, white_pawns, black_rooks, black_knights, black_bishops, black_queens, black_pawns])
-        arr = self.simplify_situation(arr)
-        eval = 0
-        strategy_eval = 0
-
-        for i in range(len(self.endgame_situations)):
-            if np.equal(self.endgame_situations[i], arr).all():
-                strategy_eval = self.endgame_strategy_eval(i)
-                eval = self.evals[i]
-                break
-        
-        return eval * 50 + strategy_eval
-
-    def get_endgame_score_of_piece(self, piece_type, location):
-        if (piece_type == self.white_king and self.cached_base_score < 0) or (piece_type == self.black_king and self.cached_base_score > 0):
-            col, row = location
-            m = self.minimax_multiplier[piece_type]
-
-            if m == 1:
-                return self.endgame_piece_dict[piece_type][row][col] * m * 3
-            else:
-                return self.endgame_piece_dict[piece_type][7-row][col] * m * 3
+        if corner_eval >= 4:
+            k_eval = 0
         else:
-            return 0
+            k_eval = k_eval * round(((4 - corner_eval) * 0.5), 0)
+
+        return corner_eval + k_eval
     
     def get_score_of_piece(self, piece_type, location):
         row, col = location
@@ -320,21 +201,6 @@ class Board_Scorer:
                 row, col = self.convert_chesspos_to_gridpos(key)
                 score_to_add = self.get_score_of_piece(piece_type, (row, col))
                 score += score_to_add
-            except KeyError:
-                pass
-        
-        return score
-    
-    def get_endgame_piece_map_scores(self, board):
-        piece_map = self.cached_piece_map
-        score = 0
-        row = 0
-
-        for key in range(64):
-            try:
-                piece_type = piece_map[key]
-                row, col = self.convert_chesspos_to_gridpos(key)
-                score += self.get_endgame_score_of_piece(piece_type, (row, col))
             except KeyError:
                 pass
         
@@ -403,20 +269,10 @@ class Board_Scorer:
             old_score = score
         # add scores based on where the pieces are and if it is endgame
         if self.is_endgame:
-            if score < -90:
-                score += self.piece_ind * ((abs(score) - 90) / 10)
-
-            score += self.get_endgame_piece_map_scores(board)
+            k_in_corner = self.king_in_corner_eval()
+            score += k_in_corner
             if self.verbose:
-                print("Piece map score: " + str(score - old_score))
-                print("\n")
-                old_score = score
-            
-            score += self.get_endgame_eval()
-            if self.verbose:
-                print("Endgame eval score: " + str(score - old_score))
-                print("\n")
-                old_score = score
+                print("King in corner eval: " + str(k_in_corner))
         else:
             score += self.get_piece_map_scores(board)
             if self.verbose:

@@ -237,13 +237,17 @@ class Minimax:
         prev_sub_time = 0
         full_pred_time = 0
         self.one_move_flag = False
+        tied_best_moves = []
 
         while depth <= 15:
             sub_start = time.time()
             if depth == 4 and self.dump_minimax_tree == True:
-                best_move, (eval, move_chain) = self.rec_minimax(board, depth, maximizing_player, alpha, beta, move2, current_root=self.tree.root)
+                best_move, (eval, move_chain), ties = self.rec_minimax(board, depth, maximizing_player, alpha, beta, move2, current_root=self.tree.root)
             else:
-                best_move, (eval, move_chain) = self.rec_minimax(board, depth, maximizing_player, alpha, beta, move2)
+                best_move, (eval, move_chain), ties = self.rec_minimax(board, depth, maximizing_player, alpha, beta, move2)
+            
+            if depth >= 2:
+                tied_best_moves.append(ties)
 
             if self.one_move_flag == True:
                 break
@@ -272,7 +276,39 @@ class Minimax:
                 break
 
         move_chain.reverse()
-        print(f"Returning {best_move} after searching {self.positions_searched} positions")
+        # in theory the best move is tied_best_moves[-1][0]
+
+        top_level_ties = len(tied_best_moves[-1])
+        if top_level_ties > 1:
+            print(f"{len(tied_best_moves[-1])} best moves found at top level ({tied_best_moves[-1]}), choosing based on lower levels")
+
+            tie_break_level = 0
+
+            while tie_break_level < len(tied_best_moves) and len(tied_best_moves[-1]) > 1:
+                move_to_check = len(tied_best_moves[-1]) - 1
+
+                while move_to_check >= 0:
+                    try:
+                        if tied_best_moves[-1][move_to_check] not in tied_best_moves[tie_break_level]:
+                            tied_best_moves[-1].pop(move_to_check)
+                        
+                            if len(tied_best_moves[-1]) == 1:
+                                break
+                    except IndexError:
+                        print("Index error")
+                        print(f"move_to_check: {move_to_check}")
+                        print(f"tied_best_moves[-1]: {tied_best_moves[-1]}")
+                        print(f"tied_best_moves: {tied_best_moves}")
+                        print(f"tie_break_level: {tie_break_level}")
+                        raise IndexError
+                    
+                    move_to_check -= 1
+                
+                tie_break_level += 1
+            
+            print(f"Narrowed it down to {len(tied_best_moves[-1])} best moves at top level")
+        
+        print(f"Returning {tied_best_moves[-1][random.randint(0,len(tied_best_moves[-1])-1)]} (eval={round(eval, 0)}) after searching {self.positions_searched} positions")
         print(f"Predicted move chain: {move_chain}")
         
         return best_move, move_chain
@@ -325,6 +361,8 @@ class Minimax:
                 current_root.eval = eval
             return None, (eval, [])
         
+        if depth == self.max_depth:
+            tiebreak_moves = []
         best_move = None
         captured_piece = None
 
@@ -405,8 +443,25 @@ class Minimax:
                 # pop move off board to make room for the next move
                 board.pop()
 
+                if eval_of_branch <= -1000 or eval_of_branch >= 1000:
+                    eval_of_branch *= 2
+
+                if eval_of_branch == max_eval:
+                    if depth == self.max_depth:
+                        tiebreak_moves.append(move)
+                    
+                    if random.randint(0,2) <= 1:
+                        best_move = move
+                        if self.move_chaining:
+                            move_chain.append((move, f"Eval: {eval_of_branch}"))
+                            current_best_chain = move_chain
+
                 # check if that move is better than the current best move
-                if eval_of_branch > max_eval or (eval_of_branch == max_eval and random.randint(0,2) <= 1):
+                if eval_of_branch > max_eval:
+                    if depth == self.max_depth:
+                        tiebreak_moves.clear()
+                        tiebreak_moves.append(move)
+
                     max_eval = eval_of_branch
                     if current_root != None:
                         current_root.best_child = index
@@ -429,7 +484,10 @@ class Minimax:
                 current_root.eval = max_eval
 
             #print(f"3: returning {current_best_chain}")
-            return best_move, (max_eval, current_best_chain)
+            if depth == self.max_depth:
+                return best_move, (max_eval, current_best_chain), tiebreak_moves
+            else:
+                return best_move, (max_eval, current_best_chain)
         else:
             min_eval = 1000
 
@@ -494,8 +552,25 @@ class Minimax:
 
                 board.pop()
 
+                if eval_of_branch <= -1000 or eval_of_branch >= 1000:
+                    eval_of_branch *= 2
+
+                if eval_of_branch == min_eval:
+                    if depth == self.max_depth:
+                        tiebreak_moves.append(move)
+                    
+                    if random.randint(0,2) <= 1:
+                        best_move = move
+                        if self.move_chaining:
+                            move_chain.append((move, f"Eval: {eval_of_branch}"))
+                            current_best_chain = move_chain
+
                 #print(f"tested one move successfully at depth {depth}")
-                if eval_of_branch < min_eval or (eval_of_branch == min_eval and random.randint(0,2) <= 1):
+                if eval_of_branch < min_eval:
+                    if depth == self.max_depth:
+                        tiebreak_moves.clear()
+                        tiebreak_moves.append(move)
+
                     min_eval = eval_of_branch
                     if current_root != None:
                         current_root.best_child = index
@@ -517,4 +592,7 @@ class Minimax:
                 current_root.eval = min_eval
 
             #print(f"5: returning {current_best_chain}")
-            return best_move, (min_eval, current_best_chain)
+            if depth == self.max_depth:
+                return best_move, (min_eval, current_best_chain), tiebreak_moves
+            else:
+                return best_move, (min_eval, current_best_chain)
