@@ -22,11 +22,12 @@ pip3 install -r requirements.txt
     If this fails you could try the command python3 -m pip3 install -r requirements.txt
 
 ## Running the AI
-Now you have installed the AI. To run it you can easily use these commands:
-cd ~/Documents/chess-ai
-    There's no need to run this command if you are already in this directory in the terminal.
-    You will already be in this directory if you just followed the installation instructions.
-python3 PyGameWrapper.py
+Now you have installed the AI. To run it you can easily use these commands:  
+cd ~/Documents/chess-ai  
+    There's no need to run this command if you are already in this directory in the terminal.  
+    You will already be in this directory if you just followed the installation instructions.  
+      
+python3 PyGameWrapper.py  
 
 ## Playing the AI
 Once you run the game a board will open and you will be playing as White against the AI who is playing Black.
