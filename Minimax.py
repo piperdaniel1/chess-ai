@@ -201,6 +201,7 @@ class Minimax:
         # index 3: 4 -> 5
         # index 4: 5 -> 6
         # and so on
+        return 1
 
         if len(times) == 1 or len(self.prev_multipliers[depth-1]) == 0:
             return 15
@@ -220,6 +221,8 @@ class Minimax:
                 self.MAX_SECONDS = self.time_remaining / 15
         except ZeroDivisionError:
             self.MAX_SECONDS = self.time_remaining / 15
+        
+        self.MAX_SECONDS = 30
 
         if self.time_remaining < 5:
             self.MAX_SECONDS = 0.2
