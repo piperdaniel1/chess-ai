@@ -185,7 +185,7 @@ class ChessWindow:
         pygame.display.flip()
 
         running = False
-        self.player_move = True
+        self.player_move = False
         # rn1qkbnr/ppp2p1p/3pp1p1/8/2PP2b1/1P3N1P/P3PPP1/RNBQKB1R bishop does not avoid capture? (fixed)
         # 4k2r/p4ppp/n1p1pn2/q2pN3/P2P4/b1P1P3/3N1PPP/1Q3RK1 king does not castle?
         #self.internal_board.set_fen("4k2r/p1q2ppp/n1pbpn2/P2pN3/3P4/1QP1P3/3N1PPP/R5K1 b k - 0 1")
@@ -346,7 +346,8 @@ if __name__ == "__main__":
     window = ChessWindow()
     window.minimax.dump_minimax_tree = False
     window.minimax.move_chaining = False
-    window.internal_board.set_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+    #window.internal_board.set_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+    window.internal_board.set_fen("r1bqkbnr/pp1p1ppp/2n1p3/2P5/1P2P3/2P2N2/P4PPP/RNBQKB1R b KQkq - 0 1")
     window.minimax.MAX_SECONDS = 15
     window.timer.white_clock.minutes = 10
     window.timer.black_clock.minutes = 10

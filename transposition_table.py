@@ -1,3 +1,5 @@
+import chess
+
 class Entry:
     def __init__(self, key, eval_, depth, board):
         self.key = key
@@ -12,11 +14,12 @@ class Transposition_Table:
     def __init__(self):
         self.table = [None] * 10000000
 
-    def decode(self, key):
+    def decode(self, key, board):
         index = key % len(self.table)
         if self.table[index] != None:
             if self.table[index].key == key:
-                return self.table[index]
+                if self.table[index].board == board:
+                    return self.table[index]
     
     def encode(self, entry : Entry):
         self.table[entry.key % len(self.table)] = entry

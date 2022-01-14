@@ -293,7 +293,7 @@ class Minimax:
             captured_piece = board.piece_at(move.to_square)
             board.push(move)
             new_hash = self.transpose_zorbist_hash(current_hash, board, captured_piece)
-            tt_entry = self.tt.decode(new_hash)
+            tt_entry = self.tt.decode(new_hash, board)
             if tt_entry != None:
                 score_of_moves.append(tt_entry.eval)
             else:
@@ -372,7 +372,7 @@ class Minimax:
                 self.positions_searched += 1
                 # check score of move
                 new_hash = self.transpose_zorbist_hash(current_hash, board, captured_piece)
-                tt_entry = self.tt.decode(new_hash)
+                tt_entry = self.tt.decode(new_hash, board)
                 if tt_entry != None:
                     if tt_entry.depth >= depth:
                         eval_of_branch = tt_entry.eval
@@ -462,7 +462,7 @@ class Minimax:
                     current_root.children.append(TreeNode(parent=current_root, depth=depth-1))
                 self.positions_searched += 1
                 new_hash = self.transpose_zorbist_hash(current_hash, board, captured_piece)
-                tt_entry = self.tt.decode(new_hash)
+                tt_entry = self.tt.decode(new_hash, board)
                 if tt_entry != None:
                     if tt_entry.depth >= depth:
                         eval_of_branch = tt_entry.eval
