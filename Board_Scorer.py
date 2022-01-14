@@ -242,10 +242,10 @@ class Board_Scorer:
                 print("Evaluating board:")
                 print("Checkmate.")
             if board.outcome().result()[0] == "0":
-                score = -1000
+                score = -100000
                 return score
             else:
-                score = 1000
+                score = 100000
                 return score
         elif board.is_stalemate() == True or board.is_repetition():
             if self.verbose:

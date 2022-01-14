@@ -249,6 +249,10 @@ class Minimax:
             else:
                 best_move, (eval, move_chain), ties = self.rec_minimax(board, depth, maximizing_player, alpha, beta, move2)
 
+            if eval < -1000:
+                self.old_best_eval = eval
+                return best_move, move_chain
+
             if eval > self.old_best_eval:
                 print("Trying to improve eval from " + str(eval) + " to " + str(self.old_best_eval))
 
@@ -391,7 +395,7 @@ class Minimax:
         # computer is trying to maximize the eval with this move
         if maximize:
             # init eval to -inf
-            max_eval = -1000
+            max_eval = -10000
 
             # init debug values for printing (only on highest level)
             if depth == self.max_depth:
@@ -463,7 +467,7 @@ class Minimax:
                 board.pop()
 
                 if eval_of_branch <= -1000 or eval_of_branch >= 1000:
-                    eval_of_branch *= 2
+                    eval_of_branch = round(eval_of_branch * 0.98, 0)
 
                 if eval_of_branch == max_eval:
                     if depth == self.max_depth:
@@ -508,7 +512,7 @@ class Minimax:
             else:
                 return best_move, (max_eval, current_best_chain)
         else:
-            min_eval = 1000
+            min_eval = 10000
 
             if depth == self.max_depth:
                 total = board.legal_moves.count()
@@ -572,7 +576,8 @@ class Minimax:
                 board.pop()
 
                 if eval_of_branch <= -1000 or eval_of_branch >= 1000:
-                    eval_of_branch *= 2
+                    eval_of_branch = round(eval_of_branch * 0.98, 0)
+
 
                 if eval_of_branch == min_eval:
                     if depth == self.max_depth:
