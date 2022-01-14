@@ -236,35 +236,13 @@ class Board_Scorer:
 
             corner_distance = min(tl_distance, tr_distance, bl_distance, br_distance)
 
-            if corner_distance == tl_distance:
-                rook_mating_square = (2, 0)
-                king_mating_square = (0, 2)
+            if corner_distance < 5:
+                rook_king_distance = abs(b_king_pos[1] - b_rook_pos[1]) + abs(b_king_pos[0] - b_rook_pos[0])
 
-                # get brook distance from rook mating square
-                rook_mating_distance = abs(b_rook_pos[0] - rook_mating_square[0]) + abs(b_rook_pos[1] - rook_mating_square[1])
-                king_mating_distance = abs(b_king_pos[0] - king_mating_square[0]) + abs(b_king_pos[1] - king_mating_square[1])
-            elif corner_distance == tr_distance:
-                rook_mating_square = (2, 7)
-                king_mating_square = (7, 2)
-
-                # get brook distance from rook mating square
-                rook_mating_distance = abs(b_rook_pos[0] - rook_mating_square[0]) + abs(b_rook_pos[1] - rook_mating_square[1])
-                king_mating_distance = abs(b_king_pos[0] - king_mating_square[0]) + abs(b_king_pos[1] - king_mating_square[1])
-            elif corner_distance == bl_distance:
-                rook_mating_square = (7, 0)
-                king_mating_square = (0, 7)
-
-                # get brook distance from rook mating square
-                rook_mating_distance = abs(b_rook_pos[0] - rook_mating_square[0]) + abs(b_rook_pos[1] - rook_mating_square[1])
-                king_mating_distance = abs(b_king_pos[0] - king_mating_square[0]) + abs(b_king_pos[1] - king_mating_square[1])
-            elif corner_distance == br_distance:
-                rook_mating_square = (7, 7)
-                king_mating_square = (7, 7)
-
-                # get brook distance from rook mating square
-                rook_mating_distance = abs(b_rook_pos[0] - rook_mating_square[0]) + abs(b_rook_pos[1] - rook_mating_square[1])
-                king_mating_distance = abs(b_king_pos[0] - king_mating_square[0]) + abs(b_king_pos[1] - king_mating_square[1])
-
+                if rook_king_distance > 2:
+                    rook_king_distance = 10
+            else:
+                rook_king_distance = 0
 
             if self.verbose:
                 print("King distance:", king_distance)
@@ -272,7 +250,7 @@ class Board_Scorer:
                 print("Corner distance:", corner_distance)
 
             # bigger distance = better for white
-            return corner_distance * 5 + king_distance * 15 + rook_mating_distance * 3 + king_mating_distance * 3
+            return corner_distance * 5 + rook_distance * 5 + rook_king_distance * 5
         
         return 0
 
