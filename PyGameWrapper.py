@@ -191,7 +191,7 @@ class ChessWindow:
         pygame.display.flip()
 
         running = False
-        self.player_move = False
+        self.player_move = True
         # rn1qkbnr/ppp2p1p/3pp1p1/8/2PP2b1/1P3N1P/P3PPP1/RNBQKB1R bishop does not avoid capture? (fixed)
         # 4k2r/p4ppp/n1p1pn2/q2pN3/P2P4/b1P1P3/3N1PPP/1Q3RK1 king does not castle?
         #self.internal_board.set_fen("4k2r/p1q2ppp/n1pbpn2/P2pN3/3P4/1QP1P3/3N1PPP/R5K1 b k - 0 1")
@@ -205,6 +205,14 @@ class ChessWindow:
             if not self.player_move:
                 self.minimax.positions_searched = 0
                 move = self.get_move_from_minimax(True)
+
+                if self.timer.black_clock.get_seconds_remaining() <= 0:
+                    running = True
+                    pygame.quit()
+                    self.timer.stopped = True
+                    print("Game over. You won because black ran out of time!")
+                    quit()
+
                 self.internal_board.push(move)
                 self.timer.black_clock.apply_move_bonus(self.timer.move_bonus)
                 self.timer.turn = True
@@ -222,6 +230,13 @@ class ChessWindow:
                     print(self.internal_board.move_stack)
                     print(self.internal_board)
                     print(self.internal_board.fen())
+            
+            if self.timer.white_clock.get_seconds_remaining() <= 0:
+                running = True
+                pygame.quit()
+                self.timer.stopped = True
+                print("Game over. Black won because you ran out of time!")
+                quit()
                 
             for event in pygame.event.get():
                 if event.type == pygame.MOUSEBUTTONUP and self.player_move == True:
@@ -357,14 +372,14 @@ class ChessWindow:
 
 if __name__ == "__main__":
     window = ChessWindow()
-    window.minimax.dump_minimax_tree = True
+    window.minimax.dump_minimax_tree = False
     window.minimax.move_chaining = False
-    #window.internal_board.set_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
-    window.internal_board.set_fen("r1b2rk1/1p3p2/1p2p1PQ/2bn4/3p4/2PB4/P4PP1/RNB1K2R b KQ - 0 1")
+    window.internal_board.set_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+    #window.internal_board.set_fen("r1b2rk1/1p3p2/1p2p1PQ/2bn4/3p4/2PB4/P4PP1/RNB1K2R b KQ - 0 1")
     window.minimax.MAX_SECONDS = 15
-    window.timer.white_clock.minutes = 10
-    window.timer.black_clock.minutes = 10
-    window.timer.white_clock.seconds = 0
+    window.timer.white_clock.minutes = 0
+    window.timer.black_clock.minutes = 0
+    window.timer.white_clock.seconds = 10
     window.timer.black_clock.seconds = 0
     window.timer.move_bonus = 0
 
