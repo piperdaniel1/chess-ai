@@ -28,6 +28,9 @@ class ChessTimer:
             return "{}:0{}".format(self.minutes, self.seconds)
         elif self.minutes < 10 and self.seconds < 10:
             return "0{}:0{}".format(self.minutes, self.seconds)
+
+    def get_seconds_remaining(self):
+        return self.minutes * 60 + self.seconds
     
     def tick(self):
         self.seconds -= 1
@@ -41,14 +44,21 @@ class ChessTimer:
             self.seconds = 59
             self.minutes -= 1
 
+    def apply_move_bonus(self, move_bonus : float):
+        self.seconds += move_bonus
+        if self.seconds > 59:
+            self.seconds -= 60
+            self.minutes += 1
+
 class TimerThread(Thread):
-    def __init__(self, event, board: chess.Board):
+    def __init__(self, event, board: chess.Board, mins = 5, secs = 0):
         Thread.__init__(self)
         self.stopped = False
         self.board = board
         self.turn = True
-        self.white_clock = ChessTimer(10)
-        self.black_clock = ChessTimer(10)
+        self.white_clock = ChessTimer(mins, secs)
+        self.black_clock = ChessTimer(mins, secs)
+        self.move_bonus = 0
 
     def run(self):
         while self.stopped == False:
@@ -84,6 +94,8 @@ class ChessWindow:
         depth = 4
         
         while True:
+            self.minimax.time_remaining = self.timer.black_clock.get_seconds_remaining()
+            self.minimax.opponent_time_remaining = self.timer.white_clock.get_seconds_remaining()
             educated_move, move_chain = self.minimax.find_best_move(deepcopy(self.internal_board), False, -1000, 1000, self.moves_made)
             end_time = time.time()
 
@@ -179,8 +191,7 @@ class ChessWindow:
         #self.internal_board.set_fen("4k2r/p1q2ppp/n1pbpn2/P2pN3/3P4/1QP1P3/3N1PPP/R5K1 b k - 0 1")
         #self.internal_board.set_castling_fen("k")
         #self.internal_board.turn = chess.BLACK
-        self.minimax.dump_minimax_tree = True
-        self.minimax.move_chaining = False
+
         self.draw_board()
         pygame.display.flip()
 
@@ -189,6 +200,7 @@ class ChessWindow:
                 self.minimax.positions_searched = 0
                 move = self.get_move_from_minimax(True)
                 self.internal_board.push(move)
+                self.timer.black_clock.apply_move_bonus(self.timer.move_bonus)
                 self.timer.turn = True
                 self.draw_board()
                 pygame.display.flip()
@@ -255,6 +267,7 @@ class ChessWindow:
                                 if move.to_square == chess_pos:
                                     self.internal_board.push(move)
                                     self.timer.turn = False
+                                    self.timer.white_clock.apply_move_bonus(self.timer.move_bonus)
                                     self.player_move = not self.player_move
                                     self.moves_made += 1
                                     break
@@ -329,19 +342,29 @@ class ChessWindow:
 
                 time.sleep(500 / 1000)
 
-window = ChessWindow()
+if __name__ == "__main__":
+    window = ChessWindow()
+    window.minimax.dump_minimax_tree = False
+    window.minimax.move_chaining = False
+    # set up the board
+    window.internal_board.set_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+    window.minimax.MAX_SECONDS = 15
+    window.timer.white_clock.minutes = 5
+    window.timer.black_clock.minutes = 5
+    window.timer.white_clock.seconds = 0
+    window.timer.black_clock.seconds = 0
 
-try:
-    window.run_game()
-except Exception:
-    print("Oh no... looks like we hit an unhandled exception.")
-    print("Current board:")
-    print(window.internal_board)
-    print("Current move stack:")
-    print(window.internal_board.move_stack)
-    print("FEN:", window.internal_board.fen())
-    raise Exception
+    try:
+        window.run_game()
+    except Exception:
+        print("Oh no... looks like we hit an unhandled exception.")
+        print("Current board:")
+        print(window.internal_board)
+        print("Current move stack:")
+        print(window.internal_board.move_stack)
+        print("FEN:", window.internal_board.fen())
+        raise Exception
 
-pygame.quit()
-window.timer.stopped = True
-quit()
+    pygame.quit()
+    window.timer.stopped = True
+    quit()

@@ -46,6 +46,9 @@ class Minimax:
         self.positions_searched = 0
         self.move_chaining = False
         self.dump_minimax_tree = False
+        self.time_remaining = 0
+        self.opponent_time_remaining = 0
+        self.MAX_SECONDS = 15
         # index 0: 1 -> 2
         # index 1: 2 -> 3
         # index 2: 3 -> 4
@@ -61,9 +64,9 @@ class Minimax:
             current_board = self.tree.root
 
             if current_board == None:
-                print("No tree to view")
+                print("No tree to view (likely because engine played a move from the opening book).")
                 return
-                
+
         os.system('clear')
         print("CURRENT BOARD:")
         print(current_board.board)
@@ -207,8 +210,20 @@ class Minimax:
             if book_move != None:
                 print("Returning book move " + str(book_move) + " from opening book")
                 return book_move, None
+        
+        try:
+            self.MAX_SECONDS = self.time_remaining / (30 - (len(board.move_stack) // 2))
+            if self.MAX_SECONDS < 0:
+                self.MAX_SECONDS = self.time_remaining / 15
+        except ZeroDivisionError:
+            self.MAX_SECONDS = self.time_remaining / 15
 
-        MAX_SECONDS = 5 # not a hard limit, the program will do its best to end near this number though
+        if self.time_remaining < 5:
+            self.MAX_SECONDS = 0.2
+        elif self.time_remaining < 10:
+            self.MAX_SECONDS = 0.35
+        elif self.time_remaining < 20:
+            self.MAX_SECONDS = 0.5
 
         start_time = time.time()
         depth = 1
@@ -246,7 +261,7 @@ class Minimax:
             depth += 1
             self.max_depth = depth
 
-            if full_pred_time > MAX_SECONDS:
+            if full_pred_time > self.MAX_SECONDS:
                 break
 
         move_chain.reverse()
