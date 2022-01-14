@@ -48,6 +48,7 @@ class Minimax:
         self.dump_minimax_tree = False
         self.time_remaining = 0
         self.opponent_time_remaining = 0
+        self.one_move_flag = False
         self.MAX_SECONDS = 15
         # index 0: 1 -> 2
         # index 1: 2 -> 3
@@ -233,6 +234,7 @@ class Minimax:
         sub_time = 0
         prev_sub_time = 0
         full_pred_time = 0
+        self.one_move_flag = False
 
         while depth <= 15:
             sub_start = time.time()
@@ -240,6 +242,9 @@ class Minimax:
                 best_move, (eval, move_chain) = self.rec_minimax(board, depth, maximizing_player, alpha, beta, move2, current_root=self.tree.root)
             else:
                 best_move, (eval, move_chain) = self.rec_minimax(board, depth, maximizing_player, alpha, beta, move2)
+
+            if self.one_move_flag == True:
+                break
 
             sub_time = time.time() - sub_start
 
@@ -339,6 +344,9 @@ class Minimax:
                 legal_moves = self.sort_moves_by_probable_score(board, current_hash, depth, maximize)
             else:
                 legal_moves = list(board.legal_moves)
+
+            if len(legal_moves) == 1 and depth == self.max_depth:
+                self.one_move_flag = True
             
             current_best_chain = []
             if current_root != None:
@@ -433,6 +441,9 @@ class Minimax:
             else:
                 legal_moves = list(board.legal_moves)
             
+            if len(legal_moves) == 1 and depth == self.max_depth:
+                self.one_move_flag = True
+
             current_best_chain = []
             if current_root != None:
                 current_root.board = str(board)

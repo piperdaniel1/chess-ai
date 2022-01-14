@@ -149,9 +149,9 @@ class ChessWindow:
                 pass
 
         font = pygame.font.SysFont('Consolas', 100)
-        self.screen.blit(font.render(self.timer.black_clock.__str__(), True, (0, 0, 0)), (930, 300))
+        self.screen.blit(font.render(self.timer.black_clock.__str__(), True, (0, 0, 0)), (920, 300))
         pygame.draw.line(self.screen, (0, 0, 0), (920, 450), (1330, 450), 5)
-        self.screen.blit(font.render(self.timer.white_clock.__str__(), True, (0, 0, 0)), (930, 500))
+        self.screen.blit(font.render(self.timer.white_clock.__str__(), True, (0, 0, 0)), (920, 500))
 
     def convert_gridpos_to_chesspos(self, grid_pos):
         row, col = grid_pos
@@ -346,13 +346,13 @@ if __name__ == "__main__":
     window = ChessWindow()
     window.minimax.dump_minimax_tree = False
     window.minimax.move_chaining = False
-    # set up the board
     window.internal_board.set_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
     window.minimax.MAX_SECONDS = 15
-    window.timer.white_clock.minutes = 5
-    window.timer.black_clock.minutes = 5
+    window.timer.white_clock.minutes = 10
+    window.timer.black_clock.minutes = 10
     window.timer.white_clock.seconds = 0
     window.timer.black_clock.seconds = 0
+    window.timer.move_bonus = 0
 
     try:
         window.run_game()
