@@ -165,3 +165,13 @@ void Board::print_self() {
         std::cout << std::endl;
     }
 }
+
+bool Board::check_on_board() {
+    for(int row=0; row<8; row++) {
+        for(int col=0; col<8; col++) {
+            if(board[row][col] == '.') {
+                std::cout << "Error: (" << row << ", " << col << ") is not on the board." << std::endl;
+            }
+        }
+    }
+}
