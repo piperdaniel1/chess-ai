@@ -22,19 +22,27 @@ class Board {
                         {'.', '.', '.', '.', '.', '.', '.', '.'},
                         {'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'},
                         {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'}};
+
+    char * black_pieces = new char[6];
+    char * white_pieces = new char[6];
+
     bool turn = true;
 
     bool check_on_board();
 
     public:
     Board();
+    ~Board();
     void free_move_list(Move * moves);
     void clear_board();
     void set_piece(int row, int col, char piece);
     void print_self();
     void push_move(Move * move);
+    bool is_in_arr(char piece, char arr[]);
     Move * get_legal_moves();
     Move * get_rook_moves(Move *, int, int);
+    Move * get_king_moves(Move *, int, int);
+    bool is_king_in_check();
 };
 
 #endif

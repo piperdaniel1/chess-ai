@@ -45,8 +45,10 @@ int main() {
     Board board;
 
     board.clear_board();
+    board.set_piece(0, 0, 'k');
     board.set_piece(5, 3, 'r');
-    board.set_piece(5, 6, 'N');
+    board.set_piece(5, 6, 'K');
+    board.set_piece(5, 0, 'R');
     board.print_self();
     Move * move_list = board.get_legal_moves();
     Move * curr_move = move_list;
@@ -56,9 +58,6 @@ int main() {
         std::cout << "Move: (" << curr_move->from_x << ", " << curr_move->from_y << ") to (" << curr_move->to_x << ", " << curr_move->to_y << ")" << std::endl;
         curr_move = curr_move->next;
     }
-
-    board.push_move(move_list);
-    board.print_self();
 
     // free the move list
     board.free_move_list(move_list);
