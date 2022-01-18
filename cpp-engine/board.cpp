@@ -7,40 +7,50 @@ Board::Board() {
     black_pieces[1] = 'n';
     black_pieces[2] = 'b';
     black_pieces[3] = 'q';
-    black_pieces[4] = 'k';
+    black_pieces[4] = 'L';
     black_pieces[5] = 'p';
     // init white pieces
     white_pieces[0] = 'R';
     white_pieces[1] = 'N';
     white_pieces[2] = 'B';
     white_pieces[3] = 'Q';
-    white_pieces[4] = 'K';
+    white_pieces[4] = 'L';
     white_pieces[5] = 'P';
+
+    black_king = 'k';
+    white_king = 'K';
 }
 
 Board::~Board() {
     std::cout << "Deleting board..." << std::endl;
-    free(black_pieces);
-    free(white_pieces);
+    delete black_pieces;
+    delete white_pieces;
 }
 
 void Board::clear_board() {
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {
-            board[i][j] = '.';
+            this->board[i][j] = '.';
         }
     }
 }
 
 void Board::set_piece(int row, int col, char piece) {
-    board[row][col] = piece;
+    this->board[row][col] = piece;
 }
 
-// assumes that the move is legal
-void Board::push_move(Move * move) {
+// assumes that the move is legal does not support castling
+char Board::push_move(Move * move) {
     turn = !turn;
-    board[move->to_y][move->to_x] = board[move->from_y][move->from_x];
-    board[move->from_y][move->from_x] = '.';
+    char captured_piece = this->board[move->to_y][move->to_x];
+    this->board[move->to_y][move->to_x] = this->board[move->from_y][move->from_x];
+    this->board[move->from_y][move->from_x] = '.';
+
+    if (captured_piece != '.') {
+        return captured_piece;
+    }
+
+    return '.';
 }
 
 // Assumes that arr is length six
@@ -54,34 +64,35 @@ bool Board::is_in_arr(char piece, char * arr) {
 }
 
 bool Board::is_king_in_check(int row, int col) {
-    char * enemy_pieces = turn ? black_pieces : white_pieces;
+    char * enemy_pieces = this->turn ? black_pieces : white_pieces;
+    char enemy_king = this->turn ? this->black_king : this->white_king;
 
     // check for rooks and queens on the same row or column that are not blocked by other pieces
     for (int i = row - 1; i >= 0; i--) {
-        if (board[i][col] == enemy_pieces[0] || board[i][col] == enemy_pieces[3]) {
+        if (this->board[i][col] == enemy_pieces[0] || this->board[i][col] == enemy_pieces[3]) {
             return true;
-        } else if (board[i][col] != '.') {
+        } else if (this->board[i][col] != '.') {
             break;
         }
     }
     for (int i = row + 1; i < 0; i--) {
-        if (board[i][col] == enemy_pieces[0] || board[i][col] == enemy_pieces[3]) {
+        if (this->board[i][col] == enemy_pieces[0] || this->board[i][col] == enemy_pieces[3]) {
             return true;
-        } else if (board[i][col] != '.') {
+        } else if (this->board[i][col] != '.') {
             break;
         }
     }
     for (int i = col - 1; i >= 0; i--) {
-        if (board[row][i] == enemy_pieces[0] || board[row][i] == enemy_pieces[3]) {
+        if (this->board[row][i] == enemy_pieces[0] || this->board[row][i] == enemy_pieces[3]) {
             return true;
-        }  else if (board[row][i] != '.') {
+        }  else if (this->board[row][i] != '.') {
             break;
         }
     }
     for (int i = col + 1; i < 8; i++) {
-        if (board[row][i] == enemy_pieces[0] || board[row][i] == enemy_pieces[3]) {
+        if (this->board[row][i] == enemy_pieces[0] || this->board[row][i] == enemy_pieces[3]) {
             return true;
-        } else if (board[row][i] != '.') {
+        } else if (this->board[row][i] != '.') {
             break;
         }
     }
@@ -89,9 +100,9 @@ bool Board::is_king_in_check(int row, int col) {
     // check for bishops and queens on the same diagonal that are not blocked by other pieces
     for (int i = 1; i < 8; i++) {
         if (row + i < 8 && col + i < 8) {
-            if (board[row + i][col + i] == enemy_pieces[2] || board[row + i][col + i] == enemy_pieces[3]) {
+            if (this->board[row + i][col + i] == enemy_pieces[2] || this->board[row + i][col + i] == enemy_pieces[3]) {
                 return true;
-            } else if (board[row + i][col + i] != '.') {
+            } else if (this->board[row + i][col + i] != '.') {
                 break;
             }
         } else {
@@ -100,9 +111,9 @@ bool Board::is_king_in_check(int row, int col) {
     }
     for (int i = 1; i < 8; i++) {
         if (row - i >= 0 && col - i >= 0) {
-            if (board[row - i][col - i] == enemy_pieces[2] || board[row - i][col - i] == enemy_pieces[3]) {
+            if (this->board[row - i][col - i] == enemy_pieces[2] || this->board[row - i][col - i] == enemy_pieces[3]) {
                 return true;
-            } else if (board[row - i][col - i] != '.') {
+            } else if (this->board[row - i][col - i] != '.') {
                 break;
             }
         } else {
@@ -111,9 +122,9 @@ bool Board::is_king_in_check(int row, int col) {
     }
     for (int i = 1; i < 8; i++) {
         if (row + i < 8 && col - i >= 0) {
-            if (board[row + i][col - i] == enemy_pieces[2] || board[row + i][col - i] == enemy_pieces[3]) {
+            if (this->board[row + i][col - i] == enemy_pieces[2] || this->board[row + i][col - i] == enemy_pieces[3]) {
                 return true;
-            } else if (board[row + i][col - i] != '.') {
+            } else if (this->board[row + i][col - i] != '.') {
                 break;
             }
         } else {
@@ -122,9 +133,9 @@ bool Board::is_king_in_check(int row, int col) {
     }
     for (int i = 1; i < 8; i++) {
         if (row - i >= 0 && col + i < 8) {
-            if (board[row - i][col + i] == enemy_pieces[2] || board[row - i][col + i] == enemy_pieces[3]) {
+            if (this->board[row - i][col + i] == enemy_pieces[2] || this->board[row - i][col + i] == enemy_pieces[3]) {
                 return true;
-            } else if (board[row - i][col + i] != '.') {
+            } else if (this->board[row - i][col + i] != '.') {
                 break;
             }
         } else {
@@ -134,42 +145,42 @@ bool Board::is_king_in_check(int row, int col) {
 
     // check for knights that are two and one spaces away from the king
     if (row + 2 < 8 && col + 1 < 8) {
-        if (board[row + 2][col + 1] == enemy_pieces[1]) {
+        if (this->board[row + 2][col + 1] == enemy_pieces[1]) {
             return true;
         }
     }
     if (row + 2 < 8 && col - 1 >= 0) {
-        if (board[row + 2][col - 1] == enemy_pieces[1]) {
+        if (this->board[row + 2][col - 1] == enemy_pieces[1]) {
             return true;
         }
     }
     if (row - 2 >= 0 && col + 1 < 8) {
-        if (board[row - 2][col + 1] == enemy_pieces[1]) {
+        if (this->board[row - 2][col + 1] == enemy_pieces[1]) {
             return true;
         }
     }
     if (row - 2 >= 0 && col - 1 >= 0) {
-        if (board[row - 2][col - 1] == enemy_pieces[1]) {
+        if (this->board[row - 2][col - 1] == enemy_pieces[1]) {
             return true;
         }
     }
     if (row + 1 < 8 && col + 2 < 8) {
-        if (board[row + 1][col + 2] == enemy_pieces[1]) {
+        if (this->board[row + 1][col + 2] == enemy_pieces[1]) {
             return true;
         }
     }
     if (row + 1 < 8 && col - 2 >= 0) {
-        if (board[row + 1][col - 2] == enemy_pieces[1]) {
+        if (this->board[row + 1][col - 2] == enemy_pieces[1]) {
             return true;
         }
     }
     if (row - 1 >= 0 && col + 2 < 8) {
-        if (board[row - 1][col + 2] == enemy_pieces[1]) {
+        if (this->board[row - 1][col + 2] == enemy_pieces[1]) {
             return true;
         }
     }
     if (row - 1 >= 0 && col - 2 >= 0) {
-        if (board[row - 1][col - 2] == enemy_pieces[1]) {
+        if (this->board[row - 1][col - 2] == enemy_pieces[1]) {
             return true;
         }
     }
@@ -185,7 +196,7 @@ bool Board::is_king_in_check(int row, int col) {
                 continue;
             }
 
-            if (board[row + i][col + j] == enemy_pieces[4]) {
+            if (this->board[row + i][col + j] == enemy_king) {
                 return true;
             }
         }
@@ -196,12 +207,12 @@ bool Board::is_king_in_check(int row, int col) {
     // that are on a lower row than the king
     if (turn == false) {
         if (row - 1 > 0 && col + 1 < 8) {
-            if (board[row - 1][col + 1] == enemy_pieces[5]) {
+            if (this->board[row - 1][col + 1] == enemy_pieces[5]) {
                 return true;
             }
         }
         if (row - 1 > 0 && col - 1 >= 0) {
-            if (board[row - 1][col - 1] == enemy_pieces[5]) {
+            if (this->board[row - 1][col - 1] == enemy_pieces[5]) {
                 return true;
             }
         }
@@ -209,12 +220,12 @@ bool Board::is_king_in_check(int row, int col) {
     // that are on a higher row than the king
     } else {
         if (row + 1 < 8 && col + 1 < 8) {
-            if (board[row + 1][col + 1] == enemy_pieces[5]) {
+            if (this->board[row + 1][col + 1] == enemy_pieces[5]) {
                 return true;
             }
         }
         if (row + 1 < 8 && col - 1 >= 0) {
-            if (board[row + 1][col - 1] == enemy_pieces[5]) {
+            if (this->board[row + 1][col - 1] == enemy_pieces[5]) {
                 return true;
             }
         }
@@ -239,7 +250,7 @@ Move * Board::get_king_moves(Move * moves, int row, int col) {
                 continue;
             }
 
-            if (board[row + i][col + j] == '.' || is_in_arr(board[row + i][col + j], pieces)) {
+            if (this->board[row + i][col + j] == '.' || is_in_arr(this->board[row + i][col + j], pieces)) {
                 moves->from_x = col;
                 moves->from_y = row;
                 moves->to_x = col + j;
@@ -259,13 +270,21 @@ Move * Board::get_rook_moves(Move * moves, int row, int col) {
     
     // check up
     for (int i = row - 1; i >= 0; i--) {
-        if (board[i][col] == '.' || is_in_arr(board[i][col], pieces)) {
+        if (this->board[i][col] == '.') {
             moves->from_x = col;
             moves->from_y = row;
             moves->to_x = col;
             moves->to_y = i;
             moves->next = new Move;
             moves = moves->next;
+        } else if ( is_in_arr(this->board[i][col], pieces)) {
+            moves->from_x = col;
+            moves->from_y = row;
+            moves->to_x = col;
+            moves->to_y = i;
+            moves->next = new Move;
+            moves = moves->next;
+            break;
         } else {
             break;
         }
@@ -273,13 +292,21 @@ Move * Board::get_rook_moves(Move * moves, int row, int col) {
 
     // check down
     for (int i = row + 1; i < 8; i++) {
-        if (board[i][col] == '.' || is_in_arr(board[i][col], pieces)) {
+        if (this->board[i][col] == '.') {
             moves->from_x = col;
             moves->from_y = row;
             moves->to_x = col;
             moves->to_y = i;
             moves->next = new Move;
             moves = moves->next;
+        } else if (is_in_arr(this->board[i][col], pieces)) {
+            moves->from_x = col;
+            moves->from_y = row;
+            moves->to_x = col;
+            moves->to_y = i;
+            moves->next = new Move;
+            moves = moves->next;
+            break;
         } else {
             break;
         }
@@ -287,13 +314,21 @@ Move * Board::get_rook_moves(Move * moves, int row, int col) {
 
     // check left
     for (int i = col - 1; i >= 0; i--) {
-        if (board[row][i] == '.' || is_in_arr(board[row][i], pieces)) {
+        if (this->board[row][i] == '.') {
             moves->from_x = col;
             moves->from_y = row;
             moves->to_x = i;
             moves->to_y = row;
             moves->next = new Move;
             moves = moves->next;
+        } else if (is_in_arr(this->board[row][i], pieces)) {
+            moves->from_x = col;
+            moves->from_y = row;
+            moves->to_x = i;
+            moves->to_y = row;
+            moves->next = new Move;
+            moves = moves->next;
+            break;
         } else {
             break;
         }
@@ -301,13 +336,21 @@ Move * Board::get_rook_moves(Move * moves, int row, int col) {
 
     // check right
     for (int i = col + 1; i < 8; i++) {
-        if (board[row][i] == '.' || is_in_arr(board[row][i], pieces)) {
+        if (this->board[row][i] == '.') {
             moves->from_x = col;
             moves->from_y = row;
             moves->to_x = i;
             moves->to_y = row;
             moves->next = new Move;
             moves = moves->next;
+        } else if (is_in_arr(this->board[row][i], pieces)) {
+            moves->from_x = col;
+            moves->from_y = row;
+            moves->to_x = i;
+            moves->to_y = row;
+            moves->next = new Move;
+            moves = moves->next;
+            break;
         } else {
             break;
         }
@@ -335,7 +378,7 @@ Move * Board::get_pseudo_legal_moves() {
     char piece;
     for(int row=0; row<8; row++) {
         for(int col=0; col<8; col++) {
-            piece = board[row][col];
+            piece = this->board[row][col];
 
             if(piece == '.') {
                 continue;
@@ -360,17 +403,73 @@ Move * Board::get_pseudo_legal_moves() {
     return moves;
 }
 
-void Board::pull_move(Move * move, int captured_piece = NULL) {
+// does not support castling
+void Board::pull_move(Move * move, int captured_piece = '.') {
+    char piece = this->board[move->to_y][move->to_x];
+
+    if (captured_piece != '.') {
+        this->board[move->to_y][move->to_x] = captured_piece;
+    } else {
+        this->board[move->to_y][move->to_x] = '.';
+    }
+    
+    this->board[move->from_y][move->from_x] = piece;
+}
+
+int * Board::get_king_pos() {
+    for(int i=0; i<8; i++) {
+        for(int j=0; j<8; j++) {
+            if(this->board[i][j] == 'k' and this->turn == false) {
+                int * king_pos = new int[2];
+                king_pos[0] = i;
+                king_pos[1] = j;
+                return king_pos;
+            } else if (this->board[i][j] == 'K' and this->turn == true) {
+                int * king_pos = new int[2];
+                king_pos[0] = i;
+                king_pos[1] = j;
+                return king_pos;
+            }
+        }
+    }
+
+    return nullptr;
 }
 
 bool Board::is_legal_move(Move * move) {
-    return;
+    char captured = this->push_move(move);
+    this->turn = !this->turn;
+
+    int * king_pos = this->get_king_pos();
+
+    int row = king_pos[0];
+    int col = king_pos[1];
+
+    if(this->is_king_in_check(row, col) == true) {
+        this->pull_move(move, captured);
+
+        delete king_pos;
+        return false;
+    }
+
+    this->pull_move(move, captured);
+
+    delete king_pos;
+    return true;
 }
 
 Move * Board::get_legal_moves() {
-    std::cout << "Getting legal moves..." << std::endl;
-
     Move * pseudo_legal_moves = get_pseudo_legal_moves();
+
+    /*std::cout << "ALL PSEUDO LEGAL MOVES:" << std::endl;
+    Move * curr_move = pseudo_legal_moves;
+    // print out the moves
+    while (curr_move->next != nullptr) {
+        std::cout << "Move: (" << curr_move->from_x << ", " << curr_move->from_y << ") to (" << curr_move->to_x << ", " << curr_move->to_y << ")" << std::endl;
+        curr_move = curr_move->next;
+    }
+    std::cout << std::endl;*/
+
     Move * moves = new Move;
     Move * list_end = moves;
 
@@ -379,7 +478,7 @@ Move * Board::get_legal_moves() {
         temp = pseudo_legal_moves;
         pseudo_legal_moves = pseudo_legal_moves->next;
 
-        if (is_legal_move(temp)) {
+        if (this->is_legal_move(temp)) {
             list_end->from_x = temp->from_x;
             list_end->from_y = temp->from_y;
             list_end->to_x = temp->to_x;
@@ -395,10 +494,10 @@ Move * Board::get_legal_moves() {
 }
 
 void Board::print_self() {
-    std::cout << "Printing board..." << std::endl;
+    std::cout << "Printing this->board..." << std::endl;
     for(int row=0; row<8; row++) {
         for(int col=0; col<8; col++) {
-            std::cout << board[row][col] << " ";
+            std::cout << this->board[row][col] << " ";
         }
         std::cout << std::endl;
     }
@@ -407,7 +506,7 @@ void Board::print_self() {
 bool Board::check_on_board() {
     for(int row=0; row<8; row++) {
         for(int col=0; col<8; col++) {
-            if(board[row][col] == '.') {
+            if(this->board[row][col] == '.') {
                 return false;
             }
         }
