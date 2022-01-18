@@ -29,6 +29,12 @@ class Board {
     bool turn = true;
 
     bool check_on_board();
+    void pull_move(Move * move, int captured_piece = NULL);
+    bool is_legal_move(Move * move);
+    Move * get_pseudo_legal_moves();
+    bool is_in_arr(char piece, char arr[]);
+    Move * get_rook_moves(Move *, int, int);
+    Move * get_king_moves(Move *, int, int);
 
     public:
     Board();
@@ -38,11 +44,8 @@ class Board {
     void set_piece(int row, int col, char piece);
     void print_self();
     void push_move(Move * move);
-    bool is_in_arr(char piece, char arr[]);
     Move * get_legal_moves();
-    Move * get_rook_moves(Move *, int, int);
-    Move * get_king_moves(Move *, int, int);
-    bool is_king_in_check();
+    bool is_king_in_check(int, int);
 };
 
 #endif

@@ -50,6 +50,7 @@ int main() {
     board.set_piece(5, 6, 'K');
     board.set_piece(5, 0, 'R');
     board.print_self();
+    std::cout << "Is king in check? " << board.is_king_in_check(5, 6) << std::endl;
     Move * move_list = board.get_legal_moves();
     Move * curr_move = move_list;
     
