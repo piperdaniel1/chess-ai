@@ -45,22 +45,77 @@ void Board::set_piece(int row, int col, char piece) {
 }
 
 // assumes that the move is legal does not support castling
-char Board::push_move(Move * move) {
-    turn = !turn;
+char Board::push_move(Move * move) {    
+    // execute castling move if applicable
+    if(!this->turn) {
+        if(this->black_queenside_castling) {
+            if(move->from_x == 4 && move->from_y == 0 && move->to_x == 2 && move->to_y == 0) {
+                this->board[0][2] = 'k';
+                this->board[0][3] = 'r';
+                this->board[0][0] = '.';
+                this->board[0][4] = '.';
+                this->turn = !this->turn;
+                this->black_kingside_castling = false;
+                this->black_queenside_castling = false;
+                return '.';
+            }
+        }
+        if (this->black_kingside_castling) {
+            if(move->from_x == 4 && move->from_y == 0 && move->to_x == 6 && move->to_y == 0) {
+                // execute black kingside castle
+                this->board[0][6] = 'k';
+                this->board[0][5] = 'r';
+                this->board[0][7] = '.';
+                this->board[0][4] = '.';
+                this->turn = !this->turn;
+                this->black_kingside_castling = false;
+                this->black_queenside_castling = false;
+                return '.';
+            }
+        }
+    } else {
+        if(this->white_queenside_castling) {
+            if(move->from_x == 4 && move->from_y == 7 && move->to_x == 2 && move->to_y == 7) {
+                // execute white qeenside castle
+                this->board[7][2] = 'K';
+                this->board[7][3] = 'R';
+                this->board[7][0] = '.';
+                this->board[7][4] = '.';
+                this->turn = !this->turn;
+                this->white_kingside_castling = false;
+                this->white_queenside_castling = false;
+                return '.';
+            }
+        } 
+        if (this->white_kingside_castling) {
+            if(move->from_x == 4 && move->from_y == 7 && move->to_x == 6 && move->to_y == 7) {
+                // execute white kingside castle
+                std::cout << "pushing white kingside castle move" << std::endl;
+                this->board[7][6] = 'K';
+                this->board[7][5] = 'R';
+                this->board[7][7] = '.';
+                this->board[7][4] = '.';
+                this->turn = !this->turn;
+                this->white_kingside_castling = false;
+                this->white_queenside_castling = false;
+                return '.';
+            }
+        }
+    }
 
-    // adjust castling rights if king or rook move
+    // remove castle rights if applicable
     if(!this->turn) {
         if(this->black_kingside_castling) {
             if(move->from_x == 7 && move->from_y == 0) {
                 this->black_kingside_castling = false;
-            } else if (move->from_x == 4 && and move->from_y == 0) {
+            } else if (move->from_x == 4 && move->from_y == 0) {
                 this->black_kingside_castling = false;
                 this->black_queenside_castling = false;
             }
         } else if (this->black_queenside_castling) {
             if(move->from_x == 0 && move->from_y == 0) {
                 this->black_kingside_castling = false;
-            } else if (move->from_x == 4 && and move->from_y == 0) {
+            } else if (move->from_x == 4 && move->from_y == 0) {
                 this->black_kingside_castling = false;
                 this->black_queenside_castling = false;
             }
@@ -69,34 +124,18 @@ char Board::push_move(Move * move) {
         if(this->white_kingside_castling) {
             if(move->from_x == 7 && move->from_y == 7) {
                 this->white_kingside_castling = false;
-            } else if (move->from_x == 4 && and move->from_y == 7) {
+            } else if (move->from_x == 4 && move->from_y == 7) {
                 this->white_kingside_castling = false;
                 this->white_queenside_castling = false;
             }
         } else if (this->white_queenside_castling) {
             if(move->from_x == 0 && move->from_y == 0) {
                 this->white_kingside_castling = false;
-            } else if (move->from_x == 7 && and move->from_y == 7) {
+            } else if (move->from_x == 7 && move->from_y == 7) {
                 this->white_kingside_castling = false;
                 this->white_queenside_castling = false;
             }
         }
-    }
-
-    if(!this->turn) {
-        if(this->black_queenside_castling) {
-            if(move->from_x == 4 && move->from_y == 0 && move->to_x == 2 && move->to_y == 0) {
-                // execute black qeenside castle
-                return '.'
-            }
-        } else if (this->black_kingside_castling) {
-            if(move->from_x == 4 && move->from_y == 0 && move->to_x == 6 && move->to_y == 0) {
-                // execute black kingside castle
-                return '.'
-            }
-        }
-    } else {
-        
     }
 
     // execute move
@@ -108,6 +147,7 @@ char Board::push_move(Move * move) {
         return captured_piece;
     }
 
+    this->turn = !this->turn;
     return '.';
 }
 
@@ -433,8 +473,49 @@ Move * Board::get_rook_moves(Move * moves, int row, int col) {
 // we don't deal with checking castling rights here, we assume
 // that the Board::castling_rights booleans are correct and up to date
 // those booleans get changed in push_move.
-Move * Board::get_castling_moves(Move * moves, int row, int col) {
-    
+Move * Board::get_castling_moves(Move * moves) {
+    if(!this->turn) {
+        // check for black castling
+        if(this->black_kingside_castling) {
+            // TODO check if there is a check along the way
+            moves->from_x = 4;
+            moves->from_y = 0;
+            moves->to_x = 6;
+            moves->to_y = 0;
+            moves->next = new Move;
+            moves = moves->next;
+        }
+
+        if(this->black_queenside_castling) {
+            moves->from_x = 4;
+            moves->from_y = 0;
+            moves->to_x = 2;
+            moves->to_y = 0;
+            moves->next = new Move;
+            moves = moves->next;
+        }
+    } else {
+        // check for white castling
+        if(this->white_kingside_castling) {
+            moves->from_x = 4;
+            moves->from_y = 7;
+            moves->to_x = 6;
+            moves->to_y = 7;
+            moves->next = new Move;
+            moves = moves->next;
+        }
+
+        if(this->white_queenside_castling) {
+            moves->from_x = 4;
+            moves->from_y = 7;
+            moves->to_x = 2;
+            moves->to_y = 7;
+            moves->next = new Move;
+            moves = moves->next;
+        }
+    }
+
+    return moves;
 }
 
 
@@ -478,6 +559,8 @@ Move * Board::get_pseudo_legal_moves() {
             }
         }
     }
+
+    this->get_castling_moves(list_end);
 
     return moves;
 }
@@ -537,7 +620,7 @@ bool Board::is_legal_move(Move * move) {
 }
 
 Move * Board::get_legal_moves() {
-    Move * pseudo_legal_moves = get_pseudo_legal_moves();
+    Move * pseudo_legal_moves = this->get_pseudo_legal_moves();
 
     /*std::cout << "ALL PSEUDO LEGAL MOVES:" << std::endl;
     Move * curr_move = pseudo_legal_moves;

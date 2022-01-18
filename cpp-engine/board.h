@@ -41,7 +41,7 @@ class Board {
     bool is_in_arr(char piece, char arr[]);
     Move * get_rook_moves(Move *, int, int);
     Move * get_king_moves(Move *, int, int);
-    Move * get_castling_moves(Move *, int, int);
+    Move * get_castling_moves(Move *);
     int * get_king_pos();
     char fake_push_move(Move * move);
 

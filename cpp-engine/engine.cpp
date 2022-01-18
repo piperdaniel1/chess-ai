@@ -54,12 +54,20 @@ int main() {
     std::cout << "Is king in check? " << board.is_king_in_check(5, 6) << std::endl;
     Move * move_list = board.get_legal_moves();
     Move * curr_move = move_list;
+    Move best_move;
     
     // print out the moves
     while (curr_move->next != nullptr) {
         std::cout << "Move: (" << curr_move->from_x << ", " << curr_move->from_y << ") to (" << curr_move->to_x << ", " << curr_move->to_y << ")" << std::endl;
         curr_move = curr_move->next;
+
+        if(curr_move->from_x == 4 && curr_move->from_y == 7 && curr_move->to_x == 6 && curr_move->to_y == 7) {
+            best_move = *curr_move;
+        }
     }
+
+    board.push_move(&best_move);
+    board.print_self();
 
     // free the move list
     board.free_move_list(move_list);
