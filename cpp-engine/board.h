@@ -27,6 +27,10 @@ class Board {
     char * white_pieces = new char[6];
     char black_king;
     char white_king;
+    bool white_kingside_castling;
+    bool white_queenside_castling;
+    bool black_kingside_castling;
+    bool black_queenside_castling;
 
     bool turn = true;
 
@@ -37,7 +41,10 @@ class Board {
     bool is_in_arr(char piece, char arr[]);
     Move * get_rook_moves(Move *, int, int);
     Move * get_king_moves(Move *, int, int);
+    Move * get_castling_moves(Move *, int, int);
     int * get_king_pos();
+    char fake_push_move(Move * move);
+
 
     public:
     Board();

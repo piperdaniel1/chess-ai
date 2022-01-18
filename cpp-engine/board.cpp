@@ -19,6 +19,11 @@ Board::Board() {
 
     black_king = 'k';
     white_king = 'K';
+
+    white_kingside_castling = true;
+    white_queenside_castling = true;
+    black_kingside_castling = true;
+    black_queenside_castling = true;
 }
 
 Board::~Board() {
@@ -42,6 +47,72 @@ void Board::set_piece(int row, int col, char piece) {
 // assumes that the move is legal does not support castling
 char Board::push_move(Move * move) {
     turn = !turn;
+
+    // adjust castling rights if king or rook move
+    if(!this->turn) {
+        if(this->black_kingside_castling) {
+            if(move->from_x == 7 && move->from_y == 0) {
+                this->black_kingside_castling = false;
+            } else if (move->from_x == 4 && and move->from_y == 0) {
+                this->black_kingside_castling = false;
+                this->black_queenside_castling = false;
+            }
+        } else if (this->black_queenside_castling) {
+            if(move->from_x == 0 && move->from_y == 0) {
+                this->black_kingside_castling = false;
+            } else if (move->from_x == 4 && and move->from_y == 0) {
+                this->black_kingside_castling = false;
+                this->black_queenside_castling = false;
+            }
+        }
+    } else {
+        if(this->white_kingside_castling) {
+            if(move->from_x == 7 && move->from_y == 7) {
+                this->white_kingside_castling = false;
+            } else if (move->from_x == 4 && and move->from_y == 7) {
+                this->white_kingside_castling = false;
+                this->white_queenside_castling = false;
+            }
+        } else if (this->white_queenside_castling) {
+            if(move->from_x == 0 && move->from_y == 0) {
+                this->white_kingside_castling = false;
+            } else if (move->from_x == 7 && and move->from_y == 7) {
+                this->white_kingside_castling = false;
+                this->white_queenside_castling = false;
+            }
+        }
+    }
+
+    if(!this->turn) {
+        if(this->black_queenside_castling) {
+            if(move->from_x == 4 && move->from_y == 0 && move->to_x == 2 && move->to_y == 0) {
+                // execute black qeenside castle
+                return '.'
+            }
+        } else if (this->black_kingside_castling) {
+            if(move->from_x == 4 && move->from_y == 0 && move->to_x == 6 && move->to_y == 0) {
+                // execute black kingside castle
+                return '.'
+            }
+        }
+    } else {
+        
+    }
+
+    // execute move
+    char captured_piece = this->board[move->to_y][move->to_x];
+    this->board[move->to_y][move->to_x] = this->board[move->from_y][move->from_x];
+    this->board[move->from_y][move->from_x] = '.';
+
+    if (captured_piece != '.') {
+        return captured_piece;
+    }
+
+    return '.';
+}
+
+// for internal use
+char Board::fake_push_move(Move * move) {
     char captured_piece = this->board[move->to_y][move->to_x];
     this->board[move->to_y][move->to_x] = this->board[move->from_y][move->from_x];
     this->board[move->from_y][move->from_x] = '.';
@@ -359,6 +430,14 @@ Move * Board::get_rook_moves(Move * moves, int row, int col) {
     return moves;
 }
 
+// we don't deal with checking castling rights here, we assume
+// that the Board::castling_rights booleans are correct and up to date
+// those booleans get changed in push_move.
+Move * Board::get_castling_moves(Move * moves, int row, int col) {
+    
+}
+
+
 void Board::free_move_list(Move * moves) {
     std::cout << "Freeing move list..." << std::endl;
     Move * temp;
@@ -437,8 +516,7 @@ int * Board::get_king_pos() {
 }
 
 bool Board::is_legal_move(Move * move) {
-    char captured = this->push_move(move);
-    this->turn = !this->turn;
+    char captured = this->fake_push_move(move);
 
     int * king_pos = this->get_king_pos();
 
@@ -472,6 +550,7 @@ Move * Board::get_legal_moves() {
 
     Move * moves = new Move;
     Move * list_end = moves;
+    Move * prev_end;
 
     Move * temp;
     while (pseudo_legal_moves != nullptr) {
@@ -484,12 +563,15 @@ Move * Board::get_legal_moves() {
             list_end->to_x = temp->to_x;
             list_end->to_y = temp->to_y;
             list_end->next = new Move;
+            prev_end = list_end;
             list_end = list_end->next;
         }
 
         delete temp;
     }
 
+    delete list_end;
+    prev_end->next = nullptr;
     return moves;
 }
 
