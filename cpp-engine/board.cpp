@@ -3,27 +3,30 @@
 Board::Board() {
     std::cout << "Initializing board..." << std::endl;     
     // init black pieces
-    black_pieces[0] = 'r';
-    black_pieces[1] = 'n';
-    black_pieces[2] = 'b';
-    black_pieces[3] = 'q';
-    black_pieces[4] = 'L';
-    black_pieces[5] = 'p';
+    this->black_pieces[0] = 'r';
+    this->black_pieces[1] = 'n';
+    this->black_pieces[2] = 'b';
+    this->black_pieces[3] = 'q';
+    this->black_pieces[4] = 'L';
+    this->black_pieces[5] = 'p';
     // init white pieces
-    white_pieces[0] = 'R';
-    white_pieces[1] = 'N';
-    white_pieces[2] = 'B';
-    white_pieces[3] = 'Q';
-    white_pieces[4] = 'L';
-    white_pieces[5] = 'P';
+    this->white_pieces[0] = 'R';
+    this->white_pieces[1] = 'N';
+    this->white_pieces[2] = 'B';
+    this->white_pieces[3] = 'Q';
+    this->white_pieces[4] = 'L';
+    this->white_pieces[5] = 'P';
 
-    black_king = 'k';
-    white_king = 'K';
+    this->black_king = 'k';
+    this->white_king = 'K';
 
-    white_kingside_castling = true;
-    white_queenside_castling = true;
-    black_kingside_castling = true;
-    black_queenside_castling = true;
+    this->enPassantCol = -1;
+    this->enPassantRow = -1;
+
+    this->white_kingside_castling = true;
+    this->white_queenside_castling = true;
+    this->black_kingside_castling = true;
+    this->black_queenside_castling = true;
 }
 
 Board::~Board() {
@@ -137,6 +140,10 @@ char Board::push_move(Move * move) {
             }
         }
     }
+
+    // TODO remove en passant if applicable
+
+    // TODO add en passant rights if applicable
 
     // execute move
     char captured_piece = this->board[move->to_y][move->to_x];
@@ -359,6 +366,95 @@ int Board::max(int a, int b) {
     }
 
     return b;
+}
+
+Move * Board::get_pawn_moves(Move * moves, int row, int col) {
+    std::cout << "Getting pawn moves at " << row << " " << col << std::endl;
+    char * pieces = turn ? black_pieces : white_pieces;
+
+    if(this->turn) {
+        // check the square right in front of the pawn
+        if(board[row-1][col] == '.') {
+            moves->from_x = col;
+            moves->from_y = row;
+            moves->to_x = col;
+            moves->to_y = row - 1;
+            moves->next = new Move;
+            moves = moves->next;
+        }
+
+        // check the square two in front of the pawn (if it is the first move)
+        if(row == 6 && board[row-2][col] == '.') {
+            moves->from_x = col;
+            moves->from_y = row;
+            moves->to_x = col;
+            moves->to_y = row - 2;
+            moves->next = new Move;
+            moves = moves->next;
+        }
+
+        // check the square to the diagonal left of the pawn
+        if(col - 1 >= 0 && (this->is_in_arr(board[row-1][col-1], pieces) || row-1 == this->enPassantRow && col-1 == this->enPassantCol)) {
+            moves->from_x = col;
+            moves->from_y = row;
+            moves->to_x = col - 1;
+            moves->to_y = row - 1;
+            moves->next = new Move;
+            moves = moves->next;
+        }
+
+        // check the square to the diagonal right of the pawn
+        if(col + 1 < 8 && (this->is_in_arr(board[row-1][col+1], pieces) || row-1 == this->enPassantRow && col+1 == this->enPassantCol)) {
+            moves->from_x = col;
+            moves->from_y = row;
+            moves->to_x = col + 1;
+            moves->to_y = row - 1;
+            moves->next = new Move;
+            moves = moves->next;
+        }
+    } else {
+        // check the square right in front of the pawn
+        if(board[row+1][col] == '.') {
+            moves->from_x = col;
+            moves->from_y = row;
+            moves->to_x = col;
+            moves->to_y = row + 1;
+            moves->next = new Move;
+            moves = moves->next;
+        }
+
+        // check the square two in front of the pawn (if it is the first move)
+        if(row == 1 && board[row+2][col] == '.') {
+            moves->from_x = col;
+            moves->from_y = row;
+            moves->to_x = col;
+            moves->to_y = row + 2;
+            moves->next = new Move;
+            moves = moves->next;
+        }
+
+        // check the square to the diagonal left of the pawn
+        if(col - 1 >= 0 && (this->is_in_arr(board[row+1][col-1], pieces) || row+1 == this->enPassantRow && col-1 == this->enPassantCol)) {
+            moves->from_x = col;
+            moves->from_y = row;
+            moves->to_x = col - 1;
+            moves->to_y = row + 1;
+            moves->next = new Move;
+            moves = moves->next;
+        }
+
+        // check the square to the diagonal right of the pawn
+        if(col + 1 < 8 && (this->is_in_arr(board[row+1][col+1], pieces) || row+1 == this->enPassantRow && col+1 == this->enPassantCol)) {
+            moves->from_x = col;
+            moves->from_y = row;
+            moves->to_x = col + 1;
+            moves->to_y = row + 1;
+            moves->next = new Move;
+            moves = moves->next;
+        }
+    }
+
+    return moves;
 }
 
 Move * Board::get_bishop_moves(Move * moves, int row, int col) {

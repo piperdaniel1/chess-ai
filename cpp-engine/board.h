@@ -31,6 +31,8 @@ class Board {
     bool white_queenside_castling;
     bool black_kingside_castling;
     bool black_queenside_castling;
+    int enPassantCol;
+    int enPassantRow;
 
     bool turn = true;
 
@@ -44,6 +46,7 @@ class Board {
     Move * get_bishop_moves(Move *, int, int);
     Move * get_queen_moves(Move *, int, int);
     Move * get_knight_moves(Move *, int, int);
+    Move * get_pawn_moves(Move *, int, int);
     Move * get_castling_moves(Move *);
     int * get_king_pos();
     char fake_push_move(Move * move);
