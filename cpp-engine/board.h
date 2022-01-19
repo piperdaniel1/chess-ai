@@ -41,9 +41,14 @@ class Board {
     bool is_in_arr(char piece, char arr[]);
     Move * get_rook_moves(Move *, int, int);
     Move * get_king_moves(Move *, int, int);
+    Move * get_bishop_moves(Move *, int, int);
+    Move * get_queen_moves(Move *, int, int);
+    Move * get_knight_moves(Move *, int, int);
     Move * get_castling_moves(Move *);
     int * get_king_pos();
     char fake_push_move(Move * move);
+    int min(int, int);
+    int max(int, int);
 
 
     public:

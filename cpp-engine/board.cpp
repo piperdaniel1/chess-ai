@@ -345,6 +345,126 @@ bool Board::is_king_in_check(int row, int col) {
     return false;
 }
 
+int Board::min(int a, int b) {
+    if (a < b) {
+        return a;
+    }
+
+    return b;
+}
+
+int Board::max(int a, int b) {
+    if (a > b) {
+        return a;
+    }
+
+    return b;
+}
+
+Move * Board::get_bishop_moves(Move * moves, int row, int col) {
+    std::cout << "Getting bishop moves at " << row << " " << col << std::endl;
+    char * pieces = turn ? black_pieces : white_pieces;
+
+    // check towards the top left
+    for (int i=1; i<=min(row, col); i++) {
+        if (this->board[row-i][col-i] == '.') {
+            moves->from_x = col;
+            moves->from_y = row;
+            moves->to_x = col - i;
+            moves->to_y = row - i;
+            moves->next = new Move;
+            moves = moves->next;
+        } else if (is_in_arr(this->board[row-i][col-i], pieces)) {
+            moves->from_x = col;
+            moves->from_y = row;
+            moves->to_x = col - i;
+            moves->to_y = row - i;
+            moves->next = new Move;
+            moves = moves->next;
+            break;
+        } else {
+            break;
+        }
+    }
+
+    // check towards the top right
+    for (int i=1; i<=min(row, 7-col); i++) {
+        if (this->board[row-i][col+i] == '.') {
+            moves->from_x = col;
+            moves->from_y = row;
+            moves->to_x = col + i;
+            moves->to_y = row - i;
+            moves->next = new Move;
+            moves = moves->next;
+        } else if (is_in_arr(this->board[row-i][col+i], pieces)) {
+            moves->from_x = col;
+            moves->from_y = row;
+            moves->to_x = col + i;
+            moves->to_y = row - i;
+            moves->next = new Move;
+            moves = moves->next;
+            break;
+        } else {
+            break;
+        }
+    }
+
+    // check towards the bottom left
+    for (int i=1; i<=min(7-row, col); i++) {
+        if (this->board[row+i][col-i] == '.') {
+            moves->from_x = col;
+            moves->from_y = row;
+            moves->to_x = col - i;
+            moves->to_y = row + i;
+            moves->next = new Move;
+            moves = moves->next;
+        } else if (is_in_arr(this->board[row+i][col-i], pieces)) {
+            moves->from_x = col;
+            moves->from_y = row;
+            moves->to_x = col - i;
+            moves->to_y = row + i;
+            moves->next = new Move;
+            moves = moves->next;
+            break;
+        } else {
+            break;
+        }
+    }
+
+    // check towards the bottom right
+    for (int i=1; i<=min(7-row, 7-col); i++) {
+        if (this->board[row+i][col+i] == '.') {
+            moves->from_x = col;
+            moves->from_y = row;
+            moves->to_x = col + i;
+            moves->to_y = row + i;
+            moves->next = new Move;
+            moves = moves->next;
+        } else if (is_in_arr(this->board[row+i][col+i], pieces)) {
+            moves->from_x = col;
+            moves->from_y = row;
+            moves->to_x = col + i;
+            moves->to_y = row + i;
+            moves->next = new Move;
+            moves = moves->next;
+            break;
+        } else {
+            break;
+        }
+    }
+
+    return moves;
+}
+
+Move * Board::get_queen_moves(Move * moves, int row, int col) {
+    std::cout << "Getting queen moves at " << row << " " << col << std::endl;
+
+    moves = this->get_bishop_moves(moves, row, col);
+    moves = this->get_rook_moves(moves, row, col);
+
+    return moves;
+}
+
 Move * Board::get_king_moves(Move * moves, int row, int col) {
     std::cout << "Getting king moves at (" << col << ", " << row << ")." << std::endl;
 
@@ -370,6 +490,84 @@ Move * Board::get_king_moves(Move * moves, int row, int col) {
                 moves = moves->next;
             }
         }
+    }
+
+    return moves;
+}
+
+Move * Board::get_knight_moves(Move * moves, int row, int col) {
+    std::cout << "Getting knight moves at " << row << " " << col << std::endl;
+
+    if (row - 2 >= 0 && col - 1 >= 0) {
+        moves->from_x = col;
+        moves->from_y = row;
+        moves->to_x = col - 1;
+        moves->to_y = row - 2;
+        moves->next = new Move;
+        moves = moves->next;
+    }
+
+    if (row - 2 >= 0 && col + 1 <= 7) {
+        moves->from_x = col;
+        moves->from_y = row;
+        moves->to_x = col + 1;
+        moves->to_y = row - 2;
+        moves->next = new Move;
+        moves = moves->next;
+    }
+
+    if (row - 1 >= 0 && col - 2 >= 0) {
+        moves->from_x = col;
+        moves->from_y = row;
+        moves->to_x = col - 2;
+        moves->to_y = row - 1;
+        moves->next = new Move;
+        moves = moves->next;
+    }
+
+    if (row - 1 >= 0 && col + 2 <= 7) {
+        moves->from_x = col;
+        moves->from_y = row;
+        moves->to_x = col + 2;
+        moves->to_y = row - 1;
+        moves->next = new Move;
+        moves = moves->next;
+    }
+
+    if (row + 2 <= 7 && col - 1 >= 0) {
+        moves->from_x = col;
+        moves->from_y = row;
+        moves->to_x = col - 1;
+        moves->to_y = row + 2;
+        moves->next = new Move;
+        moves = moves->next;
+    }
+
+    if (row + 2 <= 7 && col + 1 <= 7) {
+        moves->from_x = col;
+        moves->from_y = row;
+        moves->to_x = col + 1;
+        moves->to_y = row + 2;
+        moves->next = new Move;
+        moves = moves->next;
+    }
+
+    if (row + 1 <= 7 && col - 2 >= 0) {
+        moves->from_x = col;
+        moves->from_y = row;
+        moves->to_x = col - 2;
+        moves->to_y = row + 1;
+        moves->next = new Move;
+        moves = moves->next;
+    }
+
+    if (row + 1 <= 7 && col + 2 <= 7) {
+        moves->from_x = col;
+        moves->from_y = row;
+        moves->to_x = col + 2;
+        moves->to_y = row + 1;
+        moves->next = new Move;
+        moves = moves->next;
     }
 
     return moves;
@@ -476,7 +674,9 @@ Move * Board::get_rook_moves(Move * moves, int row, int col) {
 Move * Board::get_castling_moves(Move * moves) {
     if(!this->turn) {
         // check for black castling
-        if(this->black_kingside_castling) {
+        if(this->black_kingside_castling && 
+          !this->is_king_in_check(0, 5) && !this->is_king_in_check(0,4)
+          && this->board[0][5] == '.' && this->board[0][6] == '.') {
             // TODO check if there is a check along the way
             moves->from_x = 4;
             moves->from_y = 0;
@@ -486,7 +686,9 @@ Move * Board::get_castling_moves(Move * moves) {
             moves = moves->next;
         }
 
-        if(this->black_queenside_castling) {
+        if(this->black_queenside_castling && 
+          !this->is_king_in_check(0,3) && !this->is_king_in_check(0,4)
+          && this->board[0][1] == '.' && this->board[0][2] == '.' && this->board[0][3] == '.') {
             moves->from_x = 4;
             moves->from_y = 0;
             moves->to_x = 2;
@@ -496,7 +698,9 @@ Move * Board::get_castling_moves(Move * moves) {
         }
     } else {
         // check for white castling
-        if(this->white_kingside_castling) {
+        if(this->white_kingside_castling && 
+        !this->is_king_in_check(7, 5) && !this->is_king_in_check(7,4)
+        && this->board[7][5] == '.' && this->board[7][6] == '.') {
             moves->from_x = 4;
             moves->from_y = 7;
             moves->to_x = 6;
@@ -505,7 +709,9 @@ Move * Board::get_castling_moves(Move * moves) {
             moves = moves->next;
         }
 
-        if(this->white_queenside_castling) {
+        if(this->white_queenside_castling && 
+        !this->is_king_in_check(7, 3) && !this->is_king_in_check(7,4)
+        && this->board[7][1] && this->board[7][2] == '.' && this->board[7][3] == '.') {
             moves->from_x = 4;
             moves->from_y = 7;
             moves->to_x = 2;
@@ -517,7 +723,6 @@ Move * Board::get_castling_moves(Move * moves) {
 
     return moves;
 }
-
 
 void Board::free_move_list(Move * moves) {
     std::cout << "Freeing move list..." << std::endl;
@@ -546,15 +751,27 @@ Move * Board::get_pseudo_legal_moves() {
 
             if (turn == false) {
                 if(piece == 'r') {
-                    list_end = get_rook_moves(list_end, row, col);
+                    list_end = this->get_rook_moves(list_end, row, col);
                 } else if(piece == 'k') {
-                    list_end = get_king_moves(list_end, row, col);
+                    list_end = this->get_king_moves(list_end, row, col);
+                } else if(piece == 'b') {
+                    list_end = this->get_bishop_moves(list_end, row, col);
+                } else if(piece == 'q') {
+                    list_end = this->get_queen_moves(list_end, row, col);
+                } else if(piece == 'n') {
+                    list_end = this->get_knight_moves(list_end, row, col);
                 }
             } else if (turn == true) {
                 if(piece == 'R') {
-                    list_end = get_rook_moves(list_end, row, col);
+                    list_end = this->get_rook_moves(list_end, row, col);
                 } else if(piece == 'K') {
-                    list_end = get_king_moves(list_end, row, col);
+                    list_end = this->get_king_moves(list_end, row, col);
+                } else if(piece == 'B') {
+                    list_end = this->get_bishop_moves(list_end, row, col);
+                } else if(piece == 'Q') {
+                    list_end = this->get_queen_moves(list_end, row, col);
+                } else if(piece == 'N') {
+                    list_end = this->get_knight_moves(list_end, row, col);
                 }
             }
         }

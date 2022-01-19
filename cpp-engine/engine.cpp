@@ -50,6 +50,8 @@ int main() {
     board.set_piece(0, 4, 'k');
     board.set_piece(0, 7, 'r');
     board.set_piece(7, 4, 'K');
+    board.set_piece(4, 4, 'N');
+    board.set_piece(7, 5, 'Q');
     board.set_piece(7, 7, 'R');
     board.print_self();
     
@@ -60,16 +62,16 @@ int main() {
     
     // print out the moves
     while (curr_move->next != nullptr) {
-        std::cout << "Move: (" << curr_move->from_x << ", " << curr_move->from_y << ") to (" << curr_move->to_x << ", " << curr_move->to_y << ")" << std::endl;
+        std::cout << "Move: (" << curr_move->from_y << ", " << curr_move->from_x << ") to (" << curr_move->to_y << ", " << curr_move->to_x << ")" << std::endl;
         curr_move = curr_move->next;
 
-        if(curr_move->from_x == 4 && curr_move->from_y == 7 && curr_move->to_x == 6 && curr_move->to_y == 7) {
-            best_move = *curr_move;
-        }
+        //if(curr_move->from_x == 4 && curr_move->from_y == 7 && curr_move->to_x == 6 && curr_move->to_y == 7) {
+        //   best_move = *curr_move;
+        //}
     }
 
-    board.push_move(&best_move);
-    board.print_self();
+    //board.push_move(&best_move);
+    //board.print_self();
 
     // free the move list
     board.free_move_list(move_list);
