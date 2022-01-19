@@ -249,9 +249,9 @@ Move * Board::convert_move_fen(std::string fen) {
     // should convert something like "e2e4" to a Move struct with from_x = 4, from_y = 1, to_x = 4, to_y = 3
     Move * move = new Move();
     move->from_x = fen[0] - 'a';
-    move->from_y = fen[1] - '1';
+    move->from_y = 8 -(fen[1] - '1');
     move->to_x = fen[2] - 'a';
-    move->to_y = fen[3] - '1';
+    move->to_y = 8 - (fen[3] - '1');
 
     return move;
 }
