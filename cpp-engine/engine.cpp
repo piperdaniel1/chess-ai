@@ -29,6 +29,7 @@
 
 
 /*
+ * THIS OPTION IS CURRENTLY IMPLEMENTED:
  * Okay fuck that. I think that will be way too slow because we will have to generate all of the moves of the opponent fresh for
  * every pseudo-legal move we have, all the time. Maybe we should just have a king-centric function that scans diagonals, straights,
  * and knight paths to look for an opponent piece. We would then have to run this function on every pseudo-legal move we have to make
@@ -36,6 +37,7 @@
  * Also it will be really really fast when the king is close to the edge of the board surrounded by its own pieces. This is often
  * the case.
  * 
+ * THIS IS NOT IMPLEMENTED:
  * You could potentially optimize this by caching the squares that the king had to check. If a move is not from these squares then
  * you don't need to check it. However, premature optimization is the root of all evil.
  */
