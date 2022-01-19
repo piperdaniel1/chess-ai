@@ -2,6 +2,7 @@
 #include <iostream>
 #include "minimax.h"
 #include "board.h"
+#include "fstream"
 
 // $ g++ engine.cpp minimax.cpp tt_table.cpp b_score.cpp board.cpp
 // ./a.out
@@ -46,6 +47,50 @@ int main() {
     Minimax minimax;
     Board board;
 
+    std::ifstream fen_file;
+    fen_file.open("board_file.txt", std::ios::in);
+    std::string fen = "";
+    std::getline(fen_file, fen);
+    fen_file.close();
+
+    std::cout << "FEN: " << fen << std::endl;
+
+
+    //board.import_board_fen(fen);
+    //std::cout << "Board imported." << std::endl;
+
+    Move * move_list;
+    Move * curr_move;
+    std::string move_str;
+
+    while(true) {
+        board.print_self();
+        board.print_board_metadata();
+
+        std::cout << "Generating moves..." << std::endl;
+        move_list = board.get_legal_moves();
+        curr_move = move_list;
+        int num_moves = 0;
+
+        while (curr_move->next != nullptr) {
+            std::cout << "Move: (" << curr_move->from_y << ", " << curr_move->from_x << ") to (" << curr_move->to_y << ", " << curr_move->to_x << ")" << std::endl;
+            curr_move = curr_move->next;
+            num_moves++;
+        }
+
+        std::cout << "Number of moves: " << num_moves << std::endl;
+
+        // get move from user
+        std::cout << "Enter move: ";
+        std::cin >> move_str;
+        board.push_move(board.convert_move_fen(move_str));
+    }
+
+
+    /*std::cout << "testing move fen conversion" << std::endl;
+    Move * move = board.convert_move_fen("g7a2");
+    std::cout << "Move: (" << move->from_y << ", " << move->from_x << ") to (" << move->to_y << ", " << move->to_x << ")" << std::endl;
+
     board.clear_board();
     board.set_piece(0, 4, 'k');
     board.set_piece(0, 7, 'r');
@@ -74,7 +119,7 @@ int main() {
     //board.print_self();
 
     // free the move list
-    board.free_move_list(move_list);
+    board.free_move_list(move_list);*/
 
     return 0;
 }

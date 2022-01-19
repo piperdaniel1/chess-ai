@@ -2,6 +2,7 @@
 #define BOARD_H
 
 #include <iostream>
+#include <string>
 
 struct Move {
     int from_x = -1;
@@ -34,8 +35,6 @@ class Board {
     int enPassantCol;
     int enPassantRow;
 
-    bool turn = true;
-
     bool check_on_board();
     void pull_move(Move *, int);
     bool is_legal_move(Move * move);
@@ -53,10 +52,12 @@ class Board {
     int min(int, int);
     int max(int, int);
 
-
     public:
     Board();
     ~Board();
+    void print_board_metadata();
+    void import_board_fen(std::string);
+    Move * convert_move_fen(std::string);
     void free_move_list(Move * moves);
     void clear_board();
     void set_piece(int row, int col, char piece);
@@ -64,6 +65,12 @@ class Board {
     char push_move(Move * move);
     Move * get_legal_moves();
     bool is_king_in_check(int, int);
+    // half moves since last capture or pawn move
+    int halfmove_clock;
+    // full moves since game start
+    int fullmove_number;
+    bool turn = true;
+
 };
 
 #endif

@@ -17,6 +17,9 @@ Board::Board() {
     this->white_pieces[4] = 'L';
     this->white_pieces[5] = 'P';
 
+    this->fullmove_number = 0;
+    this->halfmove_clock = 0;
+
     this->black_king = 'k';
     this->white_king = 'K';
 
@@ -45,6 +48,212 @@ void Board::clear_board() {
 
 void Board::set_piece(int row, int col, char piece) {
     this->board[row][col] = piece;
+}
+
+void Board::print_board_metadata() {
+    std::cout << "Printing board metadata..." << std::endl;
+    std::cout << "Turn: " << this->turn << std::endl;
+    std::cout << "En Passant: " << this->enPassantCol << " " << this->enPassantRow << std::endl;
+    std::cout << "White Kingside Castling: " << this->white_kingside_castling << std::endl;
+    std::cout << "White Queenside Castling: " << this->white_queenside_castling << std::endl;
+    std::cout << "Black Kingside Castling: " << this->black_kingside_castling << std::endl;
+    std::cout << "Black Queenside Castling: " << this->black_queenside_castling << std::endl;
+    std::cout << "Halfmove Clock: " << this->halfmove_clock << std::endl;
+    std::cout << "Fullmove Number: " << this->fullmove_number << std::endl;
+}
+
+void Board::import_board_fen(std::string fen) {
+    this->clear_board();
+
+    std::string row = "";
+    int row_num = 0;
+    int col_num = 0;
+    int cursor = 0;
+    for (int i = 0; i < fen.length(); i++) {
+        if (fen[i] == '/') {
+            row_num++;
+            col_num = 0;
+            continue;
+        }
+        if (fen[i] == ' ') {
+            cursor = i;
+            break;
+        }
+        if (fen[i] == '1') {
+            col_num++;
+            continue;
+        }
+        if (fen[i] == '2') {
+            col_num += 2;
+            continue;
+        }
+        if (fen[i] == '3') {
+            col_num += 3;
+            continue;
+        }
+        if (fen[i] == '4') {
+            col_num += 4;
+            continue;
+        }
+        if (fen[i] == '5') {
+            col_num += 5;
+            continue;
+        }
+        if (fen[i] == '6') {
+            col_num += 6;
+            continue;
+        }
+        if (fen[i] == '7') {
+            col_num += 7;
+            continue;
+        }
+        if (fen[i] == '8') {
+            col_num += 8;
+            continue;
+        }
+        this->board[row_num][col_num] = fen[i];
+        col_num++;
+    }
+
+    cursor++;
+    if(fen[cursor] == 'w') {
+        this->turn = true;
+    } else {
+        this->turn = false;
+    }
+
+    cursor += 2;
+    bool skip = false;
+
+    this->white_kingside_castling = false;
+    this->white_queenside_castling = false;
+    this->black_kingside_castling = false;
+    this->black_queenside_castling = false;
+
+    if(fen[cursor] == '-') {
+        skip = true;
+        cursor++;
+    } else if (fen[cursor] == 'K') {
+        this->white_kingside_castling = true;
+    } else if (fen[cursor] == 'Q') {
+        this->white_queenside_castling = true;
+    } else if (fen[cursor] == 'k') {
+        this->black_kingside_castling = true;
+    } else if (fen[cursor] == 'q') {
+        this->black_queenside_castling = true;
+    }
+
+    if(!skip) {
+        cursor++;
+    }
+
+    if(!skip) {
+        if (fen[cursor] == 'K') {
+            this->white_kingside_castling = true;
+        } else if (fen[cursor] == 'Q') {
+            this->white_queenside_castling = true;
+        } else if (fen[cursor] == 'k') {
+            this->black_kingside_castling = true;
+        } else if (fen[cursor] == 'q') {
+            this->black_queenside_castling = true;
+        } else if (fen[cursor] == ' ') {
+            skip = true;
+        }
+    }
+
+    if(!skip) {
+        cursor++;
+    }
+
+    if(!skip) {
+        if (fen[cursor] == 'K') {
+            this->white_kingside_castling = true;
+        } else if (fen[cursor] == 'Q') {
+            this->white_queenside_castling = true;
+        } else if (fen[cursor] == 'k') {
+            this->black_kingside_castling = true;
+        } else if (fen[cursor] == 'q') {
+            this->black_queenside_castling = true;
+        } else if (fen[cursor] == ' ') {
+            skip = true;
+        }
+    }
+
+    if(!skip) {
+        cursor++;
+    }
+
+    if(!skip) {
+        if (fen[cursor] == 'K') {
+            this->white_kingside_castling = true;
+        } else if (fen[cursor] == 'Q') {
+            this->white_queenside_castling = true;
+        } else if (fen[cursor] == 'k') {
+            this->black_kingside_castling = true;
+        } else if (fen[cursor] == 'q') {
+            this->black_queenside_castling = true;
+        } else if (fen[cursor] == ' ') {
+            skip = true;
+        }
+    }
+
+    cursor++;
+    if(!skip) {
+        cursor++;
+    }    
+
+    skip = false;
+
+    if(fen[cursor] == '-') {
+        cursor++;
+    } else {
+        this->enPassantCol = fen[cursor] - 'a';
+        cursor++;
+        this->enPassantRow = fen[cursor] - '1';
+        cursor++;
+    }
+
+    cursor++;
+
+    if(fen[cursor] == '-') {
+        cursor++;
+    } else {
+        if(fen[cursor+1] == ' ') {
+            this->halfmove_clock = fen[cursor] - '0';
+            cursor++;
+        } else {
+            this->halfmove_clock = (fen[cursor] - '0') * 10 + (fen[cursor+1] - '0');
+            cursor += 2;
+        }
+    }
+
+    cursor++;
+
+    if(fen[cursor] == '-') {
+        cursor++;
+    } else {
+        // one digit num
+        if(cursor+1 == fen.length()) {
+            this->fullmove_number = fen[cursor] - '0';
+        // two digit num
+        } else if (cursor+2 == fen.length()) {
+            this->fullmove_number = (fen[cursor] - '0') * 10 + (fen[cursor+1] - '0');
+        // three digit num
+        } else {
+            this->fullmove_number = (fen[cursor] - '0') * 100 + (fen[cursor+1] - '0') * 10 + (fen[cursor+2] - '0');
+        }
+    }
+}
+
+Move * Board::convert_move_fen(std::string fen) {
+    // should convert something like "e2e4" to a Move struct with from_x = 4, from_y = 1, to_x = 4, to_y = 3
+    Move * move = new Move();
+    move->from_x = fen[0] - 'a';
+    move->from_y = fen[1] - '1';
+    move->to_x = fen[2] - 'a';
+    move->to_y = fen[3] - '1';
+
+    return move;
 }
 
 // assumes that the move is legal does not support castling
@@ -141,20 +350,52 @@ char Board::push_move(Move * move) {
         }
     }
 
-    // TODO remove en passant if applicable
+    // Remove en passant
+    this->enPassantRow = -1;
+    this->enPassantCol = -1;
 
-    // TODO add en passant rights if applicable
+    // Add en passant rights if applicable
+    if(!this->turn) {
+        // if the piece is a pawn
+        if(this->board[move->from_x][move->from_y] == 'p') {
+            // if the pawn is moving two spaces
+            if(move->from_y == 1 && move->to_y == 3) {
+                this->enPassantCol = move->from_x;
+                this->enPassantRow = 2;
+            }
+        }
+    } else {
+        if(this->board[move->from_x][move->from_y] == 'P') {
+            if(move->from_y == 6 && move->to_y == 4) {
+                this->enPassantCol = move->from_x;
+                this->enPassantRow = 5;
+            }
+        }
+    }
+
+    this->halfmove_clock++;
+
+    // if the piece is a pawn
+    if(this->board[move->from_x][move->from_y] == 'p' || this->board[move->from_x][move->from_y] == 'P') {
+        this->halfmove_clock = 0;
+    }
 
     // execute move
     char captured_piece = this->board[move->to_y][move->to_x];
     this->board[move->to_y][move->to_x] = this->board[move->from_y][move->from_x];
     this->board[move->from_y][move->from_x] = '.';
 
-    if (captured_piece != '.') {
-        return captured_piece;
+    if(!this->turn) {
+        this->fullmove_number++;
     }
 
     this->turn = !this->turn;
+
+    if (captured_piece != '.') {
+        this->halfmove_clock = 0;
+        return captured_piece;
+    }
+
     return '.';
 }
 
@@ -594,7 +835,7 @@ Move * Board::get_king_moves(Move * moves, int row, int col) {
 Move * Board::get_knight_moves(Move * moves, int row, int col) {
     std::cout << "Getting knight moves at " << row << " " << col << std::endl;
 
-    if (row - 2 >= 0 && col - 1 >= 0) {
+    if (row - 2 >= 0 && col - 1 >= 0 && (this->board[row - 2][col - 1] == '.' || is_in_arr(this->board[row - 2][col - 1], turn ? black_pieces : white_pieces))) {
         moves->from_x = col;
         moves->from_y = row;
         moves->to_x = col - 1;
@@ -603,7 +844,7 @@ Move * Board::get_knight_moves(Move * moves, int row, int col) {
         moves = moves->next;
     }
 
-    if (row - 2 >= 0 && col + 1 <= 7) {
+    if (row - 2 >= 0 && col + 1 <= 7 && (this->board[row - 2][col + 1] == '.' || is_in_arr(this->board[row - 2][col + 1], turn ? black_pieces : white_pieces))) {
         moves->from_x = col;
         moves->from_y = row;
         moves->to_x = col + 1;
@@ -612,7 +853,7 @@ Move * Board::get_knight_moves(Move * moves, int row, int col) {
         moves = moves->next;
     }
 
-    if (row - 1 >= 0 && col - 2 >= 0) {
+    if (row - 1 >= 0 && col - 2 >= 0 && (this->board[row - 1][col - 2] == '.' || is_in_arr(this->board[row - 1][col - 2], turn ? black_pieces : white_pieces))) {
         moves->from_x = col;
         moves->from_y = row;
         moves->to_x = col - 2;
@@ -621,7 +862,7 @@ Move * Board::get_knight_moves(Move * moves, int row, int col) {
         moves = moves->next;
     }
 
-    if (row - 1 >= 0 && col + 2 <= 7) {
+    if (row - 1 >= 0 && col + 2 <= 7 && (this->board[row - 1][col + 2] == '.' || is_in_arr(this->board[row - 1][col + 2], turn ? black_pieces : white_pieces))) {
         moves->from_x = col;
         moves->from_y = row;
         moves->to_x = col + 2;
@@ -630,7 +871,7 @@ Move * Board::get_knight_moves(Move * moves, int row, int col) {
         moves = moves->next;
     }
 
-    if (row + 2 <= 7 && col - 1 >= 0) {
+    if (row + 2 <= 7 && col - 1 >= 0 && (this->board[row + 2][col - 1] == '.' || is_in_arr(this->board[row + 2][col - 1], turn ? black_pieces : white_pieces))) {
         moves->from_x = col;
         moves->from_y = row;
         moves->to_x = col - 1;
@@ -639,7 +880,7 @@ Move * Board::get_knight_moves(Move * moves, int row, int col) {
         moves = moves->next;
     }
 
-    if (row + 2 <= 7 && col + 1 <= 7) {
+    if (row + 2 <= 7 && col + 1 <= 7 && (this->board[row + 2][col + 1] == '.' || is_in_arr(this->board[row + 2][col + 1], turn ? black_pieces : white_pieces))) {
         moves->from_x = col;
         moves->from_y = row;
         moves->to_x = col + 1;
@@ -648,7 +889,7 @@ Move * Board::get_knight_moves(Move * moves, int row, int col) {
         moves = moves->next;
     }
 
-    if (row + 1 <= 7 && col - 2 >= 0) {
+    if (row + 1 <= 7 && col - 2 >= 0 && (this->board[row + 1][col - 2] == '.' || is_in_arr(this->board[row + 1][col - 2], turn ? black_pieces : white_pieces))) {
         moves->from_x = col;
         moves->from_y = row;
         moves->to_x = col - 2;
@@ -657,7 +898,7 @@ Move * Board::get_knight_moves(Move * moves, int row, int col) {
         moves = moves->next;
     }
 
-    if (row + 1 <= 7 && col + 2 <= 7) {
+    if (row + 1 <= 7 && col + 2 <= 7 && (this->board[row + 1][col + 2] == '.' || is_in_arr(this->board[row + 1][col + 2], turn ? black_pieces : white_pieces))) {
         moves->from_x = col;
         moves->from_y = row;
         moves->to_x = col + 2;
@@ -856,6 +1097,8 @@ Move * Board::get_pseudo_legal_moves() {
                     list_end = this->get_queen_moves(list_end, row, col);
                 } else if(piece == 'n') {
                     list_end = this->get_knight_moves(list_end, row, col);
+                } else if(piece == 'p') {
+                    list_end = this->get_pawn_moves(list_end, row, col);
                 }
             } else if (turn == true) {
                 if(piece == 'R') {
@@ -868,6 +1111,8 @@ Move * Board::get_pseudo_legal_moves() {
                     list_end = this->get_queen_moves(list_end, row, col);
                 } else if(piece == 'N') {
                     list_end = this->get_knight_moves(list_end, row, col);
+                } else if(piece == 'P') {
+                    list_end = this->get_pawn_moves(list_end, row, col);
                 }
             }
         }
