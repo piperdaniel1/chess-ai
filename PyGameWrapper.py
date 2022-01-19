@@ -220,6 +220,8 @@ class ChessWindow:
                 pygame.display.flip()
                 self.player_move = True
                 self.moves_made += 1
+
+                print("There are " + str(len(list(self.internal_board.legal_moves))) + " legal moves in this position.")
                 
                 print("current FEN:", self.internal_board.fen())
 
