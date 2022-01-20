@@ -296,7 +296,12 @@ Move * Board::convert_move_fen(std::string fen) {
 }
 
 // assumes that the move is legal does not support castling
-char Board::push_move(Move * move) {    
+char Board::push_move(Move * move) {
+    if(move->from_x < 0 || move->from_x > 7) {
+        std::cout << "push_move Error: " << move->from_x << " " << move->from_y << " " << move->to_x << " " << move->to_y << std::endl;
+        this->print_self();
+        return '.';
+    }    
     // execute castling move if applicable
     if(!this->turn) {
         if(this->black_queenside_castling) {
@@ -1096,7 +1101,9 @@ void Board::free_move_list(Move * moves) {
     while (moves != nullptr) {
         temp = moves;
         moves = moves->next;
-        delete temp;
+        if(temp->from_x >= 0 and temp->from_x <=7) {
+            delete temp;
+        }
     }
 }
 
@@ -1148,6 +1155,12 @@ Move * Board::get_pseudo_legal_moves() {
     }
 
     this->get_castling_moves(list_end);
+
+    if(moves == list_end) {
+        // no moves were found
+        delete moves;
+        return nullptr;
+    }
 
     return moves;
 }
@@ -1216,7 +1229,8 @@ bool Board::is_legal_move(Move * move) {
 Move * Board::get_legal_moves() {
     Move * pseudo_legal_moves = this->get_pseudo_legal_moves();
 
-    if(pseudo_legal_moves->from_x == -1) {
+    if(pseudo_legal_moves == nullptr) {
+        // there are no legal moves in this position
         return nullptr;
     }
 
@@ -1232,9 +1246,9 @@ Move * Board::get_legal_moves() {
     Move * moves = new Move;
     Move * list_end = moves;
     Move * prev_end;
+    int legal_moves = 0;
 
     Move * temp;
-    bool last_deleted = false;
 
     while (pseudo_legal_moves != nullptr) {
         temp = pseudo_legal_moves;
@@ -1248,16 +1262,20 @@ Move * Board::get_legal_moves() {
             list_end->next = new Move;
             prev_end = list_end;
             list_end = list_end->next;
-            last_deleted = false;
-        } else {
-            last_deleted = true;
+            legal_moves++;
         }
-
         delete temp;
     }
 
-    delete list_end;
-    prev_end->next = nullptr;
+    if(legal_moves == 0) {
+        delete moves;
+        return nullptr;
+    }
+
+    if (prev_end != nullptr) {
+        prev_end->next = nullptr;
+    }
+
     return moves;
 }
 

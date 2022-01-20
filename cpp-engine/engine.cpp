@@ -52,13 +52,15 @@ int main() {
     Minimax minimax;
     Board board;
 
-    //board.push_move(board.convert_move_fen("e2e4"));
-    board.turn = false;
+    board.push_move(board.convert_move_fen("e2e4"));
+    //board.turn = false;
+
+    //board.import_board_fen("r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1");
 
     board.print_self();
     board.print_board_metadata();
 
-    Move * best_move = minimax.get_best_move(board, 6);
+    Move * best_move = minimax.get_best_move(board, 2);
     std::cout << "Best move: " << best_move->from_y << " " << best_move->from_x << "  " << best_move->to_y << " " << best_move->to_x << std::endl;
 
     std::cout << "Evaluated " << minimax.positions_evaluated << " positions." << std::endl;

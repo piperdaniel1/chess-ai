@@ -52,7 +52,7 @@ int Minimax::minimize(Board * board, int depth, int alpha, int beta) {
         }
 
         if (alpha >= beta) {
-            break;
+            //break;
         }
 
         curr_move = curr_move->next;
@@ -111,7 +111,7 @@ int Minimax::maximize(Board * board, int depth, int alpha, int beta) {
         }
 
         if (beta <= alpha) {
-            break;
+            //break;
         }
 
         curr_move = curr_move->next;
@@ -139,14 +139,17 @@ Move * Minimax::get_best_move(Board board, int depth) {
     int best_score = -100000;
     Move * best_move = nullptr;
     int score = 0;
+    int last_eval = 0;
 
     while (curr_move != nullptr) {
         Board * next_board = new Board(board);
         next_board->push_move(curr_move);
-
+        last_eval = this->positions_evaluated;
         score = this->maximize(next_board, depth - 1, alpha, beta);
         std::cout << "Score of move (" << curr_move->from_y << " " << curr_move->from_x << " - " << curr_move->to_y << " " << curr_move->to_x << "): " << score << std::endl;
-        
+        std::cout << "Positions evaluated: " << this->positions_evaluated - last_eval << std::endl;
+        std::cout << std::endl;
+
         if (score > best_score) {
             best_score = score;
             best_move = curr_move;
@@ -154,10 +157,6 @@ Move * Minimax::get_best_move(Board board, int depth) {
 
         if (best_score > alpha) {
             alpha = best_score;
-        }
-
-        if (beta <= alpha) {
-            break;
         }
 
         curr_move = curr_move->next;
