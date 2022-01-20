@@ -1203,18 +1203,22 @@ bool Board::is_legal_move(Move * move) {
     if(this->is_king_in_check(row, col) == true) {
         this->pull_move(move, captured);
 
-        delete king_pos;
+        delete [] king_pos;
         return false;
     }
 
     this->pull_move(move, captured);
 
-    delete king_pos;
+    delete [] king_pos;
     return true;
 }
 
 Move * Board::get_legal_moves() {
     Move * pseudo_legal_moves = this->get_pseudo_legal_moves();
+
+    if(pseudo_legal_moves->from_x == -1) {
+        return nullptr;
+    }
 
     /*std::cout << "ALL PSEUDO LEGAL MOVES:" << std::endl;
     Move * curr_move = pseudo_legal_moves;

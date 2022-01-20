@@ -88,8 +88,7 @@ int Minimax::maximize(Board * board, int depth, int alpha, int beta) {
             delete board;
             return -100000;
         } else if (game_over == 3) {
-                board->free_move_list(move_list);
-
+            board->free_move_list(move_list);
             delete board;
             return 0;
         }

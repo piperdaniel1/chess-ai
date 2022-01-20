@@ -58,7 +58,7 @@ int main() {
     board.print_self();
     board.print_board_metadata();
 
-    Move * best_move = minimax.get_best_move(board, 5);
+    Move * best_move = minimax.get_best_move(board, 6);
     std::cout << "Best move: " << best_move->from_y << " " << best_move->from_x << "  " << best_move->to_y << " " << best_move->to_x << std::endl;
 
     std::cout << "Evaluated " << minimax.positions_evaluated << " positions." << std::endl;

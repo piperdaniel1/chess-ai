@@ -16,10 +16,10 @@ int Evaluator::is_game_over(Board board, Move * move_list) {
     Move * curr_move = move_list;
     int num_moves = 0;
 
-    while (curr_move != nullptr) {
-        curr_move = curr_move->next;
-        num_moves++;
+    if(curr_move != nullptr) {
+        num_moves = 1;
     }
+    
     int * king_pos = board.get_king_pos();
     bool check_status = board.is_king_in_check(king_pos[0], king_pos[1]);
     delete [] king_pos;
