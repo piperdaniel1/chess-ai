@@ -12,7 +12,7 @@ Evaluator::~Evaluator() {
 // 1 = white checkmate
 // 2 = black checkmate
 // 3 = stalemate
-int Evaluator::is_game_over(Board board) {
+int Evaluator::is_game_over(Board board, Move * legal_moves) {
     Move * move_list = board.get_legal_moves();
     Move * curr_move = move_list;
     int num_moves = 0;
@@ -37,8 +37,8 @@ int Evaluator::is_game_over(Board board) {
     return 0;
 }
 
-int Evaluator::evaluate(Board board, bool verbose=false) {
-    int game_over_status = this->is_game_over(board);
+int Evaluator::evaluate(Board board, Move * legal_moves, bool verbose=false) {
+    int game_over_status = this->is_game_over(board, legal_moves);
     if (game_over_status != 0) {
         if (game_over_status == 1) {
             return 100000;

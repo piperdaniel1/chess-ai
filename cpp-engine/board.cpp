@@ -59,6 +59,8 @@ Board::Board(const Board & b) {
     this->black_kingside_castling = true;
     this->black_queenside_castling = true;
 
+    this->turn = b.turn;
+
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {
             this->board[i][j] = b.board[i][j];
@@ -595,7 +597,7 @@ bool Board::is_king_in_check(int row, int col) {
     // check for enemy pawn on digonal from king
     // if we are checking for the black king we should be checking for white pawns
     // that are on a lower row than the king
-    if (turn == false) {
+    if (this->turn == false) {
         if (row - 1 > 0 && col + 1 < 8) {
             if (this->board[row - 1][col + 1] == enemy_pieces[5]) {
                 return true;
@@ -641,7 +643,7 @@ int Board::max(int a, int b) {
 }
 
 Move * Board::get_pawn_moves(Move * moves, int row, int col) {
-    char * pieces = turn ? black_pieces : white_pieces;
+    char * pieces = this->turn ? black_pieces : white_pieces;
 
     if(this->turn) {
         // check the square right in front of the pawn
@@ -729,7 +731,7 @@ Move * Board::get_pawn_moves(Move * moves, int row, int col) {
 }
 
 Move * Board::get_bishop_moves(Move * moves, int row, int col) {
-    char * pieces = turn ? black_pieces : white_pieces;
+    char * pieces = this->turn ? black_pieces : white_pieces;
 
     // check towards the top left
     for (int i=1; i<=min(row, col); i++) {
@@ -831,7 +833,7 @@ Move * Board::get_queen_moves(Move * moves, int row, int col) {
 }
 
 Move * Board::get_king_moves(Move * moves, int row, int col) {
-    char * pieces = turn ? black_pieces : white_pieces;
+    char * pieces = this->turn ? black_pieces : white_pieces;
 
     // check for moves in all directions
     for (int i = -1; i <= 1; i++) {
@@ -859,7 +861,7 @@ Move * Board::get_king_moves(Move * moves, int row, int col) {
 }
 
 Move * Board::get_knight_moves(Move * moves, int row, int col) {
-    if (row - 2 >= 0 && col - 1 >= 0 && (this->board[row - 2][col - 1] == '.' || is_in_arr(this->board[row - 2][col - 1], turn ? black_pieces : white_pieces))) {
+    if (row - 2 >= 0 && col - 1 >= 0 && (this->board[row - 2][col - 1] == '.' || is_in_arr(this->board[row - 2][col - 1], this->turn ? black_pieces : white_pieces))) {
         moves->from_x = col;
         moves->from_y = row;
         moves->to_x = col - 1;
@@ -868,7 +870,7 @@ Move * Board::get_knight_moves(Move * moves, int row, int col) {
         moves = moves->next;
     }
 
-    if (row - 2 >= 0 && col + 1 <= 7 && (this->board[row - 2][col + 1] == '.' || is_in_arr(this->board[row - 2][col + 1], turn ? black_pieces : white_pieces))) {
+    if (row - 2 >= 0 && col + 1 <= 7 && (this->board[row - 2][col + 1] == '.' || is_in_arr(this->board[row - 2][col + 1], this->turn ? black_pieces : white_pieces))) {
         moves->from_x = col;
         moves->from_y = row;
         moves->to_x = col + 1;
@@ -877,7 +879,7 @@ Move * Board::get_knight_moves(Move * moves, int row, int col) {
         moves = moves->next;
     }
 
-    if (row - 1 >= 0 && col - 2 >= 0 && (this->board[row - 1][col - 2] == '.' || is_in_arr(this->board[row - 1][col - 2], turn ? black_pieces : white_pieces))) {
+    if (row - 1 >= 0 && col - 2 >= 0 && (this->board[row - 1][col - 2] == '.' || is_in_arr(this->board[row - 1][col - 2], this->turn ? black_pieces : white_pieces))) {
         moves->from_x = col;
         moves->from_y = row;
         moves->to_x = col - 2;
@@ -886,7 +888,7 @@ Move * Board::get_knight_moves(Move * moves, int row, int col) {
         moves = moves->next;
     }
 
-    if (row - 1 >= 0 && col + 2 <= 7 && (this->board[row - 1][col + 2] == '.' || is_in_arr(this->board[row - 1][col + 2], turn ? black_pieces : white_pieces))) {
+    if (row - 1 >= 0 && col + 2 <= 7 && (this->board[row - 1][col + 2] == '.' || is_in_arr(this->board[row - 1][col + 2], this->turn ? black_pieces : white_pieces))) {
         moves->from_x = col;
         moves->from_y = row;
         moves->to_x = col + 2;
@@ -904,7 +906,7 @@ Move * Board::get_knight_moves(Move * moves, int row, int col) {
         moves = moves->next;
     }
 
-    if (row + 2 <= 7 && col + 1 <= 7 && (this->board[row + 2][col + 1] == '.' || is_in_arr(this->board[row + 2][col + 1], turn ? black_pieces : white_pieces))) {
+    if (row + 2 <= 7 && col + 1 <= 7 && (this->board[row + 2][col + 1] == '.' || is_in_arr(this->board[row + 2][col + 1], this->turn ? black_pieces : white_pieces))) {
         moves->from_x = col;
         moves->from_y = row;
         moves->to_x = col + 1;
@@ -913,7 +915,7 @@ Move * Board::get_knight_moves(Move * moves, int row, int col) {
         moves = moves->next;
     }
 
-    if (row + 1 <= 7 && col - 2 >= 0 && (this->board[row + 1][col - 2] == '.' || is_in_arr(this->board[row + 1][col - 2], turn ? black_pieces : white_pieces))) {
+    if (row + 1 <= 7 && col - 2 >= 0 && (this->board[row + 1][col - 2] == '.' || is_in_arr(this->board[row + 1][col - 2], this->turn ? black_pieces : white_pieces))) {
         moves->from_x = col;
         moves->from_y = row;
         moves->to_x = col - 2;
@@ -922,7 +924,7 @@ Move * Board::get_knight_moves(Move * moves, int row, int col) {
         moves = moves->next;
     }
 
-    if (row + 1 <= 7 && col + 2 <= 7 && (this->board[row + 1][col + 2] == '.' || is_in_arr(this->board[row + 1][col + 2], turn ? black_pieces : white_pieces))) {
+    if (row + 1 <= 7 && col + 2 <= 7 && (this->board[row + 1][col + 2] == '.' || is_in_arr(this->board[row + 1][col + 2], this->turn ? black_pieces : white_pieces))) {
         moves->from_x = col;
         moves->from_y = row;
         moves->to_x = col + 2;
@@ -935,7 +937,7 @@ Move * Board::get_knight_moves(Move * moves, int row, int col) {
 }
 
 Move * Board::get_rook_moves(Move * moves, int row, int col) {
-    char * pieces = turn ? black_pieces : white_pieces;
+    char * pieces = this->turn ? black_pieces : white_pieces;
     
     // check up
     for (int i = row - 1; i >= 0; i--) {
@@ -1109,7 +1111,7 @@ Move * Board::get_pseudo_legal_moves() {
                 continue;
             }
 
-            if (turn == false) {
+            if (this->turn == false) {
                 if(piece == 'r') {
                     list_end = this->get_rook_moves(list_end, row, col);
                 } else if(piece == 'k') {
@@ -1123,7 +1125,7 @@ Move * Board::get_pseudo_legal_moves() {
                 } else if(piece == 'p') {
                     list_end = this->get_pawn_moves(list_end, row, col);
                 }
-            } else if (turn == true) {
+            } else if (this->turn == true) {
                 if(piece == 'R') {
                     list_end = this->get_rook_moves(list_end, row, col);
                 } else if(piece == 'K') {

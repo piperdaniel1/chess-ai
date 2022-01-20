@@ -52,12 +52,13 @@ int main() {
     Minimax minimax;
     Board board;
 
-    board.push_move(board.convert_move_fen("e2e4"));
+    //board.push_move(board.convert_move_fen("e2e4"));
+    board.turn = false;
 
     board.print_self();
     board.print_board_metadata();
 
-    Move * best_move = minimax.get_best_move(board, 1);
+    Move * best_move = minimax.get_best_move(board, 2);
     std::cout << "Best move: " << best_move->from_y << " " << best_move->from_x << "  " << best_move->to_y << " " << best_move->to_x << std::endl;
 
     std::cout << "Evaluated " << minimax.positions_evaluated << " positions." << std::endl;
