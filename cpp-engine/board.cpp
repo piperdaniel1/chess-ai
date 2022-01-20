@@ -46,6 +46,10 @@ void Board::clear_board() {
     }
 }
 
+char Board::get_piece(int row, int col) {
+    return this->board[row][col];
+}
+
 void Board::set_piece(int row, int col, char piece) {
     this->board[row][col] = piece;
 }

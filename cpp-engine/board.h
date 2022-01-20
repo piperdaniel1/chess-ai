@@ -46,7 +46,6 @@ class Board {
     Move * get_knight_moves(Move *, int, int);
     Move * get_pawn_moves(Move *, int, int);
     Move * get_castling_moves(Move *);
-    int * get_king_pos();
     char fake_push_move(Move * move);
     int min(int, int);
     int max(int, int);
@@ -54,12 +53,14 @@ class Board {
     public:
     Board();
     ~Board();
+    int * get_king_pos();
     void print_board_metadata();
     void import_board_fen(std::string);
     Move * convert_move_fen(std::string);
     void free_move_list(Move * moves);
     void clear_board();
     void set_piece(int row, int col, char piece);
+    char get_piece(int row, int col);
     void print_self();
     char push_move(Move * move);
     Move * get_pseudo_legal_moves();
