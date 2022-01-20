@@ -1087,7 +1087,6 @@ Move * Board::get_castling_moves(Move * moves) {
 }
 
 void Board::free_move_list(Move * moves) {
-    std::cout << "Freeing move list..." << std::endl;
     Move * temp;
     while (moves != nullptr) {
         temp = moves;
@@ -1227,8 +1226,7 @@ Move * Board::get_legal_moves() {
 
     Move * temp;
     bool last_deleted = false;
-    // there is a bug in here somewhere:
-    // somehow the last legal move sometimes get deleted
+
     while (pseudo_legal_moves != nullptr) {
         temp = pseudo_legal_moves;
         pseudo_legal_moves = pseudo_legal_moves->next;

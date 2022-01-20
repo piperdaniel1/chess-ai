@@ -5,23 +5,28 @@ Minimax::Minimax() {
     std::cout << "Initializing minimax..." << std::endl;
 }
 
-int Minimax::minimize(Board board, int depth, int alpha, int beta) {
-    Move * move_list = board.get_legal_moves();
+int Minimax::minimize(Board * board, int depth, int alpha, int beta) {
+    Move * move_list = board->get_legal_moves();
     Move * curr_move = move_list;
 
     if (depth == 0) {
         this->positions_evaluated++;
-        return this->eval.evaluate(board, move_list, false);
+        int final_eval = this->eval.evaluate(*board, move_list, false);
+        delete board;
+        return final_eval;
     }
 
-    int game_over = this->eval.is_game_over(board, move_list);
+    int game_over = this->eval.is_game_over(*board, move_list);
     if (game_over != 0) {
         this->positions_evaluated++;
         if (game_over == 1) {
+            delete board;
             return 100000;
         } else if (game_over == 2) {
+            delete board;
             return -100000;
         } else if (game_over == 3) {
+            delete board;
             return 0;
         }
     }
@@ -30,8 +35,8 @@ int Minimax::minimize(Board board, int depth, int alpha, int beta) {
     int score = 0;
 
     while (curr_move != nullptr) {
-        Board next_board = board;
-        next_board.push_move(curr_move);
+        Board * next_board = new Board(*board);
+        next_board->push_move(curr_move);
         score = this->maximize(next_board, depth - 1, alpha, beta);
 
         if (score < best_score) {
@@ -49,34 +54,34 @@ int Minimax::minimize(Board board, int depth, int alpha, int beta) {
         curr_move = curr_move->next;
     }
 
-    //this->positions_evaluated++;
+    board->free_move_list(move_list);
+
     return best_score;
 }
 
-int Minimax::maximize(Board board, int depth, int alpha, int beta) {
-    Move * move_list = board.get_legal_moves();
+int Minimax::maximize(Board * board, int depth, int alpha, int beta) {
+    //std::cout << "MAXIMIZE: " << board.turn << std::endl;
+    Move * move_list = board->get_legal_moves();
     Move * curr_move = move_list;
-
-    /*std::cout << "\nmoves:" << std::endl;
-    while(move_list != nullptr) {
-        std::cout << "move: " << move_list->from_y << " " << move_list->from_x << " - " << move_list->to_y << " " << move_list->to_x << std::endl;
-        move_list = move_list->next;
-    }
-    board.print_self();*/
 
     if (depth == 0) {
         this->positions_evaluated++;
-        return this->eval.evaluate(board, move_list, false);
+        int final_eval = this->eval.evaluate(*board, move_list, false);
+        delete board;
+        return final_eval;
     }
 
-    int game_over = this->eval.is_game_over(board, move_list);
+    int game_over = this->eval.is_game_over(*board, move_list);
     if (game_over != 0) {
         this->positions_evaluated++;
         if (game_over == 1) {
+            delete board;
             return 100000;
         } else if (game_over == 2) {
+            delete board;
             return -100000;
         } else if (game_over == 3) {
+            delete board;
             return 0;
         }
     }
@@ -85,8 +90,8 @@ int Minimax::maximize(Board board, int depth, int alpha, int beta) {
     int score = 0;
 
     while (curr_move != nullptr) {
-        Board next_board = board;
-        next_board.push_move(curr_move);
+        Board * next_board = new Board(*board);
+        next_board->push_move(curr_move);
         score = this->minimize(next_board, depth - 1, alpha, beta);
 
         if (score > best_score) {
@@ -104,7 +109,8 @@ int Minimax::maximize(Board board, int depth, int alpha, int beta) {
         curr_move = curr_move->next;
     }
 
-    //this->positions_evaluated++;
+    board->free_move_list(move_list);
+
     return best_score;
 }
 
@@ -127,8 +133,8 @@ Move * Minimax::get_best_move(Board board, int depth) {
     int score = 0;
 
     while (curr_move != nullptr) {
-        Board next_board = board;
-        next_board.push_move(curr_move);
+        Board * next_board = new Board(board);
+        next_board->push_move(curr_move);
 
         score = this->maximize(next_board, depth - 1, alpha, beta);
         std::cout << "Score of move (" << curr_move->from_y << " " << curr_move->from_x << " - " << curr_move->to_y << " " << curr_move->to_x << "): " << score << std::endl;
@@ -149,6 +155,6 @@ Move * Minimax::get_best_move(Board board, int depth) {
         curr_move = curr_move->next;
     }
 
-    //this->positions_evaluated++;
+    board.free_move_list(move_list);
     return best_move;
 }
