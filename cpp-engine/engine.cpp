@@ -42,6 +42,11 @@
  * You could potentially optimize this by caching the squares that the king had to check. If a move is not from these squares then
  * you don't need to check it. However, premature optimization is the root of all evil.
  */
+
+
+/*
+ * TODO make it so that pawns cannot jump pieces when moving forward two squares.
+ */
 int main() {
     std::cout << "Initializing chess engine..." << std::endl;
     Minimax minimax;

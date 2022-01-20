@@ -625,7 +625,7 @@ Move * Board::get_pawn_moves(Move * moves, int row, int col) {
         }
 
         // check the square two in front of the pawn (if it is the first move)
-        if(row == 6 && board[row-2][col] == '.') {
+        if(row == 6 && board[row-2][col] == '.' && board[row-1][col] == '.') {
             moves->from_x = col;
             moves->from_y = row;
             moves->to_x = col;
@@ -665,7 +665,7 @@ Move * Board::get_pawn_moves(Move * moves, int row, int col) {
         }
 
         // check the square two in front of the pawn (if it is the first move)
-        if(row == 1 && board[row+2][col] == '.') {
+        if(row == 1 && board[row+2][col] == '.' && board[row+1][col] == '.') {
             moves->from_x = col;
             moves->from_y = row;
             moves->to_x = col;
