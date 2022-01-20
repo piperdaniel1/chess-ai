@@ -10,7 +10,7 @@ class Evaluator {
     public:
     Evaluator();
     ~Evaluator();
-    int evaluate(Board board, bool verbose=false);
+    int evaluate(Board board, bool verbose);
     int is_game_over(Board board);
 };
 

@@ -15,17 +15,9 @@ struct Move {
 
 class Board {
     private:
-    char board[8][8] = {{'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},
-                        {'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'},
-                        {'.', '.', '.', '.', '.', '.', '.', '.'},
-                        {'.', '.', '.', '.', '.', '.', '.', '.'},
-                        {'.', '.', '.', '.', '.', '.', '.', '.'},
-                        {'.', '.', '.', '.', '.', '.', '.', '.'},
-                        {'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'},
-                        {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'}};
-
-    char * black_pieces = new char[6];
-    char * white_pieces = new char[6];
+    char board[8][8];
+    char * black_pieces;
+    char * white_pieces;
     char black_king;
     char white_king;
     bool white_kingside_castling;
@@ -53,6 +45,7 @@ class Board {
     public:
     Board();
     ~Board();
+    Board(const Board &);
     int * get_king_pos();
     void print_board_metadata();
     void import_board_fen(std::string);

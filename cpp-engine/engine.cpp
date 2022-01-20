@@ -4,7 +4,7 @@
 #include "board.h"
 #include "fstream"
 
-// $ g++ engine.cpp minimax.cpp tt_table.cpp b_score.cpp board.cpp
+// $ g++ engine.cpp minimax.cpp tt_table.cpp evaluator.cpp board.cpp
 // ./a.out
 
 /*
@@ -60,19 +60,21 @@ int main() {
 
     std::cout << "FEN: " << fen << std::endl;
 
-    //board.import_board_fen(fen);
-    //std::cout << "Board imported." << std::endl;
+    board.import_board_fen(fen);
+    std::cout << "Board imported." << std::endl;
+
+    Board board2 = board;
 
     Move * move_list;
     Move * curr_move;
     std::string move_str;
 
     while(true) {
-        board.print_self();
-        board.print_board_metadata();
+        board2.print_self();
+        board2.print_board_metadata();
 
         std::cout << "Generating moves..." << std::endl;
-        move_list = board.get_legal_moves();
+        move_list = board2.get_legal_moves();
         curr_move = move_list;
         int num_moves = 0;
 
@@ -87,7 +89,7 @@ int main() {
         // get move from user
         std::cout << "Enter move: ";
         std::cin >> move_str;
-        board.push_move(board.convert_move_fen(move_str));
+        board2.push_move(board2.convert_move_fen(move_str));
     }
 
 

@@ -2,13 +2,13 @@
 #define MINIMAX_H
 
 #include "tt_table.h"
-#include "b_score.h"
+#include "evaluator.h"
 #include <iostream>
 
 class Minimax {
     private:
     TT_Table tt_table;
-    Board_Score eval;
+    Evaluator eval;
 
     public:
     Minimax();

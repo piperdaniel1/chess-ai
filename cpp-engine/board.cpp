@@ -1,7 +1,10 @@
 #include "board.h"
 
 Board::Board() {
-    std::cout << "Initializing board..." << std::endl;     
+    //std::cout << "Initializing board..." << std::endl;
+    this->black_pieces = new char[6];
+    this->white_pieces = new char[6];
+
     // init black pieces
     this->black_pieces[0] = 'r';
     this->black_pieces[1] = 'n';
@@ -30,12 +33,37 @@ Board::Board() {
     this->white_queenside_castling = true;
     this->black_kingside_castling = true;
     this->black_queenside_castling = true;
+
+    this->import_board_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 }
 
 Board::~Board() {
-    std::cout << "Deleting board..." << std::endl;
-    delete black_pieces;
-    delete white_pieces;
+    //std::cout << "Deleting board..." << std::endl;
+}
+
+Board::Board(const Board & b) {
+    //std::cout << "Copying board..." << std::endl;
+    this->black_pieces = b.black_pieces;
+    this->white_pieces = b.white_pieces;
+    this->black_king = b.black_king;
+    this->white_king = b.white_king;
+
+    this->fullmove_number = 0;
+    this->halfmove_clock = 0;
+
+    this->enPassantCol = -1;
+    this->enPassantRow = -1;
+
+    this->white_kingside_castling = true;
+    this->white_queenside_castling = true;
+    this->black_kingside_castling = true;
+    this->black_queenside_castling = true;
+
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            this->board[i][j] = b.board[i][j];
+        }
+    }
 }
 
 void Board::clear_board() {
