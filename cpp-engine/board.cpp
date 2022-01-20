@@ -68,6 +68,11 @@ Board::Board(const Board & b) {
     }
 }
 
+void Board::free_piece_lists() {
+    delete [] this->black_pieces;
+    delete [] this->white_pieces;
+}
+
 void Board::clear_board() {
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {

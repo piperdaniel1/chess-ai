@@ -64,6 +64,7 @@ class Board {
     // full moves since game start
     int fullmove_number;
     bool turn = true;
+    void free_piece_lists();
 
 };
 

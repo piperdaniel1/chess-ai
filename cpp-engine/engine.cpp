@@ -58,10 +58,12 @@ int main() {
     board.print_self();
     board.print_board_metadata();
 
-    Move * best_move = minimax.get_best_move(board, 3);
+    Move * best_move = minimax.get_best_move(board, 5);
     std::cout << "Best move: " << best_move->from_y << " " << best_move->from_x << "  " << best_move->to_y << " " << best_move->to_x << std::endl;
 
     std::cout << "Evaluated " << minimax.positions_evaluated << " positions." << std::endl;
+    delete best_move;
+    board.free_piece_lists();
 
     /*std::ifstream fen_file;
     fen_file.open("board_file.txt", std::ios::in);

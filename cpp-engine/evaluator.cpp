@@ -12,8 +12,7 @@ Evaluator::~Evaluator() {
 // 1 = white checkmate
 // 2 = black checkmate
 // 3 = stalemate
-int Evaluator::is_game_over(Board board, Move * legal_moves) {
-    Move * move_list = board.get_legal_moves();
+int Evaluator::is_game_over(Board board, Move * move_list) {
     Move * curr_move = move_list;
     int num_moves = 0;
 
@@ -23,6 +22,7 @@ int Evaluator::is_game_over(Board board, Move * legal_moves) {
     }
     int * king_pos = board.get_king_pos();
     bool check_status = board.is_king_in_check(king_pos[0], king_pos[1]);
+    delete [] king_pos;
 
     if (num_moves == 0 && check_status) {
         if(board.turn) {

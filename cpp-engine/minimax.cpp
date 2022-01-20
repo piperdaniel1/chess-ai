@@ -12,6 +12,7 @@ int Minimax::minimize(Board * board, int depth, int alpha, int beta) {
     if (depth == 0) {
         this->positions_evaluated++;
         int final_eval = this->eval.evaluate(*board, move_list, false);
+        board->free_move_list(move_list);
         delete board;
         return final_eval;
     }
@@ -20,12 +21,15 @@ int Minimax::minimize(Board * board, int depth, int alpha, int beta) {
     if (game_over != 0) {
         this->positions_evaluated++;
         if (game_over == 1) {
+            board->free_move_list(move_list);
             delete board;
             return 100000;
         } else if (game_over == 2) {
+            board->free_move_list(move_list);
             delete board;
             return -100000;
         } else if (game_over == 3) {
+            board->free_move_list(move_list);
             delete board;
             return 0;
         }
@@ -55,7 +59,7 @@ int Minimax::minimize(Board * board, int depth, int alpha, int beta) {
     }
 
     board->free_move_list(move_list);
-
+    delete board;
     return best_score;
 }
 
@@ -67,6 +71,7 @@ int Minimax::maximize(Board * board, int depth, int alpha, int beta) {
     if (depth == 0) {
         this->positions_evaluated++;
         int final_eval = this->eval.evaluate(*board, move_list, false);
+        board->free_move_list(move_list);
         delete board;
         return final_eval;
     }
@@ -75,12 +80,16 @@ int Minimax::maximize(Board * board, int depth, int alpha, int beta) {
     if (game_over != 0) {
         this->positions_evaluated++;
         if (game_over == 1) {
+            board->free_move_list(move_list);
             delete board;
             return 100000;
         } else if (game_over == 2) {
+            board->free_move_list(move_list);
             delete board;
             return -100000;
         } else if (game_over == 3) {
+                board->free_move_list(move_list);
+
             delete board;
             return 0;
         }
@@ -109,8 +118,8 @@ int Minimax::maximize(Board * board, int depth, int alpha, int beta) {
         curr_move = curr_move->next;
     }
 
+    delete board;
     board->free_move_list(move_list);
-
     return best_score;
 }
 
@@ -155,6 +164,13 @@ Move * Minimax::get_best_move(Board board, int depth) {
         curr_move = curr_move->next;
     }
 
+    Move * unfreed_move = new Move;
+    unfreed_move->from_x = best_move->from_x;
+    unfreed_move->from_y = best_move->from_y;
+    unfreed_move->to_y = best_move->to_y;
+    unfreed_move->to_x = best_move->to_x;
+
     board.free_move_list(move_list);
-    return best_move;
+
+    return unfreed_move;
 }
