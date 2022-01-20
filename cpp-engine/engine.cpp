@@ -60,7 +60,6 @@ int main() {
 
     std::cout << "FEN: " << fen << std::endl;
 
-
     //board.import_board_fen(fen);
     //std::cout << "Board imported." << std::endl;
 
@@ -77,7 +76,7 @@ int main() {
         curr_move = move_list;
         int num_moves = 0;
 
-        while (curr_move->next != nullptr) {
+        while (curr_move != nullptr) {
             std::cout << "Move: (" << curr_move->from_y << ", " << curr_move->from_x << ") to (" << curr_move->to_y << ", " << curr_move->to_x << ")" << std::endl;
             curr_move = curr_move->next;
             num_moves++;

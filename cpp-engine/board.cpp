@@ -302,7 +302,6 @@ char Board::push_move(Move * move) {
         if (this->white_kingside_castling) {
             if(move->from_x == 4 && move->from_y == 7 && move->to_x == 6 && move->to_y == 7) {
                 // execute white kingside castle
-                std::cout << "pushing white kingside castle move" << std::endl;
                 this->board[7][6] = 'K';
                 this->board[7][5] = 'R';
                 this->board[7][7] = '.';
@@ -610,7 +609,6 @@ int Board::max(int a, int b) {
 }
 
 Move * Board::get_pawn_moves(Move * moves, int row, int col) {
-    std::cout << "Getting pawn moves at " << row << " " << col << std::endl;
     char * pieces = turn ? black_pieces : white_pieces;
 
     if(this->turn) {
@@ -699,7 +697,6 @@ Move * Board::get_pawn_moves(Move * moves, int row, int col) {
 }
 
 Move * Board::get_bishop_moves(Move * moves, int row, int col) {
-    std::cout << "Getting bishop moves at " << row << " " << col << std::endl;
     char * pieces = turn ? black_pieces : white_pieces;
 
     // check towards the top left
@@ -794,7 +791,6 @@ Move * Board::get_bishop_moves(Move * moves, int row, int col) {
 }
 
 Move * Board::get_queen_moves(Move * moves, int row, int col) {
-    std::cout << "Getting queen moves at " << row << " " << col << std::endl;
 
     moves = this->get_bishop_moves(moves, row, col);
     moves = this->get_rook_moves(moves, row, col);
@@ -803,8 +799,6 @@ Move * Board::get_queen_moves(Move * moves, int row, int col) {
 }
 
 Move * Board::get_king_moves(Move * moves, int row, int col) {
-    std::cout << "Getting king moves at (" << col << ", " << row << ")." << std::endl;
-
     char * pieces = turn ? black_pieces : white_pieces;
 
     // check for moves in all directions
@@ -833,8 +827,6 @@ Move * Board::get_king_moves(Move * moves, int row, int col) {
 }
 
 Move * Board::get_knight_moves(Move * moves, int row, int col) {
-    std::cout << "Getting knight moves at " << row << " " << col << std::endl;
-
     if (row - 2 >= 0 && col - 1 >= 0 && (this->board[row - 2][col - 1] == '.' || is_in_arr(this->board[row - 2][col - 1], turn ? black_pieces : white_pieces))) {
         moves->from_x = col;
         moves->from_y = row;
@@ -911,7 +903,6 @@ Move * Board::get_knight_moves(Move * moves, int row, int col) {
 }
 
 Move * Board::get_rook_moves(Move * moves, int row, int col) {
-    std::cout << "Getting rook moves at (" << col << ", " << row << ")." << std::endl;
     char * pieces = turn ? black_pieces : white_pieces;
     
     // check up
@@ -1157,12 +1148,19 @@ int * Board::get_king_pos() {
 }
 
 bool Board::is_legal_move(Move * move) {
+    if(move->from_x == -1) {
+        return false;
+    }
+
     char captured = this->fake_push_move(move);
 
     int * king_pos = this->get_king_pos();
 
     int row = king_pos[0];
     int col = king_pos[1];
+
+    //std::cout << std::endl;
+    //std::cout << "King pos is " << row << " " << col << "." << std::endl;
 
     if(this->is_king_in_check(row, col) == true) {
         this->pull_move(move, captured);
@@ -1194,6 +1192,9 @@ Move * Board::get_legal_moves() {
     Move * prev_end;
 
     Move * temp;
+    bool last_deleted = false;
+    // there is a bug in here somewhere:
+    // somehow the last legal move sometimes get deleted
     while (pseudo_legal_moves != nullptr) {
         temp = pseudo_legal_moves;
         pseudo_legal_moves = pseudo_legal_moves->next;
@@ -1206,6 +1207,9 @@ Move * Board::get_legal_moves() {
             list_end->next = new Move;
             prev_end = list_end;
             list_end = list_end->next;
+            last_deleted = false;
+        } else {
+            last_deleted = true;
         }
 
         delete temp;
