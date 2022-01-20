@@ -38,7 +38,6 @@ int Evaluator::is_game_over(Board board) {
 }
 
 int Evaluator::evaluate(Board board, bool verbose=false) {
-    std::cout << "Evaluating board..." << std::endl;
     int game_over_status = this->is_game_over(board);
     if (game_over_status != 0) {
         if (game_over_status == 1) {

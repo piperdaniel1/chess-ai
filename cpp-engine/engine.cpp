@@ -52,7 +52,17 @@ int main() {
     Minimax minimax;
     Board board;
 
-    std::ifstream fen_file;
+    board.push_move(board.convert_move_fen("e2e4"));
+
+    board.print_self();
+    board.print_board_metadata();
+
+    Move * best_move = minimax.get_best_move(board, 1);
+    std::cout << "Best move: " << best_move->from_y << " " << best_move->from_x << "  " << best_move->to_y << " " << best_move->to_x << std::endl;
+
+    std::cout << "Evaluated " << minimax.positions_evaluated << " positions." << std::endl;
+
+    /*std::ifstream fen_file;
     fen_file.open("board_file.txt", std::ios::in);
     std::string fen = "";
     std::getline(fen_file, fen);
@@ -90,7 +100,7 @@ int main() {
         std::cout << "Enter move: ";
         std::cin >> move_str;
         board2.push_move(board2.convert_move_fen(move_str));
-    }
+    }*/
 
 
     /*std::cout << "testing move fen conversion" << std::endl;

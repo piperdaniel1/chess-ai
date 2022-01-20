@@ -1095,7 +1095,7 @@ void Board::free_move_list(Move * moves) {
 }
 
 Move * Board::get_pseudo_legal_moves() {
-    std::cout << "Getting pseudo legal moves..." << std::endl;
+    //std::cout << "Getting pseudo legal moves..." << std::endl;
     
     Move * moves = new Move;
     Move * list_end = moves;

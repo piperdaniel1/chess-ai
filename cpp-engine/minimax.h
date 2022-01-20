@@ -3,6 +3,7 @@
 
 #include "tt_table.h"
 #include "evaluator.h"
+#include "board.h"
 #include <iostream>
 
 class Minimax {
@@ -12,6 +13,10 @@ class Minimax {
 
     public:
     Minimax();
+    Move * get_best_move(Board board, int depth);
+    int maximize(Board board, int depth, int alpha, int beta);
+    int minimize(Board board, int depth, int alpha, int beta);
+    int positions_evaluated;
 };
 
 #endif
