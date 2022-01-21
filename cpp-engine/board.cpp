@@ -639,21 +639,8 @@ bool Board::is_king_in_check(int row, int col) {
 
     // check for enemy pawn on digonal from king
     // if we are checking for the black king we should be checking for white pawns
-    // that are on a lower row than the king
-    if (this->turn == false) {
-        if (row - 1 > 0 && col + 1 < 8) {
-            if (this->board[row - 1][col + 1] == enemy_pieces[5]) {
-                return true;
-            }
-        }
-        if (row - 1 > 0 && col - 1 >= 0) {
-            if (this->board[row - 1][col - 1] == enemy_pieces[5]) {
-                return true;
-            }
-        }
-    // if we are checking for the white king we should be checking for black pawns
     // that are on a higher row than the king
-    } else {
+    if (this->turn == false) {
         if (row + 1 < 8 && col + 1 < 8) {
             if (this->board[row + 1][col + 1] == enemy_pieces[5]) {
                 return true;
@@ -661,6 +648,19 @@ bool Board::is_king_in_check(int row, int col) {
         }
         if (row + 1 < 8 && col - 1 >= 0) {
             if (this->board[row + 1][col - 1] == enemy_pieces[5]) {
+                return true;
+            }
+        }
+    // if we are checking for the white king we should be checking for black pawns
+    // that are on a lower row than the king
+    } else {
+        if (row - 1 >= 0 && col + 1 < 8) {
+            if (this->board[row - 1][col + 1] == enemy_pieces[5]) {
+                return true;
+            }
+        }
+        if (row - 1 >= 0 && col - 1 >= 0) {
+            if (this->board[row - 1][col - 1] == enemy_pieces[5]) {
                 return true;
             }
         }

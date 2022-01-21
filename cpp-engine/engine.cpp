@@ -55,6 +55,7 @@ int main() {
     //board.push_move(board.convert_move_fen("e2e4"));
     //board.turn = false;
 
+    //board.import_board_fen("r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1");
     board.import_board_fen("r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1");
     //bug (fixed):
     //starting from above pos:
@@ -121,6 +122,16 @@ int main() {
     // f8f7: 74094 (too high)
     // g8h8: 81762 (too high)
     // full: 423263 (too high)
+
+    // Depth 4 (more better):
+    // c5c4: 60836 (too high)
+    // d7d5: 72097 (too high)
+    // f6d5: 75781 (too high)
+    // b5c4: 58205 (too high)
+    // f8f7: 74012 (too high)
+    // g8h8: 81678 (too high)
+    // progress:
+    // after c5c4, e1e2 is wrong and e1c1 (castle) is wrong, both king moves.
  
     /*std::ifstream fen_file;
     fen_file.open("board_file.txt", std::ios::in);

@@ -157,6 +157,9 @@ Move * Minimax::get_best_move(Board board, int depth) {
     int alpha = -100000;
     int beta = 100000;
 
+    // if board->turn is true, then we are maximizing
+    // if board->turn is false, then we are minimizing
+
     Move * move_list = board.get_legal_moves();
     Move * curr_move = move_list;
 
@@ -166,7 +169,13 @@ Move * Minimax::get_best_move(Board board, int depth) {
         return nullptr;
     }
 
-    int best_score = -100000;
+    int best_score = 0;
+
+    if (!board.turn) {
+        best_score = -100000;
+    } else {
+        best_score = 100000;
+    }
     Move * best_move = nullptr;
     int score = 0;
     int last_eval = 0;
@@ -175,22 +184,38 @@ Move * Minimax::get_best_move(Board board, int depth) {
         Board * next_board = new Board(board);
         next_board->push_move(curr_move);
         last_eval = this->positions_evaluated;
-        if (board.get_move_fen(curr_move) == "c5c4") {
+
+        if(!board.turn) {
             score = this->maximize(next_board, depth - 1, alpha, beta, false);
         } else {
-            score = this->maximize(next_board, depth - 1, alpha, beta, false);
+            score = this->minimize(next_board, depth - 1, alpha, beta, false);
         }
+
         std::cout << "Score of move " << board.get_move_fen(curr_move) << " is " << score << std::endl;
         std::cout << "Positions evaluated: " << this->positions_evaluated - last_eval << std::endl;
         std::cout << std::endl;
 
-        if (score > best_score) {
-            best_score = score;
-            best_move = curr_move;
+        if(!board.turn) {
+            if (score > best_score) {
+                best_score = score;
+                best_move = curr_move;
+            }
+        } else {
+            if (score < best_score) {
+                best_score = score;
+                best_move = curr_move;
+            }
         }
 
-        if (best_score > alpha) {
-            alpha = best_score;
+        if(!board.turn) {
+            if (best_score > alpha) {
+                alpha = best_score;
+            }
+        } else {
+            // this is BUGGED as SHIT bro.
+            if (best_score < beta) {
+                beta = best_score;
+            }
         }
 
         curr_move = curr_move->next;
