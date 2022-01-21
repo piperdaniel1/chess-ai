@@ -132,6 +132,24 @@ int main() {
     // g8h8: 81678 (too high)
     // progress:
     // after c5c4, e1e2 is wrong and e1c1 (castle) is wrong, both king moves.
+    // seems like this problem was due to pawns putting the king in check.
+
+    // Depth 4 (more more better):
+    // c5c4: 60771 (+2)
+    // d7d5: 72057 (+6)
+    // f6d5: 75742 (+6)
+    // b5c4: 58171 (+4)
+    // f8f7: 73975 (+3)
+    // g8h8: 81640 (+2)
+
+    // Depth 4 (more more more better):
+    // c5c4: 60769 (perfect)
+    // d7d5: 72053 (+2)
+    // f6d5: 75738 (+2)
+    // b5c4: 58167 (perfect)
+    // f8f7: 73971 (-1)
+    // g8h8: 81636 (-2)
+    // full: 422334 (+1)
  
     /*std::ifstream fen_file;
     fen_file.open("board_file.txt", std::ios::in);

@@ -20,7 +20,7 @@ int Minimax::minimize(Board * board, int depth, int alpha, int beta, bool verbos
 
     int game_over = this->eval.is_game_over(*board, move_list);
     if (game_over != 0) {
-        this->positions_evaluated++;
+        //this->positions_evaluated++;
         if (game_over == 1) {
             board->free_move_list(move_list);
             delete board;
@@ -93,7 +93,7 @@ int Minimax::maximize(Board * board, int depth, int alpha, int beta, bool verbos
 
     int game_over = this->eval.is_game_over(*board, move_list);
     if (game_over != 0) {
-        this->positions_evaluated++;
+        //this->positions_evaluated++;
         if (game_over == 1) {
             board->free_move_list(move_list);
             delete board;
