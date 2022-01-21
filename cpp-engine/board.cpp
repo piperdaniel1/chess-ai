@@ -415,7 +415,7 @@ char Board::push_move(Move * move) {
     // Add en passant rights if applicable
     if(!this->turn) {
         // if the piece is a pawn
-        if(this->board[move->from_x][move->from_y] == 'p') {
+        if(this->board[move->from_y][move->from_x] == 'p') {
             // if the pawn is moving two spaces
             if(move->from_y == 1 && move->to_y == 3) {
                 this->enPassantCol = move->from_x;
@@ -423,7 +423,7 @@ char Board::push_move(Move * move) {
             }
         }
     } else {
-        if(this->board[move->from_x][move->from_y] == 'P') {
+        if(this->board[move->from_y][move->from_x] == 'P') {
             if(move->from_y == 6 && move->to_y == 4) {
                 this->enPassantCol = move->from_x;
                 this->enPassantRow = 5;
@@ -451,7 +451,6 @@ char Board::push_move(Move * move) {
     if(move->promotion != '.') {
         this->board[move->to_y][move->to_x] = move->promotion;
     }
-
 
     /*if(move->from_x == 1 && move->from_y == 1 && move->to_x == 1 && move->to_y == 0) {
         std::cout << "after:" << std::endl;

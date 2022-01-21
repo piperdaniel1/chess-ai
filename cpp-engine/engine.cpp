@@ -72,7 +72,7 @@ int main() {
     board.print_self();
     board.print_board_metadata();
 
-    Move * best_move = minimax.get_best_move(board, 3);
+    Move * best_move = minimax.get_best_move(board, 4);
     std::cout << "Best move: " << best_move->from_y << " " << best_move->from_x << "  " << best_move->to_y << " " << best_move->to_x << std::endl;
 
     std::cout << "Evaluated " << minimax.positions_evaluated << " positions." << std::endl;
@@ -102,6 +102,25 @@ int main() {
     // b5c4: 1352 (perfect)
     // f8f7: 1622 (-1)
     // g8h8: 1752 (-1)
+
+    // New "more more fixed" version:
+    // c5c4: 1409 (perfect)
+    // d7d5: 1643 (perfect)
+    // f6d5: 1687 (perfect)
+    // b5c4: 1352 (perfect)
+    // f8f7: 1623 (perfect)
+    // g8h8: 1753 (perfect)
+    // full: 9467 (perfect)
+    // nice! depth 3 is correct.
+
+
+    // Depth 4:
+    // c5c4: 61066 (too high)
+    // d7d5: 72189 (too high)
+    // f6d5: 75867 (too high)
+    // f8f7: 74094 (too high)
+    // g8h8: 81762 (too high)
+    // full: 423263 (too high)
  
     /*std::ifstream fen_file;
     fen_file.open("board_file.txt", std::ios::in);
