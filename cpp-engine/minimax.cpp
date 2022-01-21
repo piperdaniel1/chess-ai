@@ -42,17 +42,17 @@ int Minimax::minimize(Board * board, int depth, int alpha, int beta, bool verbos
     while (curr_move != nullptr) {
         Board * next_board = new Board(*board);
         next_board->push_move(curr_move);
-        /*if(verbose) {
+        if(verbose) {
             std::cout << "After push: " << std::endl;
             next_board->print_self();
         }
-        last_eval = this->positions_evaluated;*/
+        last_eval = this->positions_evaluated;
         score = this->maximize(next_board, depth - 1, alpha, beta, false);
-        /*if(verbose) {
+        if(verbose) {
             std::cout << "raw move: " << curr_move->from_y << " " << curr_move->from_x << " " << curr_move->to_y << " " << curr_move->to_x << std::endl;
             std::cout << board->get_move_fen(curr_move) << " positions evaluated: " << this->positions_evaluated - last_eval << std::endl;
             std::cout << std::endl;
-        }*/
+        }
         if (score < best_score) {
             best_score = score;
         }
@@ -111,21 +111,21 @@ int Minimax::maximize(Board * board, int depth, int alpha, int beta, bool verbos
     while (curr_move != nullptr) {
         Board * next_board = new Board(*board);
         next_board->push_move(curr_move);
-        if(verbose) {
+        /*if(verbose) {
             std::cout << "After push: " << std::endl;
             next_board->print_self();
-        }
+        }*/
         last_eval = this->positions_evaluated;
-        if(verbose && board->get_move_fen(curr_move) == "a6f6") {
-            score = this->minimize(next_board, depth - 1, alpha, beta, false);
+        if(verbose && board->get_move_fen(curr_move) == "c2c4") {
+            score = this->minimize(next_board, depth - 1, alpha, beta, true);
         } else {
             score = this->minimize(next_board, depth - 1, alpha, beta, false);
         }
-        if(verbose) {
+        /*if(verbose) {
             std::cout << "raw move: " << curr_move->from_y << " " << curr_move->from_x << " " << curr_move->to_y << " " << curr_move->to_x << std::endl;
             std::cout << board->get_move_fen(curr_move) << " positions evaluated: " << this->positions_evaluated - last_eval << std::endl;
             std::cout << std::endl;
-        }
+        }*/
         if (score > best_score) {
             best_score = score;
         }

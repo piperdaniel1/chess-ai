@@ -56,11 +56,18 @@ int main() {
     //board.turn = false;
 
     board.import_board_fen("r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1");
-    //bug:
+    //bug (fixed):
     //starting from above pos:
     //c5c4 -> a6f6
     //engine evaluates g8f7 as a possible move when it leaves the white king in check from the enemy queen.
     //bug must be caused by is_legal_move function.
+
+    //bug:
+    //starting from above pos:
+    //d7d5 -> c2c4
+    //black should be able to take with en passant with the move b4c3.
+    //however, this move is missing.
+    //bug must be caused by the en passant section in the get_pawn_moves function.
 
     board.print_self();
     board.print_board_metadata();

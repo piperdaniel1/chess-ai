@@ -733,7 +733,7 @@ Move * Board::get_pawn_moves(Move * moves, int row, int col) {
         }
 
         // check the square to the diagonal left of the pawn
-        if(col - 1 >= 0 && (this->is_in_arr(board[row-1][col-1], pieces) || row-1 == this->enPassantRow && col-1 == this->enPassantCol)) {
+        if(col - 1 >= 0 && (this->is_in_arr(board[row-1][col-1], pieces) || (row-1 == this->enPassantRow && col-1 == this->enPassantCol))) {
             if(row-1 == 0) {
                 moves = this->clone_promotion_moves(moves, row, col, row-1, col-1);
             } else {
@@ -747,7 +747,7 @@ Move * Board::get_pawn_moves(Move * moves, int row, int col) {
         }
 
         // check the square to the diagonal right of the pawn
-        if(col + 1 < 8 && (this->is_in_arr(board[row-1][col+1], pieces) || row-1 == this->enPassantRow && col+1 == this->enPassantCol)) {
+        if(col + 1 < 8 && (this->is_in_arr(board[row-1][col+1], pieces) || (row-1 == this->enPassantRow && col+1 == this->enPassantCol))) {
             if(row-1 == 0) {
                 moves = this->clone_promotion_moves(moves, row, col, row-1, col+1);
             } else {
@@ -784,8 +784,8 @@ Move * Board::get_pawn_moves(Move * moves, int row, int col) {
             moves = moves->next;
         }
 
-        // check the square to the diagonal left of the pawn
-        if(col - 1 >= 0 && (this->is_in_arr(board[row+1][col-1], pieces) || row+1 == this->enPassantRow && col-1 == this->enPassantCol)) {
+        // check the square to the diagonal "left" of the pawn
+        if(col - 1 >= 0 && (this->is_in_arr(board[row+1][col-1], pieces) || (row+1 == this->enPassantRow && col-1 == this->enPassantCol))) {
             if(row+1 == 7) {
                 moves = this->clone_promotion_moves(moves, row, col, row+1, col-1);
             } else {
@@ -798,8 +798,8 @@ Move * Board::get_pawn_moves(Move * moves, int row, int col) {
             }
         }
 
-        // check the square to the diagonal right of the pawn
-        if(col + 1 < 8 && (this->is_in_arr(board[row+1][col+1], pieces) || row+1 == this->enPassantRow && col+1 == this->enPassantCol)) {
+        // check the square to the diagonal "right" of the pawn
+        if(col + 1 < 8 && (this->is_in_arr(board[row+1][col+1], pieces) || (row+1 == this->enPassantRow && col+1 == this->enPassantCol))) {
             if(row+1 == 7) {
                 moves = this->clone_promotion_moves(moves, row, col, row+1, col+1);
             } else {
