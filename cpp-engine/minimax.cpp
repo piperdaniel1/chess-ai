@@ -146,7 +146,7 @@ Move * Minimax::get_best_move(Board board, int depth) {
         next_board->push_move(curr_move);
         last_eval = this->positions_evaluated;
         score = this->maximize(next_board, depth - 1, alpha, beta);
-        std::cout << "Score of move (" << curr_move->from_y << " " << curr_move->from_x << " - " << curr_move->to_y << " " << curr_move->to_x << "): " << score << std::endl;
+        std::cout << "Score of move " << board.get_move_fen(curr_move) << " is " << score << std::endl;
         std::cout << "Positions evaluated: " << this->positions_evaluated - last_eval << std::endl;
         std::cout << std::endl;
 

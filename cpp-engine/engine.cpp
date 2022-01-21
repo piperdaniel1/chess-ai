@@ -52,20 +52,29 @@ int main() {
     Minimax minimax;
     Board board;
 
-    board.push_move(board.convert_move_fen("e2e4"));
+    //board.push_move(board.convert_move_fen("e2e4"));
     //board.turn = false;
 
-    //board.import_board_fen("r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1");
+    board.import_board_fen("r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1");
 
     board.print_self();
     board.print_board_metadata();
 
-    Move * best_move = minimax.get_best_move(board, 2);
+    Move * best_move = minimax.get_best_move(board, 3);
     std::cout << "Best move: " << best_move->from_y << " " << best_move->from_x << "  " << best_move->to_y << " " << best_move->to_x << std::endl;
 
     std::cout << "Evaluated " << minimax.positions_evaluated << " positions." << std::endl;
     delete best_move;
     board.free_piece_lists();
+
+    // c5c4: 1410 (+1)
+    // d7d5: 1643 (perfect)
+    // f6d5: 1687 (perfect)
+    // b5c4: 1353 (+1)
+    // f8f7: 1634 (+11)
+    // g8h8: 1752 (-1 missing)
+
+    // full: 9479 (+12)
 
     /*std::ifstream fen_file;
     fen_file.open("board_file.txt", std::ios::in);

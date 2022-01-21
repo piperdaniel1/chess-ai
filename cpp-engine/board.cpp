@@ -295,6 +295,17 @@ Move * Board::convert_move_fen(std::string fen) {
     return move;
 }
 
+std::string Board::get_move_fen(Move * move) {
+    std::string fen = "";
+    fen += (char)(move->from_x + 'a');
+    fen += (char)(7 - move->from_y + '1');
+    fen += (char)(move->to_x + 'a');
+    fen += (char)(7 - move->to_y + '1');
+
+    return fen;
+}
+
+
 // assumes that the move is legal does not support castling
 char Board::push_move(Move * move) {
     if(move->from_x < 0 || move->from_x > 7) {
@@ -427,6 +438,10 @@ char Board::push_move(Move * move) {
     char captured_piece = this->board[move->to_y][move->to_x];
     this->board[move->to_y][move->to_x] = this->board[move->from_y][move->from_x];
     this->board[move->from_y][move->from_x] = '.';
+
+    if(move->promotion != '.') {
+        this->board[move->to_y][move->to_x] = move->promotion;
+    }
 
     if(!this->turn) {
         this->fullmove_number++;
@@ -652,18 +667,43 @@ int Board::max(int a, int b) {
     return b;
 }
 
+Move * Board::clone_promotion_moves(Move * moves, int from_y, int from_x, int to_y, int to_x) {
+    char * promo_pieces;
+    if(this->turn) {
+        promo_pieces = this->white_pieces;
+    } else {
+        promo_pieces = this->black_pieces;
+    }
+
+    for(int i=0; i<4; i++) {
+        moves->from_x = from_x;
+        moves->from_y = from_y;
+        moves->to_x = to_x;
+        moves->to_y = to_y;
+        moves->promotion = promo_pieces[i];
+        moves->next = new Move;
+        moves = moves->next;
+    }
+
+    return moves;
+}
+
 Move * Board::get_pawn_moves(Move * moves, int row, int col) {
     char * pieces = this->turn ? black_pieces : white_pieces;
 
     if(this->turn) {
         // check the square right in front of the pawn
         if(board[row-1][col] == '.') {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = col;
-            moves->to_y = row - 1;
-            moves->next = new Move;
-            moves = moves->next;
+            if(row-1 == 0) {
+                moves = this->clone_promotion_moves(moves, row, col, row-1, col);
+            } else {
+                moves->from_x = col;
+                moves->from_y = row;
+                moves->to_x = col;
+                moves->to_y = row - 1;
+                moves->next = new Move;
+                moves = moves->next;
+            }
         }
 
         // check the square two in front of the pawn (if it is the first move)
@@ -678,32 +718,44 @@ Move * Board::get_pawn_moves(Move * moves, int row, int col) {
 
         // check the square to the diagonal left of the pawn
         if(col - 1 >= 0 && (this->is_in_arr(board[row-1][col-1], pieces) || row-1 == this->enPassantRow && col-1 == this->enPassantCol)) {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = col - 1;
-            moves->to_y = row - 1;
-            moves->next = new Move;
-            moves = moves->next;
+            if(row-1 == 0) {
+                moves = this->clone_promotion_moves(moves, row, col, row-1, col-1);
+            } else {
+                moves->from_x = col;
+                moves->from_y = row;
+                moves->to_x = col - 1;
+                moves->to_y = row - 1;
+                moves->next = new Move;
+                moves = moves->next;
+            }
         }
 
         // check the square to the diagonal right of the pawn
         if(col + 1 < 8 && (this->is_in_arr(board[row-1][col+1], pieces) || row-1 == this->enPassantRow && col+1 == this->enPassantCol)) {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = col + 1;
-            moves->to_y = row - 1;
-            moves->next = new Move;
-            moves = moves->next;
+            if(row-1 == 0) {
+                moves = this->clone_promotion_moves(moves, row, col, row-1, col+1);
+            } else {
+                moves->from_x = col;
+                moves->from_y = row;
+                moves->to_x = col + 1;
+                moves->to_y = row - 1;
+                moves->next = new Move;
+                moves = moves->next;
+            }
         }
     } else {
         // check the square right in front of the pawn
         if(board[row+1][col] == '.') {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = col;
-            moves->to_y = row + 1;
-            moves->next = new Move;
-            moves = moves->next;
+            if(row+1 == 7) {
+                moves = this->clone_promotion_moves(moves, row, col, row+1, col);
+            } else {
+                moves->from_x = col;
+                moves->from_y = row;
+                moves->to_x = col;
+                moves->to_y = row + 1;
+                moves->next = new Move;
+                moves = moves->next;
+            }
         }
 
         // check the square two in front of the pawn (if it is the first move)
@@ -718,22 +770,30 @@ Move * Board::get_pawn_moves(Move * moves, int row, int col) {
 
         // check the square to the diagonal left of the pawn
         if(col - 1 >= 0 && (this->is_in_arr(board[row+1][col-1], pieces) || row+1 == this->enPassantRow && col-1 == this->enPassantCol)) {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = col - 1;
-            moves->to_y = row + 1;
-            moves->next = new Move;
-            moves = moves->next;
+            if(row+1 == 7) {
+                moves = this->clone_promotion_moves(moves, row, col, row+1, col-1);
+            } else {
+                moves->from_x = col;
+                moves->from_y = row;
+                moves->to_x = col - 1;
+                moves->to_y = row + 1;
+                moves->next = new Move;
+                moves = moves->next;
+            }
         }
 
         // check the square to the diagonal right of the pawn
         if(col + 1 < 8 && (this->is_in_arr(board[row+1][col+1], pieces) || row+1 == this->enPassantRow && col+1 == this->enPassantCol)) {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = col + 1;
-            moves->to_y = row + 1;
-            moves->next = new Move;
-            moves = moves->next;
+            if(row+1 == 7) {
+                moves = this->clone_promotion_moves(moves, row, col, row+1, col+1);
+            } else {
+                moves->from_x = col;
+                moves->from_y = row;
+                moves->to_x = col + 1;
+                moves->to_y = row + 1;
+                moves->next = new Move;
+                moves = moves->next;
+            }
         }
     }
 
