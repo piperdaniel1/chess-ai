@@ -56,6 +56,11 @@ int main() {
     //board.turn = false;
 
     board.import_board_fen("r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1");
+    //bug:
+    //starting from above pos:
+    //c5c4 -> a6f6
+    //engine evaluates g8f7 as a possible move when it leaves the white king in check from the enemy queen.
+    //bug must be caused by is_legal_move function.
 
     board.print_self();
     board.print_board_metadata();
@@ -73,9 +78,24 @@ int main() {
     // b5c4: 1353 (+1)
     // f8f7: 1634 (+11)
     // g8h8: 1752 (-1 missing)
-
     // full: 9479 (+12)
 
+    // New "fixed" version:
+    // c5c4: 1410 (+1)
+    // d7d5: 1643 (perfect)
+    // f6d5: 1687 (perfect)
+    // b5c4: 1353 (+1)
+    // f8f7: 1622 (-1)
+    // g8h8: 1752 (-1)
+
+    // New "more fixed" version:
+    // c5c4: 1409 (perfect)
+    // d7d5: 1642 (-1)
+    // f6d5: 1686 (-1)
+    // b5c4: 1352 (perfect)
+    // f8f7: 1622 (-1)
+    // g8h8: 1752 (-1)
+ 
     /*std::ifstream fen_file;
     fen_file.open("board_file.txt", std::ios::in);
     std::string fen = "";

@@ -438,10 +438,10 @@ char Board::push_move(Move * move) {
         this->halfmove_clock = 0;
     }
 
-    if(move->from_x == 1 && move->from_y == 1 && move->to_x == 1 && move->to_y == 0) {
-        std::cout << "before:" << std::endl;
-        this->print_self();
-    }
+    //if(move->from_x == 1 && move->from_y == 1 && move->to_x == 1 && move->to_y == 0) {
+    //    std::cout << "before:" << std::endl;
+    //    this->print_self();
+    //}
 
     // execute move
     char captured_piece = this->board[move->to_y][move->to_x];
@@ -453,10 +453,10 @@ char Board::push_move(Move * move) {
     }
 
 
-    if(move->from_x == 1 && move->from_y == 1 && move->to_x == 1 && move->to_y == 0) {
+    /*if(move->from_x == 1 && move->from_y == 1 && move->to_x == 1 && move->to_y == 0) {
         std::cout << "after:" << std::endl;
         this->print_self();
-    }
+    }*/
 
     if(!this->turn) {
         this->fullmove_number++;
@@ -507,7 +507,7 @@ bool Board::is_king_in_check(int row, int col) {
             break;
         }
     }
-    for (int i = row + 1; i < 0; i--) {
+    for (int i = row + 1; i < 8; i--) {
         if (this->board[i][col] == enemy_pieces[0] || this->board[i][col] == enemy_pieces[3]) {
             return true;
         } else if (this->board[i][col] != '.') {
@@ -1335,6 +1335,7 @@ Move * Board::get_legal_moves() {
             list_end->from_y = temp->from_y;
             list_end->to_x = temp->to_x;
             list_end->to_y = temp->to_y;
+            list_end->promotion = temp->promotion;
             list_end->next = new Move;
             prev_end = list_end;
             list_end = list_end->next;
