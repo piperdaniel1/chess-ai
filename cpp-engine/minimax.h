@@ -14,8 +14,8 @@ class Minimax {
     public:
     Minimax();
     Move * get_best_move(Board board, int depth);
-    int maximize(Board * board, int depth, int alpha, int beta);
-    int minimize(Board * board, int depth, int alpha, int beta);
+    int maximize(Board * board, int depth, int alpha, int beta, bool verbose);
+    int minimize(Board * board, int depth, int alpha, int beta, bool verbose);
     int positions_evaluated;
 };
 

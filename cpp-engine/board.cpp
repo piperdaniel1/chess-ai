@@ -302,6 +302,10 @@ std::string Board::get_move_fen(Move * move) {
     fen += (char)(move->to_x + 'a');
     fen += (char)(7 - move->to_y + '1');
 
+    if(move->promotion != '.') {
+        fen += move->promotion;
+    }
+
     return fen;
 }
 
@@ -434,6 +438,11 @@ char Board::push_move(Move * move) {
         this->halfmove_clock = 0;
     }
 
+    if(move->from_x == 1 && move->from_y == 1 && move->to_x == 1 && move->to_y == 0) {
+        std::cout << "before:" << std::endl;
+        this->print_self();
+    }
+
     // execute move
     char captured_piece = this->board[move->to_y][move->to_x];
     this->board[move->to_y][move->to_x] = this->board[move->from_y][move->from_x];
@@ -441,6 +450,12 @@ char Board::push_move(Move * move) {
 
     if(move->promotion != '.') {
         this->board[move->to_y][move->to_x] = move->promotion;
+    }
+
+
+    if(move->from_x == 1 && move->from_y == 1 && move->to_x == 1 && move->to_y == 0) {
+        std::cout << "after:" << std::endl;
+        this->print_self();
     }
 
     if(!this->turn) {
@@ -681,6 +696,7 @@ Move * Board::clone_promotion_moves(Move * moves, int from_y, int from_x, int to
         moves->to_x = to_x;
         moves->to_y = to_y;
         moves->promotion = promo_pieces[i];
+
         moves->next = new Move;
         moves = moves->next;
     }
