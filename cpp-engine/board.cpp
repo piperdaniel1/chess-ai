@@ -48,16 +48,16 @@ Board::Board(const Board & b) {
     this->black_king = b.black_king;
     this->white_king = b.white_king;
 
-    this->fullmove_number = 0;
-    this->halfmove_clock = 0;
+    this->fullmove_number = b.fullmove_number;
+    this->halfmove_clock = b.halfmove_clock;
 
-    this->enPassantCol = -1;
-    this->enPassantRow = -1;
+    this->enPassantCol = b.enPassantCol;
+    this->enPassantRow = b.enPassantRow;
 
-    this->white_kingside_castling = true;
-    this->white_queenside_castling = true;
-    this->black_kingside_castling = true;
-    this->black_queenside_castling = true;
+    this->white_kingside_castling = b.white_kingside_castling;
+    this->white_queenside_castling = b.white_queenside_castling;
+    this->black_kingside_castling = b.black_kingside_castling;
+    this->black_queenside_castling = b.black_queenside_castling;
 
     this->turn = b.turn;
 
@@ -382,9 +382,11 @@ char Board::push_move(Move * move) {
                 this->black_kingside_castling = false;
                 this->black_queenside_castling = false;
             }
-        } else if (this->black_queenside_castling) {
+        }
+
+        if (this->black_queenside_castling) {
             if(move->from_x == 0 && move->from_y == 0) {
-                this->black_kingside_castling = false;
+                this->black_queenside_castling = false;
             } else if (move->from_x == 4 && move->from_y == 0) {
                 this->black_kingside_castling = false;
                 this->black_queenside_castling = false;
@@ -398,10 +400,12 @@ char Board::push_move(Move * move) {
                 this->white_kingside_castling = false;
                 this->white_queenside_castling = false;
             }
-        } else if (this->white_queenside_castling) {
-            if(move->from_x == 0 && move->from_y == 0) {
-                this->white_kingside_castling = false;
-            } else if (move->from_x == 7 && move->from_y == 7) {
+        }
+
+        if (this->white_queenside_castling) {
+            if(move->from_x == 0 && move->from_y == 7) {
+                this->white_queenside_castling = false;
+            } else if (move->from_x == 4 && move->from_y == 7) {
                 this->white_kingside_castling = false;
                 this->white_queenside_castling = false;
             }

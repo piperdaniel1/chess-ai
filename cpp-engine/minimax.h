@@ -10,6 +10,7 @@ class Minimax {
     private:
     TT_Table tt_table;
     Evaluator eval;
+    bool v2;
 
     public:
     Minimax();
