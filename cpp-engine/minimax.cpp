@@ -179,6 +179,20 @@ Move * Minimax::get_best_move(Board board, int depth) {
         next_board->push_move(curr_move);
         last_eval = this->positions_evaluated;
 
+        /*if(board.get_move_fen(curr_move) == "h7h5") {
+            std::cout << "original:" << std::endl;
+            board.print_self();
+            board.print_board_metadata();
+            std::cout << "next:" << std::endl;
+            next_board->print_self();
+            next_board->print_board_metadata();
+            std::cout << "ideal next:" << std::endl;
+            Board * test_board = new Board;
+            test_board->import_board_fen("r2q1rk1/pP1p2p1/Q4n2/bb2p2p/Npp5/1B3NBn/pPPP1PPP/R3KR2 w Q - 0 3");
+            test_board->print_self();
+            test_board->print_board_metadata();
+        }*/
+        
         if(!board.turn) {
             score = this->maximize(next_board, depth - 1, alpha, beta, false);
         } else {

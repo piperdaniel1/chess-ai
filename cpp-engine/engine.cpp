@@ -56,7 +56,7 @@ int main() {
     //board.turn = false;
 
     //board.import_board_fen("r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1");
-    board.import_board_fen("r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1");
+    board.import_board_fen("r2q1rk1/pP1p2pp/Q4n2/bb2p3/Npp5/1B3NBn/pPPP1PPP/R3KR2 b Q - 1 2");
     //bug (fixed):
     //starting from above pos:
     //c5c4 -> a6f6
@@ -73,7 +73,7 @@ int main() {
     board.print_self();
     board.print_board_metadata();
 
-    Move * best_move = minimax.get_best_move(board, 5);
+    Move * best_move = minimax.get_best_move(board, 3);
     std::cout << "Best move: " << best_move->from_y << " " << best_move->from_x << "  " << best_move->to_y << " " << best_move->to_x << std::endl;
 
     std::cout << "Evaluated " << minimax.positions_evaluated << " positions." << std::endl;
@@ -177,6 +177,10 @@ int main() {
     // b5c4: 2027697 (too high)
     // f8f7: 2703502 (too high)
     // g8h8: 3212160 (too high)
+    // full: 15833715 (too high)
+    // So the issue with this is that after c5c4, h1f1 the engine evals h7h5 as having 1375 positions. After putting in the FEN
+    // for that position it evals to 1374 (correct). So something is wrong in that push. Should go through and manually print stuff
+    // the old fashioned way from d=3 before h7h5.  
  
     /*std::ifstream fen_file;
     fen_file.open("board_file.txt", std::ios::in);
