@@ -246,7 +246,7 @@ void Board::import_board_fen(std::string fen) {
     if(fen[cursor] == '-') {
         cursor++;
     } else {
-        this->enPassantCol = fen[cursor] - 'a';
+        this->enPassantCol = 7 - (fen[cursor] - 'a');
         cursor++;
         this->enPassantRow = fen[cursor] - '1';
         cursor++;
@@ -438,7 +438,7 @@ char Board::push_move(Move * move) {
     this->halfmove_clock++;
 
     // if the piece is a pawn
-    if(this->board[move->from_x][move->from_y] == 'p' || this->board[move->from_x][move->from_y] == 'P') {
+    if(this->board[move->from_y][move->from_x] == 'p' || this->board[move->from_y][move->from_x] == 'P') {
         this->halfmove_clock = 0;
     }
 
@@ -446,11 +446,24 @@ char Board::push_move(Move * move) {
     //    std::cout << "before:" << std::endl;
     //    this->print_self();
     //}
-
-    // execute move
-    char captured_piece = this->board[move->to_y][move->to_x];
-    this->board[move->to_y][move->to_x] = this->board[move->from_y][move->from_x];
-    this->board[move->from_y][move->from_x] = '.';
+    char captured_piece = '.';
+    // execute move for en passant
+    if(move->to_x != move->from_x && (this->board[move->from_y][move->from_x] == 'P' || this->board[move->from_y][move->from_x] == 'p') && this->board[move->to_y][move->to_x] == '.') {
+        //take with en passant
+        if(!this->turn) {
+            captured_piece = this->board[move->to_y-1][move->to_x];
+            this->board[move->to_y-1][move->to_x] = '.';
+        } else {
+            captured_piece = this->board[move->to_y+1][move->to_x];
+            this->board[move->to_y+1][move->to_x] = '.';
+        }
+        this->board[move->to_y][move->to_x] = this->board[move->from_y][move->from_x];
+        this->board[move->from_y][move->from_x] = '.';
+    } else {
+        captured_piece = this->board[move->to_y][move->to_x];
+        this->board[move->to_y][move->to_x] = this->board[move->from_y][move->from_x];
+        this->board[move->from_y][move->from_x] = '.';
+    }
 
     if(move->promotion != '.') {
         this->board[move->to_y][move->to_x] = move->promotion;

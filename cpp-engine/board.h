@@ -16,7 +16,6 @@ struct Move {
 
 class Board {
     private:
-    char board[8][8];
     char * black_pieces;
     char * white_pieces;
     char black_king;
@@ -45,6 +44,7 @@ class Board {
     int max(int, int);
 
     public:
+    char board[8][8];
     Board();
     ~Board();
     Board(const Board &);

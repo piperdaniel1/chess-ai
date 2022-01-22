@@ -47,12 +47,8 @@ int Minimax::minimize(Board * board, int depth, int alpha, int beta, bool verbos
             std::cout << "After push: " << std::endl;
             next_board->print_self();
         }*/
-        last_eval = this->positions_evaluated;
-        if(verbose && board->get_move_fen(curr_move) == "a8b8") {
-            score = this->maximize(next_board, depth - 1, alpha, beta, false);
-        } else {
-            score = this->maximize(next_board, depth - 1, alpha, beta, false);
-        }
+        //last_eval = this->positions_evaluated;
+        score = this->maximize(next_board, depth - 1, alpha, beta, false);
         /*if(verbose) {
             std::cout << "raw move: " << curr_move->from_y << " " << curr_move->from_x << " " << curr_move->to_y << " " << curr_move->to_x << std::endl;
             std::cout << board->get_move_fen(curr_move) << " positions evaluated: " << this->positions_evaluated - last_eval << std::endl;
@@ -116,20 +112,18 @@ int Minimax::maximize(Board * board, int depth, int alpha, int beta, bool verbos
     while (curr_move != nullptr) {
         Board * next_board = new Board(*board);
         next_board->push_move(curr_move);
-        /*if(verbose && this->v2) {
+        /*if(verbose) {
             std::cout << "After push: " << std::endl;
             next_board->print_self();
         }*/
         last_eval = this->positions_evaluated;
         
-        if(verbose && board->get_move_fen(curr_move) == "a1a2") {
-            score = this->minimize(next_board, depth - 1, alpha, beta, false);
-        } else {
-            score = this->minimize(next_board, depth - 1, alpha, beta, false);
-        }
-        /*if(verbose && this->v2) {
+        score = this->minimize(next_board, depth - 1, alpha, beta, false);
+        
+        /*if(verbose) {
             std::cout << "raw move: " << curr_move->from_y << " " << curr_move->from_x << " " << curr_move->to_y << " " << curr_move->to_x << std::endl;
             std::cout << board->get_move_fen(curr_move) << " positions evaluated: " << this->positions_evaluated - last_eval << std::endl;
+            
             std::cout << std::endl;
         }*/
         if (score > best_score) {
@@ -217,7 +211,6 @@ Move * Minimax::get_best_move(Board board, int depth) {
                 beta = best_score;
             }
         }
-
         curr_move = curr_move->next;
     }
 

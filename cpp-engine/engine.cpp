@@ -150,6 +150,15 @@ int main() {
     // f8f7: 73971 (-1)
     // g8h8: 81636 (-2)
     // full: 422334 (+1)
+
+    // Depth 4 (more more more more better):
+    // c5c4: 60769 (perfect)
+    // d7d5: 72051 (perfect)
+    // f6d5: 75736 (perfect)
+    // b5c4: 58167 (perfect)
+    // f8f7: 73972 (perfect)
+    // g8h8: 81638 (perfect)
+    // full: 422333 (perfect)
  
     /*std::ifstream fen_file;
     fen_file.open("board_file.txt", std::ios::in);
