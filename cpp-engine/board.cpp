@@ -248,7 +248,7 @@ void Board::import_board_fen(std::string fen) {
     } else {
         this->enPassantCol = 7 - (fen[cursor] - 'a');
         cursor++;
-        this->enPassantRow = fen[cursor] - '1';
+        this->enPassantRow = 7 - (fen[cursor] - '1');
         cursor++;
     }
 
@@ -749,7 +749,8 @@ Move * Board::get_pawn_moves(Move * moves, int row, int col) {
         }
 
         // check the square to the diagonal left of the pawn
-        if(col - 1 >= 0 && (this->is_in_arr(board[row-1][col-1], pieces) || (row-1 == this->enPassantRow && col-1 == this->enPassantCol))) {
+        if(col - 1 >= 0 && (this->is_in_arr(board[row-1][col-1], pieces) || 
+        (row-1 == this->enPassantRow && col-1 == this->enPassantCol && this->enPassantRow == 2))) {
             if(row-1 == 0) {
                 moves = this->clone_promotion_moves(moves, row, col, row-1, col-1);
             } else {
@@ -763,7 +764,8 @@ Move * Board::get_pawn_moves(Move * moves, int row, int col) {
         }
 
         // check the square to the diagonal right of the pawn
-        if(col + 1 < 8 && (this->is_in_arr(board[row-1][col+1], pieces) || (row-1 == this->enPassantRow && col+1 == this->enPassantCol))) {
+        if(col + 1 < 8 && (this->is_in_arr(board[row-1][col+1], pieces) || 
+        (row-1 == this->enPassantRow && col+1 == this->enPassantCol && this->enPassantRow == 2))) {
             if(row-1 == 0) {
                 moves = this->clone_promotion_moves(moves, row, col, row-1, col+1);
             } else {
@@ -801,7 +803,8 @@ Move * Board::get_pawn_moves(Move * moves, int row, int col) {
         }
 
         // check the square to the diagonal "left" of the pawn
-        if(col - 1 >= 0 && (this->is_in_arr(board[row+1][col-1], pieces) || (row+1 == this->enPassantRow && col-1 == this->enPassantCol))) {
+        if(col - 1 >= 0 && (this->is_in_arr(board[row+1][col-1], pieces) || 
+        (row+1 == this->enPassantRow && col-1 == this->enPassantCol && this->enPassantRow == 5))) {
             if(row+1 == 7) {
                 moves = this->clone_promotion_moves(moves, row, col, row+1, col-1);
             } else {
@@ -815,7 +818,8 @@ Move * Board::get_pawn_moves(Move * moves, int row, int col) {
         }
 
         // check the square to the diagonal "right" of the pawn
-        if(col + 1 < 8 && (this->is_in_arr(board[row+1][col+1], pieces) || (row+1 == this->enPassantRow && col+1 == this->enPassantCol))) {
+        if(col + 1 < 8 && (this->is_in_arr(board[row+1][col+1], pieces) ||
+        (row+1 == this->enPassantRow && col+1 == this->enPassantCol && this->enPassantRow == 5))) {
             if(row+1 == 7) {
                 moves = this->clone_promotion_moves(moves, row, col, row+1, col+1);
             } else {

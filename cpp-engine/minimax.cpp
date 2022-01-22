@@ -47,7 +47,7 @@ int Minimax::minimize(Board * board, int depth, int alpha, int beta, bool verbos
             std::cout << "After push: " << std::endl;
             next_board->print_self();
         }*/
-        //last_eval = this->positions_evaluated;
+        last_eval = this->positions_evaluated;
         score = this->maximize(next_board, depth - 1, alpha, beta, false);
         /*if(verbose) {
             std::cout << "raw move: " << curr_move->from_y << " " << curr_move->from_x << " " << curr_move->to_y << " " << curr_move->to_x << std::endl;
@@ -118,8 +118,8 @@ int Minimax::maximize(Board * board, int depth, int alpha, int beta, bool verbos
         }*/
         last_eval = this->positions_evaluated;
         
+
         score = this->minimize(next_board, depth - 1, alpha, beta, false);
-        
         /*if(verbose) {
             std::cout << "raw move: " << curr_move->from_y << " " << curr_move->from_x << " " << curr_move->to_y << " " << curr_move->to_x << std::endl;
             std::cout << board->get_move_fen(curr_move) << " positions evaluated: " << this->positions_evaluated - last_eval << std::endl;
