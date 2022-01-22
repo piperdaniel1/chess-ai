@@ -523,7 +523,7 @@ bool Board::is_king_in_check(int row, int col) {
             break;
         }
     }
-    for (int i = row + 1; i < 8; i--) {
+    for (int i = row + 1; i < 8; i++) {
         if (this->board[i][col] == enemy_pieces[0] || this->board[i][col] == enemy_pieces[3]) {
             return true;
         } else if (this->board[i][col] != '.') {
