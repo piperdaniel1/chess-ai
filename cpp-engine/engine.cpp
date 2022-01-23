@@ -55,7 +55,7 @@ int main() {
     //board.push_move(board.convert_move_fen("e2e4"));
     //board.turn = false;
 
-    board.import_board_fen("r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1");
+    board.import_board_fen("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
     //board.import_board_fen("r2q1rk1/pP1p2p1/Q4n2/bb2p2p/Npp5/1B3NBn/pPPP1PPP/R3KR2 w Q h6 0 3");
     //bug (fixed):
     //starting from above pos:
@@ -73,7 +73,7 @@ int main() {
     board.print_self();
     board.print_board_metadata();
 
-    Move * best_move = minimax.get_best_move(board, 5);
+    Move * best_move = minimax.get_best_move(board, 4);
     std::cout << "Best move: " << best_move->from_y << " " << best_move->from_x << "  " << best_move->to_y << " " << best_move->to_x << std::endl;
 
     std::cout << "Evaluated " << minimax.positions_evaluated << " positions." << std::endl;
@@ -182,7 +182,8 @@ int main() {
     // for that position it evals to 1374 (correct). So something is wrong in that push. Should go through and manually print stuff
     // the old fashioned way from d=3 before h7h5.  
 
-    // Depth 5 is now good
+    // Depth 5 is now good.
+    // Switching to new position.
  
     /*std::ifstream fen_file;
     fen_file.open("board_file.txt", std::ios::in);

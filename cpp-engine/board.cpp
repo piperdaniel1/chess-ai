@@ -376,8 +376,10 @@ char Board::push_move(Move * move) {
     // remove castle rights if applicable
     if(!this->turn) {
         if(this->black_kingside_castling) {
+            // kingside rook moves
             if(move->from_x == 7 && move->from_y == 0) {
                 this->black_kingside_castling = false;
+            // king moves
             } else if (move->from_x == 4 && move->from_y == 0) {
                 this->black_kingside_castling = false;
                 this->black_queenside_castling = false;
@@ -391,6 +393,12 @@ char Board::push_move(Move * move) {
                 this->black_kingside_castling = false;
                 this->black_queenside_castling = false;
             }
+        }
+
+        if (move->to_x == 7 && move->to_y == 7) {
+            this->white_kingside_castling = false;
+        } else if (move->to_x == 0 && move->to_y == 7) {
+            this->white_queenside_castling = false;
         }
     } else {
         if(this->white_kingside_castling) {
@@ -409,6 +417,12 @@ char Board::push_move(Move * move) {
                 this->white_kingside_castling = false;
                 this->white_queenside_castling = false;
             }
+        }
+
+        if (move->to_x == 7 && move->to_y == 0) {
+            this->black_kingside_castling = false;
+        } else if (move->to_x == 0 && move->to_y == 0) {
+            this->black_queenside_castling = false;
         }
     }
 
