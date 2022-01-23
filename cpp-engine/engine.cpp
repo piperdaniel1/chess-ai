@@ -55,7 +55,7 @@ int main() {
     //board.push_move(board.convert_move_fen("e2e4"));
     //board.turn = false;
 
-    board.import_board_fen("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
+    board.import_board_fen("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -");
     //board.import_board_fen("r2q1rk1/pP1p2p1/Q4n2/bb2p2p/Npp5/1B3NBn/pPPP1PPP/R3KR2 w Q h6 0 3");
     //bug (fixed):
     //starting from above pos:
@@ -73,7 +73,7 @@ int main() {
     board.print_self();
     board.print_board_metadata();
 
-    Move * best_move = minimax.get_best_move(board, 4);
+    Move * best_move = minimax.get_best_move(board, 2);
     std::cout << "Best move: " << best_move->from_y << " " << best_move->from_x << "  " << best_move->to_y << " " << best_move->to_x << std::endl;
 
     std::cout << "Evaluated " << minimax.positions_evaluated << " positions." << std::endl;

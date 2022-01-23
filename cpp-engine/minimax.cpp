@@ -43,17 +43,17 @@ int Minimax::minimize(Board * board, int depth, int alpha, int beta, bool verbos
     while (curr_move != nullptr) {
         Board * next_board = new Board(*board);
         next_board->push_move(curr_move);
-        /*if(verbose) {
+        if(verbose) {
             std::cout << "After push: " << std::endl;
             next_board->print_self();
-        }*/
+        }
         last_eval = this->positions_evaluated;
         score = this->maximize(next_board, depth - 1, alpha, beta, false);
-        /*if(verbose) {
+        if(verbose) {
             std::cout << "raw move: " << curr_move->from_y << " " << curr_move->from_x << " " << curr_move->to_y << " " << curr_move->to_x << std::endl;
             std::cout << board->get_move_fen(curr_move) << " positions evaluated: " << this->positions_evaluated - last_eval << std::endl;
             std::cout << std::endl;
-        }*/
+        }
         if (score < best_score) {
             best_score = score;
         }
@@ -192,11 +192,18 @@ Move * Minimax::get_best_move(Board board, int depth) {
             test_board->print_self();
             test_board->print_board_metadata();
         }*/
+
+        //next_board->print_self();
+        //next_board->print_board_metadata();
         
         if(!board.turn) {
             score = this->maximize(next_board, depth - 1, alpha, beta, false);
         } else {
-            score = this->minimize(next_board, depth - 1, alpha, beta, false);
+            if(board.get_move_fen(curr_move) == "g2g4") {
+                score = this->minimize(next_board, depth - 1, alpha, beta, true);
+            } else {
+                score = this->minimize(next_board, depth - 1, alpha, beta, false);
+            }
         }
 
         std::cout << "Score of move " << board.get_move_fen(curr_move) << " is " << score << std::endl;
