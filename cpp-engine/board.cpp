@@ -317,6 +317,12 @@ char Board::push_move(Move * move) {
         this->print_self();
         return '.';
     }    
+
+    if(this->verbose) {
+        std::cout << "before" << std::endl;
+        this->print_self();
+    }
+
     // execute castling move if applicable
     if(!this->turn) {
         if(this->black_queenside_castling) {
@@ -463,6 +469,11 @@ char Board::push_move(Move * move) {
     char captured_piece = '.';
     // execute move for en passant
     if(move->to_x != move->from_x && (this->board[move->from_y][move->from_x] == 'P' || this->board[move->from_y][move->from_x] == 'p') && this->board[move->to_y][move->to_x] == '.') {
+        if(this->verbose) {
+            std::cout << "Taking with en passant" << std::endl;
+            // from piece
+            std::cout << "From piece is " << this->board[move->from_y][move->from_x] << std::endl;
+        }
         //take with en passant
         if(!this->turn) {
             captured_piece = this->board[move->to_y-1][move->to_x];
@@ -493,6 +504,11 @@ char Board::push_move(Move * move) {
     }
 
     this->turn = !this->turn;
+
+    if(this->verbose) {
+        std::cout << "after" << std::endl;
+        this->print_self();
+    }
 
     if (captured_piece != '.') {
         this->halfmove_clock = 0;
@@ -1285,7 +1301,7 @@ Move * Board::get_castling_moves(Move * moves) {
 
         if(this->white_queenside_castling && 
         !this->is_king_in_check(7, 3) && !this->is_king_in_check(7,4)
-        && this->board[7][1] && this->board[7][2] == '.' && this->board[7][3] == '.') {
+        && this->board[7][1] == '.' && this->board[7][2] == '.' && this->board[7][3] == '.') {
             moves->from_x = 4;
             moves->from_y = 7;
             moves->to_x = 2;
@@ -1367,19 +1383,6 @@ Move * Board::get_pseudo_legal_moves() {
     return moves;
 }
 
-// does not support castling
-void Board::pull_move(Move * move, int captured_piece = '.') {
-    char piece = this->board[move->to_y][move->to_x];
-
-    if (captured_piece != '.') {
-        this->board[move->to_y][move->to_x] = captured_piece;
-    } else {
-        this->board[move->to_y][move->to_x] = '.';
-    }
-    
-    this->board[move->from_y][move->from_x] = piece;
-}
-
 int * Board::get_king_pos() {
     for(int i=0; i<8; i++) {
         for(int j=0; j<8; j++) {
@@ -1405,30 +1408,25 @@ bool Board::is_legal_move(Move * move) {
         return false;
     }
 
-    char captured = this->fake_push_move(move);
+    Board * dummy_board = new Board(*this);
 
-    int * king_pos = this->get_king_pos();
+    dummy_board->push_move(move);
+    dummy_board->turn = !dummy_board->turn;
+
+    int * king_pos = dummy_board->get_king_pos();
 
     int row = king_pos[0];
     int col = king_pos[1];
 
-    //std::cout << std::endl;
-    //std::cout << "King pos is " << row << " " << col << "." << std::endl;
+    bool result = dummy_board->is_king_in_check(row, col);
 
-    if(this->is_king_in_check(row, col) == true) {
-        this->pull_move(move, captured);
-
-        delete [] king_pos;
-        return false;
-    }
-
-    this->pull_move(move, captured);
-
+    delete dummy_board;
     delete [] king_pos;
-    return true;
+
+    return !result;
 }
 
-Move * Board::get_legal_moves() {
+Move * Board::get_legal_moves(bool v) {
     Move * pseudo_legal_moves = this->get_pseudo_legal_moves();
 
     if(pseudo_legal_moves == nullptr) {
@@ -1488,8 +1486,10 @@ void Board::print_self() {
         for(int col=0; col<8; col++) {
             std::cout << this->board[row][col] << " ";
         }
-        std::cout << std::endl;
+        std::cout << 8 - row << std::endl;
     }
+
+    std::cout << "a b c d e f g h" << std::endl;
 }
 
 bool Board::check_on_board() {

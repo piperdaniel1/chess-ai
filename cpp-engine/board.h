@@ -60,7 +60,7 @@ class Board {
     void print_self();
     char push_move(Move * move);
     Move * get_pseudo_legal_moves();
-    Move * get_legal_moves();
+    Move * get_legal_moves(bool v = false);
     bool is_king_in_check(int, int);
     // half moves since last capture or pawn move
     int halfmove_clock;
@@ -68,6 +68,7 @@ class Board {
     int fullmove_number;
     bool turn = true;
     void free_piece_lists();
+    bool verbose = false;
 
 };
 

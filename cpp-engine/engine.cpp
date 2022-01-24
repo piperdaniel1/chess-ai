@@ -55,7 +55,7 @@ int main() {
     //board.push_move(board.convert_move_fen("e2e4"));
     //board.turn = false;
 
-    board.import_board_fen("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -");
+    board.import_board_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 0");
     //board.import_board_fen("r2q1rk1/pP1p2p1/Q4n2/bb2p2p/Npp5/1B3NBn/pPPP1PPP/R3KR2 w Q h6 0 3");
     //bug (fixed):
     //starting from above pos:
@@ -70,13 +70,26 @@ int main() {
     //however, this move is missing.
     //bug must be caused by the en passant section in the get_pawn_moves function.
 
-    board.print_self();
-    board.print_board_metadata();
+    Move * best_move;
+    int initial_depth = 4;
+    while(1) {
+        board.print_self();
+        board.print_board_metadata();
 
-    Move * best_move = minimax.get_best_move(board, 2);
-    std::cout << "Best move: " << best_move->from_y << " " << best_move->from_x << "  " << best_move->to_y << " " << best_move->to_x << std::endl;
+        best_move = minimax.get_best_move(board, initial_depth);
+        std::cout << "Best move: " << best_move->from_y << " " << best_move->from_x << "  " << best_move->to_y << " " << best_move->to_x << std::endl;
+        std::cout << "Evaluated " << minimax.positions_evaluated << " positions." << std::endl;
+        std::cout << "Enter the move you want to search more deeply deeper: ";
+        std::string input;
+        std::cin >> input;
 
-    std::cout << "Evaluated " << minimax.positions_evaluated << " positions." << std::endl;
+        if(input == "q") {
+            break;
+        }
+
+        board.push_move(board.convert_move_fen(input));
+        initial_depth -= 1;
+    }
     delete best_move;
     board.free_piece_lists();
 
