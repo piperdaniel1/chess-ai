@@ -1,6 +1,7 @@
 millionbase-2.5.pgn
 cpp-engine/readout1.txt
 cpp-engine/readout2.txt
+cpp-engine/a.out
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
