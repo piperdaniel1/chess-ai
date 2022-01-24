@@ -323,6 +323,10 @@ char Board::push_move(Move * move) {
         this->print_self();
     }
 
+    // Remove en passant
+    this->enPassantRow = -1;
+    this->enPassantCol = -1;
+
     // execute castling move if applicable
     if(!this->turn) {
         if(this->black_queenside_castling) {
@@ -431,10 +435,6 @@ char Board::push_move(Move * move) {
             this->black_queenside_castling = false;
         }
     }
-
-    // Remove en passant
-    this->enPassantRow = -1;
-    this->enPassantCol = -1;
 
     // Add en passant rights if applicable
     if(!this->turn) {
