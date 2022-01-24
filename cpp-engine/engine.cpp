@@ -2,9 +2,10 @@
 #include <iostream>
 #include "minimax.h"
 #include "board.h"
+#include "perft_test.h"
 #include "fstream"
 
-// $ g++ engine.cpp minimax.cpp tt_table.cpp evaluator.cpp board.cpp
+// $ g++ engine.cpp minimax.cpp tt_table.cpp evaluator.cpp board.cpp perft_test.cpp
 // ./a.out
 
 /*
@@ -70,7 +71,11 @@ int main() {
     //however, this move is missing.
     //bug must be caused by the en passant section in the get_pawn_moves function.
 
-    Move * best_move;
+    Move * best_move = minimax.get_best_move(board, 4);
+    std::cout << "Best move: " << best_move->from_y << " " << best_move->from_x << "  " << best_move->to_y << " " << best_move->to_x << std::endl;
+    std::cout << "Evaluated " << minimax.positions_evaluated << " positions." << std::endl;
+
+    /*Move * best_move;
     int initial_depth = 4;
     while(1) {
         board.print_self();
@@ -91,7 +96,7 @@ int main() {
         initial_depth -= 1;
     }
     delete best_move;
-    board.free_piece_lists();
+    board.free_piece_lists();*/
 
     // c5c4: 1410 (+1)
     // d7d5: 1643 (perfect)
