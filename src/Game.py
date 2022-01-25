@@ -8,6 +8,12 @@ from threading import Thread, Event
 
 from python_engine.Minimax import Minimax
 
+'''
+ChessTimer class
+
+This class will be used to keep track of the time left on a given
+player's clock.
+'''
 class ChessTimer:
     def __init__(self, minutes : float = 5, seconds : float = 0):
         self.minutes = minutes
@@ -46,6 +52,10 @@ class ChessTimer:
             self.seconds -= 60
             self.minutes += 1
 
+'''
+Wrapper for ChessTimer class.
+Automatically ticks the timer every second in the background.
+'''
 class TimerThread(Thread):
     def __init__(self, event, board: chess.Board, mins = 5, secs = 0):
         Thread.__init__(self)
@@ -65,6 +75,12 @@ class TimerThread(Thread):
             else:
                 self.black_clock.tick_accurately()
 
+'''
+ChessWindow class
+An event driven loop that handles all the pygame events.
+Lets user take their turn, shows them their legal moves,
+and queries the chess engines for their move.
+'''
 class ChessWindow:
     def __init__(self):
         # everyone loves magic numbers 
@@ -84,52 +100,28 @@ class ChessWindow:
         self.moves_made = 0
         self.player_move = True
     
+    '''
+    This function gets a move from the python minimax.
+    It is called every time it is the minimax's turn to move.
+    It returns the move in the from of a Chess.Move object.
+    '''
     def get_move_from_minimax(self, is_white):
         curr_time = time.time()
         end_time = 0
-        depth = 4
         
         self.minimax.time_remaining = self.timer.black_clock.get_seconds_remaining()
         self.minimax.opponent_time_remaining = self.timer.white_clock.get_seconds_remaining()
         educated_move, move_chain = self.minimax.find_best_move(deepcopy(self.internal_board), False, -1000, 1000, self.moves_made)
         end_time = time.time()
 
-        if move_chain != None:
-            anim_board = self.internal_board.copy()
-            for move in move_chain:
-                try:
-                    move = move[0]
-                except:
-                    pass
-
-                if type(move) == str:
-                    continue
-
-                try:
-                    self.internal_board.push(move)
-                except AssertionError:
-                    print("board started with this fen: " + anim_board.fen())
-                    print("this move is somehow illegal")
-                    print("move:", move)
-                    print(self.internal_board)
-                    print("board fen:", self.internal_board.fen())
-                    print("move stack:", self.internal_board.move_stack)
-                    raise AssertionError
-
-                self.draw_board()
-                pygame.display.flip()
-                time.sleep(2.5)
-
-            self.internal_board = anim_board
-
         print(f"Found the move {educated_move} in {round(end_time - curr_time, 1)} seconds. (d={self.minimax.max_depth-1})                   ")
-
-        if self.minimax.dump_minimax_tree == True:
-            print("entering debug mode")
-            self.minimax.view_tree()
 
         return educated_move
 
+    '''
+    This function updates the chess board with the current timers.
+    This function does not draw the legal moves.
+    '''
     def draw_board(self):
         self.screen.fill((255, 255, 255))
         picture = pygame.image.load("assets/pieces/png-versions/board.png")
@@ -155,17 +147,28 @@ class ChessWindow:
             pygame.draw.line(self.screen, (0, 0, 0), (920, 450), (1330, 450), 5)
             self.screen.blit(font.render(self.timer.white_clock.__str__(), True, (0, 0, 0)), (920, 500))
 
+    '''
+    Converts from my weird coordinate system to chess-python's even weirder system.
+    '''
     def convert_gridpos_to_chesspos(self, grid_pos):
         row, col = grid_pos
 
         return (row * 8) + col
     
+    '''
+    Converts from chess-python's weird coordinate system to my slightly less weird coordinate system.
+    '''
     def convert_chesspos_to_gridpos(self, chess_pos):
         row = chess_pos % 8
         col = chess_pos // 8
 
         return (row, col)
 
+    '''
+    Removes legal moves that do not originate from a given
+    target square. This is used to display only moves
+    for a given piece.
+    '''
     def trim_moves(self, moves, target_square : int):
         c = 0
         while c < len(moves): 
@@ -174,7 +177,11 @@ class ChessWindow:
                 c -= 1
             
             c += 1
-        
+    '''
+    Blits legal moves onto the board.
+    Doesn't flip the pygame display, this is done
+    somewhere else.
+    '''
     def render_valid_moves(self, moves_to_render):
         for move in moves_to_render:
             key = move.to_square
@@ -182,17 +189,17 @@ class ChessWindow:
             pixelpos = self.convert_grid_to_pixel(gridpos)
             self.screen.blit(self.legal_move, pixelpos)
     
+    '''
+    Big while loop that handles all the pygame events.
+    The program executes inside this loop while the
+    user is playing the game.
+    '''
     def run_game(self):
         self.draw_board()
         pygame.display.flip()
 
         running = False
         self.player_move = self.internal_board.turn
-        # rn1qkbnr/ppp2p1p/3pp1p1/8/2PP2b1/1P3N1P/P3PPP1/RNBQKB1R bishop does not avoid capture? (fixed)
-        # 4k2r/p4ppp/n1p1pn2/q2pN3/P2P4/b1P1P3/3N1PPP/1Q3RK1 king does not castle?
-        #self.internal_board.set_fen("4k2r/p1q2ppp/n1pbpn2/P2pN3/3P4/1QP1P3/3N1PPP/R5K1 b k - 0 1")
-        #self.internal_board.set_castling_fen("k")
-        #self.internal_board.turn = chess.BLACK
 
         self.draw_board()
         pygame.display.flip()
@@ -233,19 +240,6 @@ class ChessWindow:
                 self.timer.stopped = True
                 print("Game over. Black won because you ran out of time!")
                 quit()
-
-            '''if time.time() % 10 < 5:
-                if self.selected_square != None:
-                    moves = list(self.internal_board.legal_moves)
-                    self.trim_moves(moves, self.selected_square)
-                    if len(moves) == 0:
-                        self.selected_square = None
-                    self.draw_board()
-                    self.render_valid_moves(moves)
-                    pygame.display.flip()
-                else:
-                    self.draw_board()
-                    pygame.display.flip()'''
    
             for event in pygame.event.get():
                 if event.type == pygame.MOUSEBUTTONUP and self.player_move == True:
@@ -260,17 +254,6 @@ class ChessWindow:
                         piece_at = self.internal_board.piece_at(chess_pos)
                     except IndexError:
                         continue
-
-                    # case one:
-                    # selected_square is None
-                    #   if no piece was clicked board is refreshed with no change
-                    #   if piece was clicked legal moves are calculated and displayed
-                    # selected_square is not None
-                    #   - if a piece was clicked and it is the same piece color as the selected_square piece then
-                    #     change selected_square to this new piece and rerender the board with those moves
-                    #   - if anything else is selected then check if that is a legal move for the piece that is on the selected_square
-                    #       - if it is, execute that move on the board and redisplay.
-                    #       - if it is not, set selected_square to None and redisplay.
 
                     if self.selected_square is None:
                         if piece_at is not None:
@@ -322,6 +305,10 @@ class ChessWindow:
                     self.timer.stopped = True
                     quit()
     
+    '''
+    Converts from a pixel position to grid position.
+    Great for converting mouse clicks to grid positions.
+    '''
     def convert_pixel_to_grid(self, pixel_pos):
         """
         Converts pixel position to grid position
@@ -339,6 +326,10 @@ class ChessWindow:
 
         return (row, col)
 
+    '''
+    Draws a piece onto the board.
+    Takes in a key which is a chess position.
+    '''
     def draw_piece(self, key, piece):
         row = key % 8
         col = key // 8
@@ -350,6 +341,10 @@ class ChessWindow:
         piece = pygame.transform.scale(piece, (90, 90))
         self.screen.blit(piece, self.convert_grid_to_pixel((row, col)))
 
+    '''
+    Converts from a grid position to a pixel position.
+    Great for drawing pieces onto the board.
+    '''
     def convert_grid_to_pixel(self, grid_pos):
         """
         Converts grid position to pixel position on screen
@@ -361,6 +356,9 @@ class ChessWindow:
 
         return (base_row - self.LOCAL_OFFSET + self.GLOBAL_OFFSET, base_col - self.LOCAL_OFFSET + self.GLOBAL_OFFSET)
 
+    '''
+    Draws the board onto the screen.
+    '''
     def setup_board(self):
         background_colour = (255,255,255)
         (width, height) = (1350, 900)
@@ -370,27 +368,14 @@ class ChessWindow:
 
         return screen
 
-    def board_test(self):
-        for row in range(8):
-            for col in range(8):
-                picture = pygame.image.load("assets/pieces/png-versions/board.png")
-                self.screen.blit(picture, (0,0))
-
-                white_pawn = pygame.image.load("assets/pieces/png-versions/white-pawn.png")
-                white_pawn = pygame.transform.scale(white_pawn, (90, 90))
-                self.screen.blit(white_pawn, self.convert_grid_to_pixel((row, col)))
-                pygame.display.flip()
-
-                time.sleep(500 / 1000)
-
 if __name__ == "__main__":
-    window = ChessWindow()
+    window = ChessWindow() # Initializes the window
+    # set default params this is bad practice
     window.minimax.dump_minimax_tree = False
     window.minimax.move_chaining = False
-    #window.internal_board.set_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
-    #window.internal_board.set_fen("8/4k3/8/8/4K3/8/3r4/8 w - - 8 65")
-    window.internal_board.set_fen("6k1/8/8/7K/8/8/8/6r1 w - - 56 89")
     window.minimax.MAX_SECONDS = 15
+
+    # set up the timer also bad practice
     window.timer.white_clock.minutes = 10
     window.timer.black_clock.minutes = 10
     window.timer.white_clock.seconds = 0
