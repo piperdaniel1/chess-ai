@@ -5,6 +5,7 @@ import chess
 import time
 import pygame
 from threading import Thread, Event
+import os
 
 from python_engine.Minimax import Minimax
 
@@ -99,24 +100,23 @@ class ChessWindow:
         self.legal_move = pygame.transform.scale(self.legal_move, (90, 90))
         self.moves_made = 0
         self.player_move = True
+        self.sent_to_engine = False
     
     '''
     This function gets a move from the python minimax.
     It is called every time it is the minimax's turn to move.
     It returns the move in the from of a Chess.Move object.
     '''
-    def get_move_from_minimax(self, is_white):
-        curr_time = time.time()
-        end_time = 0
+    def send_board_to_engine(self):
+        # clear contents of output file
+        os.system(f'./cpp_engine/a.out "{self.internal_board.fen()}"')
+
+    def check_engine_status(self):
+        # check contents of output file
+        with open("output_file.txt", "r") as f:
+            content = f.read()
         
-        self.minimax.time_remaining = self.timer.black_clock.get_seconds_remaining()
-        self.minimax.opponent_time_remaining = self.timer.white_clock.get_seconds_remaining()
-        educated_move, move_chain = self.minimax.find_best_move(deepcopy(self.internal_board), False, -1000, 1000, self.moves_made)
-        end_time = time.time()
-
-        print(f"Found the move {educated_move} in {round(end_time - curr_time, 1)} seconds. (d={self.minimax.max_depth-1})                   ")
-
-        return educated_move
+        return content
 
     '''
     This function updates the chess board with the current timers.
@@ -206,8 +206,11 @@ class ChessWindow:
 
         while running == False:
             if not self.player_move:
-                self.minimax.positions_searched = 0
-                move = self.get_move_from_minimax(True)
+                if not self.sent_to_engine:
+                    with open("output_file.txt", "w") as f:
+                        f.write("")
+                    Thread(target=self.send_board_to_engine).start()
+                    self.sent_to_engine = True
 
                 if self.timer.black_clock.get_seconds_remaining() <= 0:
                     running = True
@@ -216,23 +219,23 @@ class ChessWindow:
                     print("Game over. You won because black ran out of time!")
                     quit()
 
-                self.internal_board.push(move)
-                self.timer.black_clock.apply_move_bonus(self.timer.move_bonus)
-                self.timer.turn = True
-                self.draw_board()
-                pygame.display.flip()
-                self.player_move = True
-                self.moves_made += 1
+                status = self.check_engine_status()
+                if status != "" and self.sent_to_engine == True:
+                    self.sent_to_engine = False
+                    self.internal_board.push_uci(status)
+                    self.player_move = True
+                    self.timer.black_clock.apply_move_bonus(self.timer.move_bonus)
+                    self.timer.turn = True
+                    self.moves_made += 1
+                    self.draw_board()
+                    pygame.display.flip()
                 
-                print("current FEN:", self.internal_board.fen())
-
-                print("")
-                if self.minimax.eval.get_score_of_board(self.internal_board, verbose=True) in [-1000, 1000]:
-                    print("Looks like the game is over.")
-                    print("Here's the move stack in case you want to look back:")
-                    print(self.internal_board.move_stack)
-                    print(self.internal_board)
-                    print(self.internal_board.fen())
+                    if self.minimax.eval.get_score_of_board(self.internal_board, verbose=True) in [-1000, 1000]:
+                        print("Looks like the game is over.")
+                        print("Here's the move stack in case you want to look back:")
+                        print(self.internal_board.move_stack)
+                        print(self.internal_board)
+                        print(self.internal_board.fen())
             
             if self.timer.white_clock.get_seconds_remaining() <= 0:
                 running = True
