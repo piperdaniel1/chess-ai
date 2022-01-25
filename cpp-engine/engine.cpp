@@ -56,7 +56,7 @@ int main() {
     //board.push_move(board.convert_move_fen("e2e4"));
     //board.turn = false;
 
-    board.import_board_fen("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10");
+    board.import_board_fen("r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1");
     //board.import_board_fen("r2q1rk1/pP1p2p1/Q4n2/bb2p2p/Npp5/1B3NBn/pPPP1PPP/R3KR2 w Q h6 0 3");
     //bug (fixed):
     //starting from above pos:

@@ -111,7 +111,7 @@ int Minimax::maximize(Board * board, int depth, int alpha, int beta, bool verbos
             alpha = best_score;
         }
 
-        if (beta < alpha) {
+        if (alpha > beta) {
             break;
         }
 
