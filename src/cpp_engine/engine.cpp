@@ -40,7 +40,7 @@ int main() {
         board.import_board_fen(fen);
 
         best_move = minimax.get_best_move(board, 4);
-        std::cout << "Best move: " << best_move->from_y << " " << best_move->from_x << "  " << best_move->to_y << " " << best_move->to_x << std::endl;
+        std::cout << "Best move: " << board.get_move_fen(best_move) << std::endl;
         std::cout << "Evaluated " << minimax.positions_evaluated << " positions." << std::endl;
 
         myFile.open("output_file.txt");

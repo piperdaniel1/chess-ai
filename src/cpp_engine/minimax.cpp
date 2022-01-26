@@ -139,21 +139,18 @@ Move * Minimax::get_best_move(Board board, int depth) {
 
     int best_score = 0;
 
-    if (!board.turn) {
+    if (board.turn) {
         best_score = -100000;
     } else {
         best_score = 100000;
     }
     Move * best_move = nullptr;
     int score = 0;
-    int last_eval = 0;
 
     while (curr_move != nullptr) {
         Board * next_board = new Board(board);
         next_board->push_move(curr_move);
 
-        last_eval = this->positions_evaluated;
-        
         if(!board.turn) {
             score = this->maximize(next_board, depth - 1, alpha, beta, false);
         } else {
@@ -162,7 +159,7 @@ Move * Minimax::get_best_move(Board board, int depth) {
 
         std::cout << "Score of move " << board.get_move_fen(curr_move) << " is " << score << std::endl;
 
-        if(!board.turn) {
+        if(board.turn) {
             if (score > best_score) {
                 best_score = score;
                 best_move = curr_move;
