@@ -3,6 +3,7 @@
 
 TT_Table::TT_Table() {
     std::cout << "Initializing transposition table..." << std::endl;
+    this->table = new Entry[this->size];
     srand(time(NULL));
     std::random_device rd;
     this->null_entry.depth = -1;
@@ -26,6 +27,10 @@ TT_Table::TT_Table() {
         this->table[i].eval = -1;
         this->table[i].hash = -1;
     }
+}
+
+TT_Table::~TT_Table() {
+    delete [] this->table;
 }
 
 int TT_Table::get_corresponding_num(char p) {
