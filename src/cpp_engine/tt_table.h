@@ -22,6 +22,7 @@ class TT_Table {
     public:
     TT_Table();
     ~TT_Table();
+    std::uint64_t test_thing(char board[8][8]);
     std::uint64_t get_hash(char board[8][8]);
     Entry query_board(char board[8][8]);
     void store_board(char board[8][8], int depth, int eval);

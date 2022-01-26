@@ -6,9 +6,9 @@ TT_Table::TT_Table() {
     this->table = new Entry[this->size];
     srand(time(NULL));
     std::random_device rd;
-    this->null_entry.depth = -1;
-    this->null_entry.eval = -1;
-    this->null_entry.hash = -1;
+    this->null_entry.depth = 0;
+    this->null_entry.eval = 0;
+    this->null_entry.hash = 0;
 
     std::default_random_engine generator(rd());
 
@@ -23,10 +23,12 @@ TT_Table::TT_Table() {
     }
 
     for(int i=0; i<this->size; i++) {
-        this->table[i].depth = -1;
-        this->table[i].eval = -1;
-        this->table[i].hash = -1;
+        this->table[i].depth = 0;
+        this->table[i].eval = 0;
+        this->table[i].hash = 0;
     }
+
+    std::cout << "Hash: " << this->table[5000].hash << std::endl;
 }
 
 TT_Table::~TT_Table() {
@@ -64,7 +66,7 @@ int TT_Table::get_corresponding_num(char p) {
 }
 
 std::uint64_t TT_Table::get_hash(char board[8][8]) {
-    std::uint64_t hash;
+    std::uint64_t hash = 0;
     int piece = 0;
     for(int i=0; i<8; i++) {
         for(int j=0; j<8; j++) {
@@ -80,12 +82,24 @@ std::uint64_t TT_Table::get_hash(char board[8][8]) {
     return hash;
 }
 
+std::uint64_t TT_Table::test_thing(char board[8][8]) {
+    for(int row=0; row<8; row++) {
+        for(int col=0; col<8; col++) {
+            std::cout << board[row][col] << " ";
+        }
+        std::cout << 8 - row << std::endl;
+    }
+
+    std::cout << "a b c d e f g h" << std::endl;
+
+    return this->get_hash(board);
+}
+
 Entry TT_Table::query_board(char board[8][8]) {
     std::uint64_t hash = this->get_hash(board);
+
     int i = hash % this->size;
-    std::cout << "Comparing hash " << hash << " to table[" << i << "] " << this->table[i].hash << std::endl;
     if(this->table[i].hash == hash) {
-        std::cout << "Found entry in table" << std::endl;
         return this->table[i];
     }
 

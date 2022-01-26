@@ -242,7 +242,8 @@ class ChessWindow:
                     self.moves_made += 1
                     self.draw_board()
                     pygame.display.flip()
-                
+                    
+                    print("current fen: ", self.internal_board.fen())
                     if self.minimax.eval.get_score_of_board(self.internal_board, verbose=True) in [-1000, 1000]:
                         print("Looks like the game is over.")
                         print("Here's the move stack in case you want to look back:")

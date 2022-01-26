@@ -80,6 +80,9 @@ int main() {
             sorted_legal_moves = arr_to_linked_list(board, move_fens, num_moves);
             curr_depth++;
             std::cout << "Depth " << curr_depth-1 << " complete, " << minimax.positions_evaluated << " positions evaluated." << std::endl;
+            if (curr_depth > INITIAL_DEPTH + 2) {
+                break;
+            }
             std::cout << "Beginning depth " << curr_depth << "..." << std::endl;
         }
 

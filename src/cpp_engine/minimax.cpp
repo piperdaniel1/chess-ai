@@ -4,6 +4,20 @@
 Minimax::Minimax() {
     std::cout << "Initializing minimax..." << std::endl;
     this->v2 = false;
+    /*Board test;
+    std::cout << "TT Table integrity test: " << std::endl;
+    test.print_self();
+    std::cout << "Hash: " << this->tt_table.get_hash(test.board) << std::endl;
+    std::cout << "Hash2:\n" << this->tt_table.test_thing(test.board) << std::endl;
+
+    this->tt_table.store_board(test.board, 5, 5);
+    std::cout << "Stored board..." << std::endl;
+    std::cout << "Querying for board:"  << std::endl;
+    Entry test_entry = this->tt_table.query_board(test.board);
+    std::cout << "Depth: " << test_entry.depth << std::endl;
+    std::cout << "Eval: " << test_entry.eval << std::endl;
+    std::cout << "Hash: " << test_entry.hash << std::endl;
+    std::cout << "Test complete." << std::endl;*/
 }
 
 int Minimax::minimize(Board * board, int depth, int alpha, int beta, bool verbose=false) {
@@ -60,7 +74,7 @@ int Minimax::minimize(Board * board, int depth, int alpha, int beta, bool verbos
         }
 
         if (alpha > beta) {
-            //break;
+            break;
         }
 
         curr_move = curr_move->next;
@@ -126,7 +140,7 @@ int Minimax::maximize(Board * board, int depth, int alpha, int beta, bool verbos
         }
 
         if (alpha > beta) {
-            //break;
+            break;
         }
 
         curr_move = curr_move->next;
