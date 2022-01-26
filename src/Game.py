@@ -84,6 +84,16 @@ and queries the chess engines for their move.
 '''
 class ChessWindow:
     def __init__(self):
+        os.system("g++ -o cpp_engine/a.out cpp_engine/engine.cpp cpp_engine/minimax.cpp cpp_engine/tt_table.cpp cpp_engine/evaluator.cpp cpp_engine/board.cpp cpp_engine/perft_test.cpp")
+        with open("output_file.txt", "w") as f:
+            f.write("")
+        try:
+            os.remove("input_file.txt")
+        except FileNotFoundError:
+            pass
+
+        Thread(target=self.start_cpp_engine).start()
+
         # everyone loves magic numbers 
         pygame.init()
         self.GLOBAL_OFFSET = 25
@@ -102,14 +112,17 @@ class ChessWindow:
         self.player_move = True
         self.sent_to_engine = False
     
+    def start_cpp_engine(self):
+        os.system(f'./cpp_engine/a.out')
+
     '''
     This function gets a move from the python minimax.
     It is called every time it is the minimax's turn to move.
     It returns the move in the from of a Chess.Move object.
     '''
     def send_board_to_engine(self):
-        # clear contents of output file
-        os.system(f'./cpp_engine/a.out "{self.internal_board.fen()}"')
+        with open("input_file.txt", "w") as f:
+            f.write(str(self.internal_board.fen()))
 
     def check_engine_status(self):
         # check contents of output file
@@ -397,6 +410,9 @@ if __name__ == "__main__":
         print("FEN:", window.internal_board.fen())
 
         raise Exception
+
+    with open("input_file.txt", "w") as f:
+        f.write("quit")
 
     pygame.quit()
     window.timer.stopped = True
