@@ -12,15 +12,17 @@
 // ./a.out
 
 int main() {
+    std::cout << "1" << std::endl;
     Minimax minimax;
+    std::cout << "2" << std::endl;
     Board board;
     Move * best_move;
+    std::cout << "3" << std::endl;
     std::ifstream input_file;
     std::ofstream myFile;
     std::string fen;
 
     while(1) {
-
         input_file.open("input_file.txt");
         if (input_file.is_open()) {
             std::getline(input_file, fen);

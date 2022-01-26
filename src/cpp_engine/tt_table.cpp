@@ -72,9 +72,11 @@ std::uint64_t TT_Table::get_hash(char board[8][8]) {
         }
     }
 
+    return hash;
 }
 
-Entry TT_Table::query_hash(std::uint64_t hash) {
+Entry TT_Table::query_board(char board[8][8]) {
+    std::uint64_t hash = this->get_hash(board);
     int i = hash % this->size;
     if(this->table[i].hash == hash) {
         return this->table[i];

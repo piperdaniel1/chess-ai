@@ -42,7 +42,14 @@ int Minimax::minimize(Board * board, int depth, int alpha, int beta, bool verbos
         Board * next_board = new Board(*board);
         next_board->push_move(curr_move);
 
-        score = this->maximize(next_board, depth - 1, alpha, beta, false);
+        Entry tt_entry = this->tt_table.query_board(next_board->board);
+        if (tt_entry.depth >= depth) {
+            score = tt_entry.eval;
+        } else {
+            score = this->maximize(next_board, depth - 1, alpha, beta, false);
+
+            this->tt_table.store_board(next_board->board, depth, score);
+        }
 
         if (score < best_score) {
             best_score = score;
@@ -101,7 +108,14 @@ int Minimax::maximize(Board * board, int depth, int alpha, int beta, bool verbos
 
         next_board->push_move(curr_move);
 
-        score = this->minimize(next_board, depth - 1, alpha, beta, false);
+        Entry tt_entry = this->tt_table.query_board(next_board->board);
+        if (tt_entry.depth >= depth) {
+            score = tt_entry.eval;
+        } else {
+            score = this->minimize(next_board, depth - 1, alpha, beta, false);
+
+            this->tt_table.store_board(next_board->board, depth, score);
+        }
 
         if (score > best_score) {
             best_score = score;
@@ -151,10 +165,17 @@ Move * Minimax::get_best_move(Board board, int depth) {
         Board * next_board = new Board(board);
         next_board->push_move(curr_move);
 
-        if(!board.turn) {
-            score = this->maximize(next_board, depth - 1, alpha, beta, false);
+        Entry tt_entry = this->tt_table.query_board(next_board->board);
+        if (tt_entry.depth >= depth) {
+            score = tt_entry.eval;
         } else {
-            score = this->minimize(next_board, depth - 1, alpha, beta, false);
+            if(!board.turn) {
+                score = this->maximize(next_board, depth - 1, alpha, beta, false);
+            } else {
+                score = this->minimize(next_board, depth - 1, alpha, beta, false);
+            }
+
+            this->tt_table.store_board(next_board->board, depth, score);
         }
 
         std::cout << "Score of move " << board.get_move_fen(curr_move) << " is " << score << std::endl;
