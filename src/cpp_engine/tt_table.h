@@ -23,7 +23,7 @@ class TT_Table {
     TT_Table();
     std::uint64_t get_hash(char board[8][8]);
     Entry query_hash(std::uint64_t hash);
-    void TT_Table::store_hash(Entry entry);
+    void store_board(char board[8][8], int depth, int eval);
 };
 
 #endif

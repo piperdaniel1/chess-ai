@@ -71,6 +71,7 @@ std::uint64_t TT_Table::get_hash(char board[8][8]) {
             hash ^= this->hash_table[i][j][piece];
         }
     }
+
 }
 
 Entry TT_Table::query_hash(std::uint64_t hash) {
@@ -82,7 +83,10 @@ Entry TT_Table::query_hash(std::uint64_t hash) {
     return this->null_entry;
 }
 
-void TT_Table::store_hash(Entry entry) {
-    int i = entry.hash % this->size;
-    this->table[i] = entry;
+void TT_Table::store_board(char board[8][8], int depth, int eval) {
+    std::uint64_t hash = this->get_hash(board);
+    int i = hash % this->size;
+    this->table[i].depth = depth;
+    this->table[i].eval = eval;
+    this->table[i].hash = hash;
 }
