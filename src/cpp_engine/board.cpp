@@ -291,6 +291,9 @@ Move * Board::convert_move_fen(std::string fen) {
     move->from_y = 7 -(fen[1] - '1');
     move->to_x = fen[2] - 'a';
     move->to_y = 7 - (fen[3] - '1');
+    if (fen.length() == 5) {
+        move->promotion = fen[4];
+    }
 
     return move;
 }

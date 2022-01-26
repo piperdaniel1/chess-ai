@@ -8,7 +8,7 @@
 struct Entry {
     int depth;
     int eval;
-    int hash;
+    std::uint64_t hash;
 };
 
 class TT_Table {

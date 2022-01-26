@@ -14,7 +14,7 @@ class Minimax {
 
     public:
     Minimax();
-    Move * get_best_move(Board board, int depth);
+    std::string* get_best_move(Board board, int depth, int& num_moves, Move* sorted_legal_moves);
     int maximize(Board * board, int depth, int alpha, int beta, bool verbose);
     int minimize(Board * board, int depth, int alpha, int beta, bool verbose);
     int positions_evaluated;

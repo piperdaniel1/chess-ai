@@ -60,7 +60,7 @@ int Minimax::minimize(Board * board, int depth, int alpha, int beta, bool verbos
         }
 
         if (alpha > beta) {
-            break;
+            //break;
         }
 
         curr_move = curr_move->next;
@@ -126,7 +126,7 @@ int Minimax::maximize(Board * board, int depth, int alpha, int beta, bool verbos
         }
 
         if (alpha > beta) {
-            break;
+            //break;
         }
 
         curr_move = curr_move->next;
@@ -137,12 +137,12 @@ int Minimax::maximize(Board * board, int depth, int alpha, int beta, bool verbos
     return best_score;
 }
 
-Move * Minimax::get_best_move(Board board, int depth) {
+std::string* Minimax::get_best_move(Board board, int depth, int& num_moves, Move* sorted_legal_moves) {
     this->positions_evaluated = 0;
     int alpha = -100000;
     int beta = 100000;
 
-    Move * move_list = board.get_legal_moves();
+    Move * move_list = sorted_legal_moves;
     Move * curr_move = move_list;
 
     int game_over = this->eval.is_game_over(board, move_list);
@@ -160,6 +160,9 @@ Move * Minimax::get_best_move(Board board, int depth) {
     }
     Move * best_move = nullptr;
     int score = 0;
+    int scores[100]; // i really don't think there will ever be more than 100 moves
+    std::string * move_fens = new std::string[100];
+    num_moves = 0;
 
     while (curr_move != nullptr) {
         Board * next_board = new Board(board);
@@ -178,19 +181,9 @@ Move * Minimax::get_best_move(Board board, int depth) {
             this->tt_table.store_board(next_board->board, depth, score);
         }
 
-        std::cout << "Score of move " << board.get_move_fen(curr_move) << " is " << score << std::endl;
-
-        if(board.turn) {
-            if (score > best_score) {
-                best_score = score;
-                best_move = curr_move;
-            }
-        } else {
-            if (score < best_score) {
-                best_score = score;
-                best_move = curr_move;
-            }
-        }
+        scores[num_moves] = score;
+        move_fens[num_moves] = board.get_move_fen(curr_move);
+        num_moves++;
 
         // minimizing
         if(!board.turn) {
@@ -206,13 +199,53 @@ Move * Minimax::get_best_move(Board board, int depth) {
         curr_move = curr_move->next;
     }
 
-    Move * unfreed_move = new Move;
-    unfreed_move->from_x = best_move->from_x;
-    unfreed_move->from_y = best_move->from_y;
-    unfreed_move->to_y = best_move->to_y;
-    unfreed_move->to_x = best_move->to_x;
-
     board.free_move_list(move_list);
+    
+    if(board.turn) {
+        // rank the moves by score highest to lowest
+        int swaps = 0;
+        while(1) {
+            for(int i=0; i<num_moves-1; i++) {
+                if(scores[i] < scores[i+1]) {
+                    int temp = scores[i];
+                    scores[i] = scores[i+1];
+                    scores[i+1] = temp;
 
-    return unfreed_move;
+                    std::string temp_fen = move_fens[i];
+                    move_fens[i] = move_fens[i+1];
+                    move_fens[i+1] = temp_fen;
+
+                    swaps++;
+                }
+            }
+            if(swaps == 0) {
+                break;
+            }
+            swaps = 0;
+        }
+    } else {
+        // rank the moves by score lowest to highest
+        int swaps = 0;
+        while(1) {
+            for(int i=0; i<num_moves-1; i++) {
+                if(scores[i] > scores[i+1]) {
+                    int temp = scores[i];
+                    scores[i] = scores[i+1];
+                    scores[i+1] = temp;
+
+                    std::string temp_fen = move_fens[i];
+                    move_fens[i] = move_fens[i+1];
+                    move_fens[i+1] = temp_fen;
+
+                    swaps++;
+                }
+            }
+            if(swaps == 0) {
+                break;
+            }
+            swaps = 0;
+        }
+    }
+
+    return move_fens;
 }
