@@ -311,6 +311,8 @@ class ChessWindow:
                             
                             self.selected_square = None
                             self.moves_to_render = []
+                            self.draw_board()
+                            pygame.display.flip()
                 if event.type == pygame.QUIT:
                     running = True
                     pygame.quit()
