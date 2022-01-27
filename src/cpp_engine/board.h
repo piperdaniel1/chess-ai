@@ -11,6 +11,8 @@ struct Move {
     int to_y = -1;
 
     char promotion = '.';
+    char capture = '.';
+    bool en_passant = false;
     Move * next = nullptr;
 };
 
@@ -39,7 +41,6 @@ class Board {
     Move * get_pawn_moves(Move *, int, int);
     Move * get_castling_moves(Move *);
     Move * clone_promotion_moves(Move *, int, int, int, int);
-    char fake_push_move(Move * move);
     int min(int, int);
     int max(int, int);
 
@@ -58,7 +59,8 @@ class Board {
     void set_piece(int row, int col, char piece);
     char get_piece(int row, int col);
     void print_self();
-    char push_move(Move * move);
+    void push_move(Move * move);
+    void pull_move(Move * move);
     Move * get_pseudo_legal_moves();
     Move * get_legal_moves(bool v = false);
     bool is_king_in_check(int, int);
