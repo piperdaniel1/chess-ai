@@ -84,7 +84,7 @@ and queries the chess engines for their move.
 '''
 class ChessWindow:
     def __init__(self):
-        os.system("g++ -o cpp_engine/a.out cpp_engine/engine.cpp cpp_engine/minimax.cpp cpp_engine/tt_table.cpp cpp_engine/evaluator.cpp cpp_engine/board.cpp cpp_engine/perft_test.cpp")
+        os.system("g++ -o thc_testing/a.out thc_testing/engine.cpp thc_testing/minimax.cpp thc_testing/tt_table.cpp thc_testing/evaluator.cpp thc_testing/thc.cpp")
         with open("output_file.txt", "w") as f:
             f.write("")
         try:
@@ -114,7 +114,7 @@ class ChessWindow:
         self.sent_to_engine = False
     
     def start_cpp_engine(self):
-        os.system(f'./cpp_engine/a.out')
+        os.system(f'./thc_testing/a.out')
 
     '''
     This function gets a move from the python minimax.
