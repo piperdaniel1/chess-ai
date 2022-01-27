@@ -1,3 +1,0 @@
-break malloc_error_break
-run
-backtrace
