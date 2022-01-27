@@ -110,6 +110,7 @@ class ChessWindow:
         self.legal_move = pygame.transform.scale(self.legal_move, (90, 90))
         self.moves_made = 0
         self.player_move = True
+        self.moves_to_render = []
         self.sent_to_engine = False
     
     def start_cpp_engine(self):
@@ -208,16 +209,16 @@ class ChessWindow:
     user is playing the game.
     '''
     def run_game(self):
-        self.draw_board()
-        pygame.display.flip()
+        print(self.moves_to_render)
 
         running = False
         self.player_move = self.internal_board.turn
 
-        self.draw_board()
-        pygame.display.flip()
-
         while running == False:
+            self.draw_board()
+            self.render_valid_moves(self.moves_to_render)
+            pygame.display.flip()
+
             if not self.player_move:
                 if not self.sent_to_engine:
                     with open("output_file.txt", "w") as f:
@@ -232,7 +233,7 @@ class ChessWindow:
                     print("Game over. You won because black ran out of time!")
                     quit()
 
-                status = self.check_engine_status()
+                status = self.check_engine_status()                                
                 if status != "" and self.sent_to_engine == True:
                     self.sent_to_engine = False
                     self.internal_board.push_uci(status)
@@ -240,9 +241,7 @@ class ChessWindow:
                     self.timer.black_clock.apply_move_bonus(self.timer.move_bonus)
                     self.timer.turn = True
                     self.moves_made += 1
-                    self.draw_board()
-                    pygame.display.flip()
-                    
+
                     print("current fen: ", self.internal_board.fen())
                     if self.minimax.eval.get_score_of_board(self.internal_board, verbose=True) in [-1000, 1000]:
                         print("Looks like the game is over.")
@@ -279,10 +278,9 @@ class ChessWindow:
                             self.trim_moves(moves, chess_pos)
                             if len(moves) == 0:
                                 self.selected_square = None
-                            self.draw_board()
-                            self.render_valid_moves(moves)
-                            pygame.display.flip()
+                            self.moves_to_render = moves
                         else:
+                            self.moves_to_render = []
                             self.draw_board()
                             pygame.display.flip()
                     else:
@@ -290,9 +288,7 @@ class ChessWindow:
                             self.selected_square = chess_pos
                             moves = list(self.internal_board.legal_moves)
                             self.trim_moves(moves, chess_pos)
-                            self.draw_board()
-                            self.render_valid_moves(moves)
-                            pygame.display.flip()
+                            self.moves_to_render = moves
                         else:
                             moves = list(self.internal_board.legal_moves)
                             self.trim_moves(moves, self.selected_square)
@@ -314,6 +310,7 @@ class ChessWindow:
                                     break
                             
                             self.selected_square = None
+                            self.moves_to_render = []
                             self.draw_board()
                             pygame.display.flip()
                 if event.type == pygame.QUIT:
