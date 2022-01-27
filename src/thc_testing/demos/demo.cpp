@@ -98,4 +98,3 @@ int main()
     else
         printf( "Strange(???!), we expected all flags true, meaning both penultimate and final positions are legal, in the final position White is mated\n" );
 }
-
