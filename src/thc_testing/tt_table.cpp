@@ -14,11 +14,9 @@ TT_Table::TT_Table() {
 
     std::uniform_int_distribution<long long unsigned> distribution(0,0xFFFFFFFFFFFFFFFF);
 
-    for(int i=0; i<8; i++) {
-        for(int j=0; j<8; j++) {
-            for(int k=0; k<12; k++) {
-                this->hash_table[i][j][k] = distribution(generator);
-            }
+    for(int i=0; i<64; i++) {
+        for(int k=0; k<12; k++) {
+            this->hash_table[i][k] = distribution(generator);
         }
     }
 
@@ -65,37 +63,22 @@ int TT_Table::get_corresponding_num(char p) {
     }
 }
 
-std::uint64_t TT_Table::get_hash(char board[8][8]) {
+std::uint64_t TT_Table::get_hash(char board[64]) {
     std::uint64_t hash = 0;
     int piece = 0;
-    for(int i=0; i<8; i++) {
-        for(int j=0; j<8; j++) {
-            if(board[i][j] == '.') {
-                continue;
-            }
-
-            piece = this->get_corresponding_num(board[i][j]);
-            hash ^= this->hash_table[i][j][piece];
+    for(int i=0; i<64; i++) {
+        if(board[i] == ' ') {
+            continue;
         }
+
+        piece = this->get_corresponding_num(board[i]);
+        hash ^= this->hash_table[i][piece];
     }
 
     return hash;
 }
 
-std::uint64_t TT_Table::test_thing(char board[8][8]) {
-    for(int row=0; row<8; row++) {
-        for(int col=0; col<8; col++) {
-            std::cout << board[row][col] << " ";
-        }
-        std::cout << 8 - row << std::endl;
-    }
-
-    std::cout << "a b c d e f g h" << std::endl;
-
-    return this->get_hash(board);
-}
-
-Entry TT_Table::query_board(char board[8][8]) {
+Entry TT_Table::query_board(char board[64]) {
     std::uint64_t hash = this->get_hash(board);
 
     int i = hash % this->size;
@@ -106,7 +89,7 @@ Entry TT_Table::query_board(char board[8][8]) {
     return this->null_entry;
 }
 
-void TT_Table::store_board(char board[8][8], int depth, int eval) {
+void TT_Table::store_board(char board[64], int depth, int eval) {
     std::uint64_t hash = this->get_hash(board);
     int i = hash % this->size;
     this->table[i].depth = depth;

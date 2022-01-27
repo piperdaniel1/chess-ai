@@ -22,11 +22,17 @@ int Minimax::minimize(thc::ChessRules &cr, int depth, int alpha, int beta) {
     std::vector<bool> mate;
     std::vector<bool> stalemate;
     cr.GenLegalMoveList(  moves, check, mate, stalemate );
-
+    int score = 0;
     for (int i = 0; i < moves.size(); i++) {
         mv = moves[i];
         cr.PlayMove(mv);
-        int score = maximize(cr, depth-1, alpha, beta);
+        Entry e = this->tt_table.query_board(cr.squares);
+        if (e.depth >= depth) {
+            score = e.eval;
+        } else {
+            score = maximize(cr, depth-1, alpha, beta);
+            this->tt_table.store_board(cr.squares, depth, score);
+        }
         cr.PopMove(mv);
         if (score < best_score) {
             best_score = score;
@@ -53,11 +59,18 @@ int Minimax::maximize(thc::ChessRules &cr, int depth, int alpha, int beta) {
     cr.GenLegalMoveList(  moves, check, mate, stalemate );
 
     int best_score = -999999;
+    int score = 0;
 
     for (unsigned int i=0; i<moves.size(); i++) {
         mv = moves[i];
         cr.PlayMove(mv);
-        int score = minimize(cr, depth-1, alpha, beta);
+        Entry e = this->tt_table.query_board(cr.squares);
+        if (e.depth >= depth) {
+            score = e.eval;
+        } else {
+            score = minimize(cr, depth-1, alpha, beta);
+            this->tt_table.store_board(cr.squares, depth, score);
+        }
         cr.PopMove(mv);
         if (score > best_score) {
             best_score = score;
