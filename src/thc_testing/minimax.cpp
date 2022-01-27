@@ -86,18 +86,14 @@ int Minimax::maximize(thc::ChessRules &cr, int depth, int alpha, int beta) {
     return best_score;
 }
 
-thc::Move Minimax::get_best_move(thc::ChessRules &cr, int depth) {
+std::vector<thc::Move> Minimax::get_best_move(thc::ChessRules &cr, std::vector<thc::Move> moves, int depth) {
     bool turn = cr.WhiteToPlay();
-
     thc::Move mv;
-    std::vector<thc::Move> moves;
-    std::vector<bool> check;
-    std::vector<bool> mate;
-    std::vector<bool> stalemate;
+    std::vector<int> scores;
+
     int alpha = -999999;
     int beta = 999999;
 
-    cr.GenLegalMoveList(  moves, check, mate, stalemate );
     int best_score;
     if(turn) {
         best_score = -999999;
@@ -117,6 +113,8 @@ thc::Move Minimax::get_best_move(thc::ChessRules &cr, int depth) {
         }
         cr.PopMove(mv);
 
+        scores.push_back(score);
+
         if(turn) {
             if(score > best_score) {
                 best_score = score;
@@ -134,5 +132,27 @@ thc::Move Minimax::get_best_move(thc::ChessRules &cr, int depth) {
         }
     }
 
-    return best_move;
+    // sort moves based on scores
+    int swaps = 0;
+
+    while(true) {
+        for(int i=0; i<moves.size(); i++) {
+            if(scores[i] < scores[i+1]) {
+                int temp = scores[i];
+                thc::Move temp_mv = moves[i];
+                scores[i] = scores[i+1];
+                moves[i] = moves[i+1];
+                scores[i+1] = temp;
+                moves[i+1] = temp_mv;
+                swaps++;
+            }
+        }
+
+        if(swaps == 0) {
+            break;
+        }
+        swaps = 0;
+    }
+
+    return moves;
 }

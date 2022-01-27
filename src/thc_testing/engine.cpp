@@ -47,9 +47,32 @@ int main() {
         cr.Forsyth(fen.c_str());
 
         // Get the best move
-        mv = m.get_best_move(cr, 4);
+        std::vector<thc::Move> new_moves;
+        std::vector<thc::Move> moves;
+        std::vector<bool> check;
+        std::vector<bool> mate;
+        std::vector<bool> stalemate;
+        cr.GenLegalMoveList(  moves, check, mate, stalemate );
+
+        int idepth = 2;
+        std::uint64_t stime = m.get_time();
+        m.max_time = stime + 5000;
+        m.cut_search_early = false;
+        m.start_time = stime;
+        new_moves = moves;
+    
+        while(true) {
+            moves = new_moves;
+            new_moves = m.get_best_move(cr, moves, idepth);
+            idepth++;
+
+            if(m.get_time() - stime > 5000) {
+                break;
+            }
+        }
+
         myFile.open("output_file.txt");
-        myFile << mv.TerseOut();
+        myFile << moves[0].TerseOut();
         myFile.close();
     }
 
