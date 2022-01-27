@@ -40,6 +40,7 @@ int main() {
     std::ofstream myFile;
     std::string fen;
     std::string * move_fens;
+    std::string * vetted_fens;
     int scores[100];
     int num_moves = 0;
 
@@ -74,25 +75,32 @@ int main() {
         const int INITIAL_DEPTH = 2;
         int curr_depth = INITIAL_DEPTH;
         Move * sorted_legal_moves = board.get_legal_moves();
+        std::uint64_t start = minimax.get_time();
+        std::uint64_t max = start + 5000;
         // get the best move
         while(1) {
-            move_fens = minimax.get_best_move(board, curr_depth, num_moves, sorted_legal_moves);
+            move_fens = minimax.get_best_move(board, curr_depth, num_moves, sorted_legal_moves, max - minimax.get_time());
+
+            if(minimax.get_time() < max) {
+                vetted_fens = move_fens;
+            } else {
+                std::cout << "Cutting depth " << curr_depth << " short due to time constraint." << std::endl;
+                break;
+            }
+
             sorted_legal_moves = arr_to_linked_list(board, move_fens, num_moves);
             curr_depth++;
             std::cout << "Depth " << curr_depth-1 << " complete, " << minimax.positions_evaluated << " positions evaluated." << std::endl;
-            if (curr_depth > INITIAL_DEPTH + 2) {
-                break;
-            }
             std::cout << "Beginning depth " << curr_depth << "..." << std::endl;
         }
 
         // print the best move
-        std::cout << "Best move: " << move_fens[0] << std::endl;
+        std::cout << "Best move: " << vetted_fens[0] << std::endl;
         std::cout << "Evaluated " << minimax.positions_evaluated << " positions." << std::endl;
 
         // write the best move to the output file
         myFile.open("output_file.txt");
-        myFile << move_fens[0];
+        myFile << vetted_fens[0];
         myFile.close();
     }
 

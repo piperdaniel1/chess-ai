@@ -20,7 +20,17 @@ Minimax::Minimax() {
     std::cout << "Test complete." << std::endl;*/
 }
 
+std::uint64_t Minimax::get_time() {
+    return std::chrono::duration_cast<std::chrono::milliseconds>(
+    std::chrono::system_clock::now().time_since_epoch()).count();
+}
+
 int Minimax::minimize(Board * board, int depth, int alpha, int beta, bool verbose=false) {
+    if (this->get_time() - this->start_time > this->max_time) {
+        this->cut_search_early = true;
+        return 0;
+    }
+
     Move * move_list = board->get_legal_moves(true);
     Move * curr_move = move_list;
 
@@ -86,6 +96,11 @@ int Minimax::minimize(Board * board, int depth, int alpha, int beta, bool verbos
 }
 
 int Minimax::maximize(Board * board, int depth, int alpha, int beta, bool verbose = false) {
+    if (this->get_time() - this->start_time > this->max_time) {
+        this->cut_search_early = true;
+        return 0;
+    }
+
     Move * move_list = board->get_legal_moves();
     Move * curr_move = move_list;
 
@@ -151,7 +166,10 @@ int Minimax::maximize(Board * board, int depth, int alpha, int beta, bool verbos
     return best_score;
 }
 
-std::string* Minimax::get_best_move(Board board, int depth, int& num_moves, Move* sorted_legal_moves) {
+std::string* Minimax::get_best_move(Board board, int depth, int& num_moves, Move* sorted_legal_moves, std::uint64_t max) {
+    this->start_time = get_time();
+    this->cut_search_early = false;
+    this->max_time = max;
     this->positions_evaluated = 0;
     int alpha = -100000;
     int beta = 100000;
