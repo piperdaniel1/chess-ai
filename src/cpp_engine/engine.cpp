@@ -36,12 +36,6 @@ Move * arr_to_linked_list(Board& board, std::string * arr, int size) {
 int main() {
     Minimax minimax;
     Board board;
-    Perft_Test t;
-    std::uint64_t s = minimax.get_time();
-    t.run_perft_test();
-    std::cout << "The performance test took " << minimax.get_time() - s << " milliseconds." << std::endl;
-    return 0;
-
     std::ifstream input_file;
     std::ofstream myFile;
     std::string fen;

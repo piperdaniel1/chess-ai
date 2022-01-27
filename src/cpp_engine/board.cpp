@@ -1,25 +1,5 @@
 #include "board.h"
 
-/*
- * Ideas for optimizing this:
- * Make a pull_move function that reverses the previous move. Make sure to
- * always use this instead of cloning the board every single time you need
- * to push a move. Especially for checking pseudo legal moves.
- * 
- * Pull move function:
- * Maybe there are fields in the Move object that let you know how to
- * reverse it. These fields are filled out in the push_move function and
- * are used in the pull_move function. There are only ever going to be up to two
- * pieces affected by a move. Either the moved piece and the captured piece, or
- * the king and the rook in the castle. If you just store the original piece locations
- * and the new piece locations you can technically reverse it.
- * 
- * However, it probably would be more performant to just have the pull_move function
- * contextually figure out what the pieces are. You could have a capture field that contains
- * a captured piece. Then you have an en passant field that signifies if the move was en passant.
- * All other moves could be figured out contextually, even castling.
- */
-
 Board::Board() {
     //std::cout << "Initializing board..." << std::endl;
     this->black_pieces = new char[6];
@@ -332,63 +312,13 @@ std::string Board::get_move_fen(Move * move) {
     return fen;
 }
 
-void Board::pull_move(Move * move) {
-    this->turn = !this->turn;
-
-    if(this->board[move->to_y][move->to_x] == 'k' or this->board[move->to_y][move->to_x] == 'K') {
-        if(abs(move->to_x - move->from_x) > 1) {
-            if(move->to_x == 6) {
-                // kingside
-                this->board[move->to_y][6] == '.';
-                this->board[move->to_y][5] == '.';
-                if(move->to_y == 7) {
-                    this->board[move->to_y][7] == 'R';
-                } else {
-                    this->board[move->to_y][7] == 'r';
-                }
-            } else {
-                // queenside
-                this->board[move->to_y][2] == '.';
-                this->board[move->to_y][3] == '.';
-                if(move->to_y == 7) {
-                    this->board[move->to_y][0] == 'R';
-                } else {
-                    this->board[move->to_y][0] == 'r';
-                }
-            }
-
-            if(move->to_y == 0) {
-                this->board[move->to_y][4] == 'k';
-            } else {
-                this->board[move->to_y][4] == 'K';
-            }
-
-            return;
-        }
-    }
-
-    if(move->en_passant) {
-        if(move->to_y == 2) {
-            this->board[3][move->to_x] == 'p';
-        } else {
-            this->board[4][move->to_x] == 'P';
-        }
-        this->board[move->from_y][move->from_x] = board[move->to_y][move->to_x];
-        this->board[move->to_y][move->to_x] = '.';
-        return;
-    }
-
-    // it was normal
-    this->board[move->from_y][move->from_x] = board[move->to_y][move->to_x];
-    this->board[move->to_y][move->to_x] = move->capture;
-}
 
 // assumes that the move is legal does not support castling
-void Board::push_move(Move * move) {
+char Board::push_move(Move * move) {
     if(move->from_x < 0 || move->from_x > 7) {
         std::cout << "push_move Error: " << move->from_x << " " << move->from_y << " " << move->to_x << " " << move->to_y << std::endl;
         this->print_self();
-        move->capture = '.';
+        return '.';
     }    
 
     if(this->verbose) {
@@ -411,8 +341,7 @@ void Board::push_move(Move * move) {
                 this->turn = !this->turn;
                 this->black_kingside_castling = false;
                 this->black_queenside_castling = false;
-                move->capture = '.';
-                return;
+                return '.';
             }
         }
         if (this->black_kingside_castling) {
@@ -425,8 +354,7 @@ void Board::push_move(Move * move) {
                 this->turn = !this->turn;
                 this->black_kingside_castling = false;
                 this->black_queenside_castling = false;
-                move->capture = '.';
-                return;
+                return '.';
             }
         }
     } else {
@@ -440,8 +368,7 @@ void Board::push_move(Move * move) {
                 this->turn = !this->turn;
                 this->white_kingside_castling = false;
                 this->white_queenside_castling = false;
-                move->capture = '.';
-                return;
+                return '.';
             }
         } 
         if (this->white_kingside_castling) {
@@ -454,8 +381,7 @@ void Board::push_move(Move * move) {
                 this->turn = !this->turn;
                 this->white_kingside_castling = false;
                 this->white_queenside_castling = false;
-                move->capture = '.';
-                return;
+                return '.';
             }
         }
     }
@@ -561,7 +487,6 @@ void Board::push_move(Move * move) {
         }
         this->board[move->to_y][move->to_x] = this->board[move->from_y][move->from_x];
         this->board[move->from_y][move->from_x] = '.';
-        move->en_passant = true;
     } else {
         captured_piece = this->board[move->to_y][move->to_x];
         this->board[move->to_y][move->to_x] = this->board[move->from_y][move->from_x];
@@ -571,6 +496,11 @@ void Board::push_move(Move * move) {
     if(move->promotion != '.') {
         this->board[move->to_y][move->to_x] = move->promotion;
     }
+
+    /*if(move->from_x == 1 && move->from_y == 1 && move->to_x == 1 && move->to_y == 0) {
+        std::cout << "after:" << std::endl;
+        this->print_self();
+    }*/
 
     if(!this->turn) {
         this->fullmove_number++;
@@ -585,13 +515,116 @@ void Board::push_move(Move * move) {
 
     if (captured_piece != '.') {
         this->halfmove_clock = 0;
-        move->capture = captured_piece;
-        return;
+        return captured_piece;
     }
 
-    move->capture = '.';
-    return;
+    return '.';
 }
+
+char Board::fake_push_move(Move * move) {
+    if(move->from_x < 0 || move->from_x > 7) {
+        std::cout << "fake_push_move Error: " << move->from_x << " " << move->from_y << " " << move->to_x << " " << move->to_y << std::endl;
+        this->print_self();
+        return '.';
+    }    
+    // execute castling move if applicable
+    if(!this->turn) {
+        if(this->black_queenside_castling) {
+            if(move->from_x == 4 && move->from_y == 0 && move->to_x == 2 && move->to_y == 0) {
+                this->board[0][2] = 'k';
+                this->board[0][3] = 'r';
+                this->board[0][0] = '.';
+                this->board[0][4] = '.';
+                this->turn = !this->turn;
+                this->black_kingside_castling = false;
+                this->black_queenside_castling = false;
+                return '.';
+            }
+        }
+        if (this->black_kingside_castling) {
+            if(move->from_x == 4 && move->from_y == 0 && move->to_x == 6 && move->to_y == 0) {
+                // execute black kingside castle
+                this->board[0][6] = 'k';
+                this->board[0][5] = 'r';
+                this->board[0][7] = '.';
+                this->board[0][4] = '.';
+                this->turn = !this->turn;
+                this->black_kingside_castling = false;
+                this->black_queenside_castling = false;
+                return '.';
+            }
+        }
+    } else {
+        if(this->white_queenside_castling) {
+            if(move->from_x == 4 && move->from_y == 7 && move->to_x == 2 && move->to_y == 7) {
+                // execute white qeenside castle
+                this->board[7][2] = 'K';
+                this->board[7][3] = 'R';
+                this->board[7][0] = '.';
+                this->board[7][4] = '.';
+                this->turn = !this->turn;
+                this->white_kingside_castling = false;
+                this->white_queenside_castling = false;
+                return '.';
+            }
+        } 
+        if (this->white_kingside_castling) {
+            if(move->from_x == 4 && move->from_y == 7 && move->to_x == 6 && move->to_y == 7) {
+                // execute white kingside castle
+                this->board[7][6] = 'K';
+                this->board[7][5] = 'R';
+                this->board[7][7] = '.';
+                this->board[7][4] = '.';
+                this->turn = !this->turn;
+                this->white_kingside_castling = false;
+                this->white_queenside_castling = false;
+                return '.';
+            }
+        }
+    }
+
+    char captured_piece = '.';
+    // execute move for en passant
+    if(move->to_x != move->from_x && (this->board[move->from_y][move->from_x] == 'P' || this->board[move->from_y][move->from_x] == 'p') && this->board[move->to_y][move->to_x] == '.') {
+        //take with en passant
+        if(!this->turn) {
+            captured_piece = this->board[move->to_y-1][move->to_x];
+            this->board[move->to_y-1][move->to_x] = '.';
+        } else {
+            captured_piece = this->board[move->to_y+1][move->to_x];
+            this->board[move->to_y+1][move->to_x] = '.';
+        }
+        this->board[move->to_y][move->to_x] = this->board[move->from_y][move->from_x];
+        this->board[move->from_y][move->from_x] = '.';
+    } else {
+        captured_piece = this->board[move->to_y][move->to_x];
+        this->board[move->to_y][move->to_x] = this->board[move->from_y][move->from_x];
+        this->board[move->from_y][move->from_x] = '.';
+    }
+
+    if(move->promotion != '.') {
+        this->board[move->to_y][move->to_x] = move->promotion;
+    }
+
+    if (captured_piece != '.') {
+        return captured_piece;
+    }
+
+    return '.';
+}
+
+// for internal use
+/*char Board::fake_push_move(Move * move) {
+    char captured_piece = this->board[move->to_y][move->to_x];
+    this->board[move->to_y][move->to_x] = this->board[move->from_y][move->from_x];
+    this->board[move->from_y][move->from_x] = '.';
+
+    if (captured_piece != '.') {
+        return captured_piece;
+    }
+
+    return '.';
+}*/
 
 // Assumes that arr is length six
 bool Board::is_in_arr(char piece, char * arr) {
@@ -1370,10 +1403,6 @@ int * Board::get_king_pos() {
         }
     }
 
-    std::cout << "WARNING!! Unable to find king on this board:" << std::endl;
-    this->print_self();
-    this->print_board_metadata();
-
     return nullptr;
 }
 
@@ -1382,21 +1411,20 @@ bool Board::is_legal_move(Move * move) {
         return false;
     }
 
-    this->push_move(move);
-    
-    this->turn = !this->turn;
+    Board * dummy_board = new Board(*this);
 
-    int * king_pos = this->get_king_pos();
+    dummy_board->push_move(move);
+    dummy_board->turn = !dummy_board->turn;
+
+    int * king_pos = dummy_board->get_king_pos();
 
     int row = king_pos[0];
     int col = king_pos[1];
 
-    bool result = this->is_king_in_check(row, col);
+    bool result = dummy_board->is_king_in_check(row, col);
 
+    delete dummy_board;
     delete [] king_pos;
-
-    this->turn = !this->turn;
-    this->pull_move(move);
 
     return !result;
 }
