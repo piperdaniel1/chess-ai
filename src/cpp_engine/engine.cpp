@@ -11,17 +11,17 @@
 // $ g++ engine.cpp minimax.cpp tt_table.cpp evaluator.cpp board.cpp perft_test.cpp
 // ./a.out
 
-Move * arr_to_linked_list(Board& board, std::string * arr, int size) {
+Move * arr_to_linked_list(Board& board, std::vector<MovC> arr, int size) {
     Move * head = new Move();
     Move * curr = head;
     Move * converted_move;
     for (int i = 0; i < size; i++) {
-        converted_move = board.convert_move_fen(arr[i]);
-        curr->from_x = converted_move->from_x;
-        curr->from_y = converted_move->from_y;
-        curr->to_x = converted_move->to_x;
-        curr->to_y = converted_move->to_y;
-        curr->promotion = converted_move->promotion;
+        Move converted_move = arr[i].get_old_move();
+        curr->from_x = converted_move.from_x;
+        curr->from_y = converted_move.from_y;
+        curr->to_x = converted_move.to_x;
+        curr->to_y = converted_move.to_y;
+        curr->promotion = converted_move.promotion;
 
         if (i != size - 1) {
             curr->next = new Move();
@@ -34,16 +34,16 @@ Move * arr_to_linked_list(Board& board, std::string * arr, int size) {
 }
 
 int main() {
-    Perft_Test test;
-    test.run_perft_test();
-    return 0;
+    //Perft_Test test;
+    //test.run_perft_test();
+    //return 0;
     Minimax minimax;
     Board board;
     std::ifstream input_file;
     std::ofstream myFile;
     std::string fen;
-    std::string * move_fens;
-    std::string * vetted_fens;
+    std::vector<MovC> vetted_moves;
+    std::vector<MovC> moves;
     int scores[100];
     int num_moves = 0;
 
@@ -80,30 +80,31 @@ int main() {
         Move * sorted_legal_moves = board.get_legal_moves();
         std::uint64_t start = minimax.get_time();
         std::uint64_t max = start + 5000;
+
         // get the best move
         while(1) {
-            move_fens = minimax.get_best_move(board, curr_depth, num_moves, sorted_legal_moves, max - minimax.get_time());
+            moves = minimax.get_best_move(board, curr_depth, num_moves, sorted_legal_moves, max - minimax.get_time());
 
             if(minimax.get_time() < max) {
-                vetted_fens = move_fens;
+                vetted_moves = moves;
             } else {
                 std::cout << "Cutting depth " << curr_depth << " short due to time constraint." << std::endl;
                 break;
             }
 
-            sorted_legal_moves = arr_to_linked_list(board, move_fens, num_moves);
+            sorted_legal_moves = arr_to_linked_list(board, moves, num_moves);
             curr_depth++;
             std::cout << "Depth " << curr_depth-1 << " complete, " << minimax.positions_evaluated << " positions evaluated." << std::endl;
             std::cout << "Beginning depth " << curr_depth << "..." << std::endl;
         }
 
         // print the best move
-        std::cout << "Best move: " << vetted_fens[0] << std::endl;
+        std::cout << "Best move: " << vetted_moves[0].get_fen() << std::endl;
         std::cout << "Evaluated " << minimax.positions_evaluated << " positions." << std::endl;
 
         // write the best move to the output file
         myFile.open("output_file.txt");
-        myFile << vetted_fens[0];
+        myFile << vetted_moves[0].get_fen();
         myFile.close();
     }
 

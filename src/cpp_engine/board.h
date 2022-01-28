@@ -21,6 +21,7 @@ class MovC {
     MovC(int from_x, int from_y, int to_x, int to_y);
     MovC(int from_x, int from_y, int to_x, int to_y, char promotion);
     MovC(std::string);
+    MovC(Move);
     ~MovC();
     MovC(const MovC&);
     MovC& operator=(const MovC&);

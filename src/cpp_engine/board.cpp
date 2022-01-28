@@ -38,6 +38,15 @@ MovC::MovC(std::string fen) {
         this->promotion = '.';
     }
 }
+MovC::MovC(Move move) {
+    this->from_x = move.from_x;
+    this->from_y = move.from_y;
+    this->to_x = move.to_x;
+    this->to_y = move.to_y;
+
+    this->promotion = move.promotion;
+    this->next = nullptr;
+}
 MovC::~MovC() {
     // nothing to do
 }

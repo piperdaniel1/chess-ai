@@ -152,7 +152,7 @@ int Minimax::maximize(Board * board, int depth, int alpha, int beta, bool verbos
     return best_score;
 }
 
-std::string* Minimax::get_best_move(Board board, int depth, int& num_moves, Move* sorted_legal_moves, std::uint64_t max) {
+std::vector<MovC> Minimax::get_best_move(Board board, int depth, int& num_moves, Move* sorted_legal_moves, std::uint64_t max) {
     this->start_time = get_time();
     this->cut_search_early = false;
     this->max_time = max;
@@ -166,7 +166,7 @@ std::string* Minimax::get_best_move(Board board, int depth, int& num_moves, Move
     int game_over = this->eval.is_game_over(board, move_list);
     if (game_over != 0) {
         this->positions_evaluated++;
-        return nullptr;
+        return std::vector<MovC>();
     }
 
     int best_score = 0;
@@ -179,7 +179,7 @@ std::string* Minimax::get_best_move(Board board, int depth, int& num_moves, Move
     Move * best_move = nullptr;
     int score = 0;
     int scores[100]; // i really don't think there will ever be more than 100 moves
-    std::string * move_fens = new std::string[100];
+    std::vector<MovC> all_moves;
     num_moves = 0;
 
     while (curr_move != nullptr) {
@@ -200,7 +200,7 @@ std::string* Minimax::get_best_move(Board board, int depth, int& num_moves, Move
         }
 
         scores[num_moves] = score;
-        move_fens[num_moves] = board.get_move_fen(curr_move);
+        all_moves.push_back(MovC(*curr_move));
         num_moves++;
 
         // minimizing
@@ -228,11 +228,8 @@ std::string* Minimax::get_best_move(Board board, int depth, int& num_moves, Move
                     int temp = scores[i];
                     scores[i] = scores[i+1];
                     scores[i+1] = temp;
-
-                    std::string temp_fen = move_fens[i];
-                    move_fens[i] = move_fens[i+1];
-                    move_fens[i+1] = temp_fen;
-
+                    
+                    std::swap(all_moves[i], all_moves[i+1]);
                     swaps++;
                 }
             }
@@ -251,10 +248,7 @@ std::string* Minimax::get_best_move(Board board, int depth, int& num_moves, Move
                     scores[i] = scores[i+1];
                     scores[i+1] = temp;
 
-                    std::string temp_fen = move_fens[i];
-                    move_fens[i] = move_fens[i+1];
-                    move_fens[i+1] = temp_fen;
-
+                    std::swap(all_moves[i], all_moves[i+1]);
                     swaps++;
                 }
             }
@@ -265,5 +259,5 @@ std::string* Minimax::get_best_move(Board board, int depth, int& num_moves, Move
         }
     }
 
-    return move_fens;
+    return all_moves;
 }
