@@ -1053,6 +1053,7 @@ Move * Board::get_queen_moves(Move * moves, int row, int col) {
 
 Move * Board::get_king_moves(Move * moves, int row, int col) {
     char * pieces = this->turn ? black_pieces : white_pieces;
+    std::vector <MovC> movesC;
 
     // check for moves in all directions
     for (int i = -1; i <= 1; i++) {
@@ -1066,17 +1067,12 @@ Move * Board::get_king_moves(Move * moves, int row, int col) {
             }
 
             if (this->board[row + i][col + j] == '.' || is_in_arr(this->board[row + i][col + j], pieces)) {
-                moves->from_x = col;
-                moves->from_y = row;
-                moves->to_x = col + j;
-                moves->to_y = row + i;
-                moves->next = new Move;
-                moves = moves->next;
+                movesC.push_back(MovC(col, row, col + j, row + i));
             }
         }
     }
 
-    return moves;
+    return this->convert_vector_to_linked_list(movesC, moves);
 }
 
 Move * Board::get_knight_moves(Move * moves, int row, int col) {
