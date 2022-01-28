@@ -378,20 +378,6 @@ void Board::import_board_fen(std::string fen) {
     }
 }
 
-Move * Board::convert_move_fen(std::string fen) {
-    // should convert something like "e2e4" to a Move struct with from_x = 4, from_y = 1, to_x = 4, to_y = 3
-    Move * move = new Move();
-    move->from_x = fen[0] - 'a';
-    move->from_y = 7 -(fen[1] - '1');
-    move->to_x = fen[2] - 'a';
-    move->to_y = 7 - (fen[3] - '1');
-    if (fen.length() == 5) {
-        move->promotion = fen[4];
-    }
-
-    return move;
-}
-
 char Board::push_movC(MovC mov) {
     if(mov.from_x < 0 || mov.from_x > 7) {
         std::cout << "push_move Error: " << mov.from_x << " " << mov.from_y << " " << mov.to_x << " " << mov.to_y << std::endl;

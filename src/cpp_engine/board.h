@@ -75,7 +75,6 @@ class Board {
     int * get_king_pos();
     void print_board_metadata();
     void import_board_fen(std::string);
-    Move * convert_move_fen(std::string);
     void free_move_list(Move * moves);
     void clear_board();
     void set_piece(int row, int col, char piece);
