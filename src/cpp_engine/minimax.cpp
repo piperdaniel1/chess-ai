@@ -216,9 +216,7 @@ void Minimax::get_best_move(Board board, int depth, int& num_moves, std::vector<
         while(1) {
             for(int i=0; i<num_moves-1; i++) {
                 if(scores[i] < scores[i+1]) {
-                    int temp = scores[i];
-                    scores[i] = scores[i+1];
-                    scores[i+1] = temp;
+                    std::swap(scores[i], scores[i+1]);
                     
                     std::swap(sorted_legal_moves[i], sorted_legal_moves[i+1]);
                     swaps++;
@@ -235,9 +233,7 @@ void Minimax::get_best_move(Board board, int depth, int& num_moves, std::vector<
         while(1) {
             for(int i=0; i<num_moves-1; i++) {
                 if(scores[i] > scores[i+1]) {
-                    int temp = scores[i];
-                    scores[i] = scores[i+1];
-                    scores[i+1] = temp;
+                    std::swap(scores[i], scores[i+1]);
 
                     std::swap(sorted_legal_moves[i], sorted_legal_moves[i+1]);
                     swaps++;
