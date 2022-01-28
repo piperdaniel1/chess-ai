@@ -82,7 +82,7 @@ class Board {
     char get_piece(int row, int col);
     void print_self();
     char push_move(Move * move);
-    Move * get_pseudo_legal_moves();
+    void get_pseudo_legal_moves(std::vector<MovC>&);
     Move * get_legal_moves(bool v = false);
     bool is_king_in_check(int, int);
     // half moves since last capture or pawn move

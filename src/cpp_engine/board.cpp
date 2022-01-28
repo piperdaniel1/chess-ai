@@ -1208,12 +1208,7 @@ void Board::free_move_list(Move * moves) {
     }
 }
 
-Move * Board::get_pseudo_legal_moves() {    
-    Move * moves = new Move;
-    Move * list_end = moves;
-
-    std::vector <MovC> movesC;
-
+void Board::get_pseudo_legal_moves(std::vector<MovC>& movesC) {    
     char piece;
     for(int row=0; row<8; row++) {
         for(int col=0; col<8; col++) {
@@ -1256,16 +1251,6 @@ Move * Board::get_pseudo_legal_moves() {
     }
 
     this->get_castling_moves(movesC);
-
-    if(movesC.size() == 0) {
-        // no moves were found
-        delete moves;
-        return nullptr;
-    }
-
-    list_end = this->convert_vector_to_linked_list(movesC, moves);
-
-    return moves;
 }
 
 int * Board::get_king_pos() {
@@ -1312,21 +1297,16 @@ bool Board::is_legal_move(Move * move) {
 }
 
 Move * Board::get_legal_moves(bool v) {
-    Move * pseudo_legal_moves = this->get_pseudo_legal_moves();
+    std::vector <MovC> movesC;
+    this->get_pseudo_legal_moves(movesC);
 
-    if(pseudo_legal_moves == nullptr) {
+    Move * pseudo_legal_moves = new Move;
+    this->convert_vector_to_linked_list(movesC, pseudo_legal_moves);
+
+    if(movesC.size() == 0) {
         // there are no legal moves in this position
         return nullptr;
     }
-
-    /*std::cout << "ALL PSEUDO LEGAL MOVES:" << std::endl;
-    Move * curr_move = pseudo_legal_moves;
-    // print out the moves
-    while (curr_move->next != nullptr) {
-        std::cout << "Move: (" << curr_move->from_x << ", " << curr_move->from_y << ") to (" << curr_move->to_x << ", " << curr_move->to_y << ")" << std::endl;
-        curr_move = curr_move->next;
-    }
-    std::cout << std::endl;*/
 
     Move * moves = new Move;
     Move * list_end = moves;
