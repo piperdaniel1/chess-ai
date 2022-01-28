@@ -209,11 +209,12 @@ void Perft_Test::run_perft_test() {
     int passes = 0;
     int fails = 0;
     Board test_board;
-    test_board.import_board_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+
+    test_board.import_board_fen("r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1");
     std::cout << "Test 1: " << std::endl;
     this->get_best_move(test_board, 4);
-    std::cout << "Test finished, results (actual vs expected): " << this->positions_evaluated << " vs " << "197281" << std::endl;
-    if(this->positions_evaluated == 197281) {
+    std::cout << "Test finished, results (actual vs expected): " << this->positions_evaluated << " vs " << "422355" << std::endl;
+    if(this->positions_evaluated == 422355) {
         std::cout << "Test passed" << std::endl;
         passes++;
     } else {
@@ -245,11 +246,11 @@ void Perft_Test::run_perft_test() {
         fails++;
     }
 
-    test_board.import_board_fen("r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1");
+    test_board.import_board_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     std::cout << "Test 4: " << std::endl;
     this->get_best_move(test_board, 4);
-    std::cout << "Test finished, results (actual vs expected): " << this->positions_evaluated << " vs " << "422355" << std::endl;
-    if(this->positions_evaluated == 422355) {
+    std::cout << "Test finished, results (actual vs expected): " << this->positions_evaluated << " vs " << "197281" << std::endl;
+    if(this->positions_evaluated == 197281) {
         std::cout << "Test passed" << std::endl;
         passes++;
     } else {

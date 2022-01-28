@@ -1244,24 +1244,16 @@ Move * Board::get_knight_moves(Move * moves, int row, int col) {
 }
 
 Move * Board::get_rook_moves(Move * moves, int row, int col) {
+    std::vector <MovC> movesC;
+
     char * pieces = this->turn ? black_pieces : white_pieces;
     
     // check up
     for (int i = row - 1; i >= 0; i--) {
         if (this->board[i][col] == '.') {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = col;
-            moves->to_y = i;
-            moves->next = new Move;
-            moves = moves->next;
+            movesC.push_back(MovC(col, row, col, i));
         } else if ( is_in_arr(this->board[i][col], pieces)) {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = col;
-            moves->to_y = i;
-            moves->next = new Move;
-            moves = moves->next;
+            movesC.push_back(MovC(col, row, col, i));
             break;
         } else {
             break;
@@ -1271,19 +1263,9 @@ Move * Board::get_rook_moves(Move * moves, int row, int col) {
     // check down
     for (int i = row + 1; i < 8; i++) {
         if (this->board[i][col] == '.') {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = col;
-            moves->to_y = i;
-            moves->next = new Move;
-            moves = moves->next;
+            movesC.push_back(MovC(col, row, col, i));
         } else if (is_in_arr(this->board[i][col], pieces)) {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = col;
-            moves->to_y = i;
-            moves->next = new Move;
-            moves = moves->next;
+            movesC.push_back(MovC(col, row, col, i));
             break;
         } else {
             break;
@@ -1293,19 +1275,9 @@ Move * Board::get_rook_moves(Move * moves, int row, int col) {
     // check left
     for (int i = col - 1; i >= 0; i--) {
         if (this->board[row][i] == '.') {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = i;
-            moves->to_y = row;
-            moves->next = new Move;
-            moves = moves->next;
+            movesC.push_back(MovC(col, row, i, row));
         } else if (is_in_arr(this->board[row][i], pieces)) {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = i;
-            moves->to_y = row;
-            moves->next = new Move;
-            moves = moves->next;
+            movesC.push_back(MovC(col, row, i, row));
             break;
         } else {
             break;
@@ -1315,26 +1287,16 @@ Move * Board::get_rook_moves(Move * moves, int row, int col) {
     // check right
     for (int i = col + 1; i < 8; i++) {
         if (this->board[row][i] == '.') {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = i;
-            moves->to_y = row;
-            moves->next = new Move;
-            moves = moves->next;
+            movesC.push_back(MovC(col, row, i, row));
         } else if (is_in_arr(this->board[row][i], pieces)) {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = i;
-            moves->to_y = row;
-            moves->next = new Move;
-            moves = moves->next;
+            movesC.push_back(MovC(col, row, i, row));
             break;
         } else {
             break;
         }
     }
 
-    return moves;
+    return convert_vector_to_linked_list(movesC, moves);
 }
 
 Move * Board::convert_vector_to_linked_list(std::vector<MovC> movesC, Move * moves) {
