@@ -77,22 +77,22 @@ int main() {
         board.import_board_fen(fen);
         const int INITIAL_DEPTH = 2;
         int curr_depth = INITIAL_DEPTH;
-        Move * sorted_legal_moves = board.get_legal_moves();
+        std::vector<MovC> sorted_moves;
+        board.get_legal_movC(sorted_moves);
         std::uint64_t start = minimax.get_time();
         std::uint64_t max = start + 5000;
 
         // get the best move
         while(1) {
-            moves = minimax.get_best_move(board, curr_depth, num_moves, sorted_legal_moves, max - minimax.get_time());
+            minimax.get_best_move(board, curr_depth, num_moves, sorted_moves, max - minimax.get_time());
 
             if(minimax.get_time() < max) {
-                vetted_moves = moves;
+                vetted_moves = sorted_moves;
             } else {
                 std::cout << "Cutting depth " << curr_depth << " short due to time constraint." << std::endl;
                 break;
             }
 
-            sorted_legal_moves = arr_to_linked_list(board, moves, num_moves);
             curr_depth++;
             std::cout << "Depth " << curr_depth-1 << " complete, " << minimax.positions_evaluated << " positions evaluated." << std::endl;
             std::cout << "Beginning depth " << curr_depth << "..." << std::endl;

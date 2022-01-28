@@ -152,7 +152,7 @@ int Minimax::maximize(Board * board, int depth, int alpha, int beta, bool verbos
     return best_score;
 }
 
-std::vector<MovC> Minimax::get_best_move(Board board, int depth, int& num_moves, Move* sorted_legal_moves, std::uint64_t max) {
+void Minimax::get_best_move(Board board, int depth, int& num_moves, std::vector<MovC>& sorted_legal_moves, std::uint64_t max) {
     this->start_time = get_time();
     this->cut_search_early = false;
     this->max_time = max;
@@ -160,13 +160,9 @@ std::vector<MovC> Minimax::get_best_move(Board board, int depth, int& num_moves,
     int alpha = -100000;
     int beta = 100000;
 
-    Move * move_list = sorted_legal_moves;
-    Move * curr_move = move_list;
-
-    int game_over = this->eval.is_game_over(board, move_list);
+    int game_over = this->eval.is_game_overC(board, sorted_legal_moves);
     if (game_over != 0) {
         this->positions_evaluated++;
-        return std::vector<MovC>();
     }
 
     int best_score = 0;
@@ -179,12 +175,11 @@ std::vector<MovC> Minimax::get_best_move(Board board, int depth, int& num_moves,
     Move * best_move = nullptr;
     int score = 0;
     int scores[100]; // i really don't think there will ever be more than 100 moves
-    std::vector<MovC> all_moves;
     num_moves = 0;
 
-    while (curr_move != nullptr) {
+    for(MovC mov : sorted_legal_moves) {
         Board * next_board = new Board(board);
-        next_board->push_move(curr_move);
+        next_board->push_movC(mov);
 
         Entry tt_entry = this->tt_table.query_board(next_board->board);
         if (tt_entry.depth >= depth) {
@@ -200,7 +195,6 @@ std::vector<MovC> Minimax::get_best_move(Board board, int depth, int& num_moves,
         }
 
         scores[num_moves] = score;
-        all_moves.push_back(MovC(*curr_move));
         num_moves++;
 
         // minimizing
@@ -214,10 +208,7 @@ std::vector<MovC> Minimax::get_best_move(Board board, int depth, int& num_moves,
                 alpha = best_score;
             }
         }
-        curr_move = curr_move->next;
     }
-
-    board.free_move_list(move_list);
     
     if(board.turn) {
         // rank the moves by score highest to lowest
@@ -229,7 +220,7 @@ std::vector<MovC> Minimax::get_best_move(Board board, int depth, int& num_moves,
                     scores[i] = scores[i+1];
                     scores[i+1] = temp;
                     
-                    std::swap(all_moves[i], all_moves[i+1]);
+                    std::swap(sorted_legal_moves[i], sorted_legal_moves[i+1]);
                     swaps++;
                 }
             }
@@ -248,7 +239,7 @@ std::vector<MovC> Minimax::get_best_move(Board board, int depth, int& num_moves,
                     scores[i] = scores[i+1];
                     scores[i+1] = temp;
 
-                    std::swap(all_moves[i], all_moves[i+1]);
+                    std::swap(sorted_legal_moves[i], sorted_legal_moves[i+1]);
                     swaps++;
                 }
             }
@@ -258,6 +249,4 @@ std::vector<MovC> Minimax::get_best_move(Board board, int depth, int& num_moves,
             swaps = 0;
         }
     }
-
-    return all_moves;
 }

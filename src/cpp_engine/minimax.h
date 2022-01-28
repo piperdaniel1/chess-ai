@@ -19,7 +19,7 @@ class Minimax {
 
     public:
     Minimax();
-    std::vector<MovC> get_best_move(Board board, int depth, int& num_moves, Move* sorted_legal_moves, std::uint64_t max);
+    void get_best_move(Board board, int depth, int& num_moves, std::vector<MovC>& sorted_legal_moves, std::uint64_t max);
     int maximize(Board * board, int depth, int alpha, int beta, bool verbose);
     int minimize(Board * board, int depth, int alpha, int beta, bool verbose);
     std::uint64_t get_time();
