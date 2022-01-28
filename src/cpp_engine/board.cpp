@@ -607,6 +607,197 @@ char Board::push_move(Move * move) {
     return '.';
 }
 
+char Board::push_movC(MovC mov) {
+    if(mov.from_x < 0 || mov.from_x > 7) {
+        std::cout << "push_move Error: " << mov.from_x << " " << mov.from_y << " " << mov.to_x << " " << mov.to_y << std::endl;
+        this->print_self();
+        return '.';
+    }    
+
+    if(this->verbose) {
+        std::cout << "before" << std::endl;
+        this->print_self();
+    }
+
+    // Remove en passant
+    this->enPassantRow = -1;
+    this->enPassantCol = -1;
+
+    // execute castling move if applicable
+    if(!this->turn) {
+        if(this->black_queenside_castling) {
+            if(mov.from_x == 4 && mov.from_y == 0 && mov.to_x == 2 && mov.to_y == 0) {
+                this->board[0][2] = 'k';
+                this->board[0][3] = 'r';
+                this->board[0][0] = '.';
+                this->board[0][4] = '.';
+                this->turn = !this->turn;
+                this->black_kingside_castling = false;
+                this->black_queenside_castling = false;
+                return '.';
+            }
+        }
+        if (this->black_kingside_castling) {
+            if(mov.from_x == 4 && mov.from_y == 0 && mov.to_x == 6 && mov.to_y == 0) {
+                // execute black kingside castle
+                this->board[0][6] = 'k';
+                this->board[0][5] = 'r';
+                this->board[0][7] = '.';
+                this->board[0][4] = '.';
+                this->turn = !this->turn;
+                this->black_kingside_castling = false;
+                this->black_queenside_castling = false;
+                return '.';
+            }
+        }
+    } else {
+        if(this->white_queenside_castling) {
+            if(mov.from_x == 4 && mov.from_y == 7 && mov.to_x == 2 && mov.to_y == 7) {
+                // execute white qeenside castle
+                this->board[7][2] = 'K';
+                this->board[7][3] = 'R';
+                this->board[7][0] = '.';
+                this->board[7][4] = '.';
+                this->turn = !this->turn;
+                this->white_kingside_castling = false;
+                this->white_queenside_castling = false;
+                return '.';
+            }
+        } 
+        if (this->white_kingside_castling) {
+            if(mov.from_x == 4 && mov.from_y == 7 && mov.to_x == 6 && mov.to_y == 7) {
+                // execute white kingside castle
+                this->board[7][6] = 'K';
+                this->board[7][5] = 'R';
+                this->board[7][7] = '.';
+                this->board[7][4] = '.';
+                this->turn = !this->turn;
+                this->white_kingside_castling = false;
+                this->white_queenside_castling = false;
+                return '.';
+            }
+        }
+    }
+
+    // remove castle rights if applicable
+    if(!this->turn) {
+        if(this->black_kingside_castling) {
+            // kingside rook moves
+            if(mov.from_x == 7 && mov.from_y == 0) {
+                this->black_kingside_castling = false;
+            // king moves
+            } else if (mov.from_x == 4 && mov.from_y == 0) {
+                this->black_kingside_castling = false;
+                this->black_queenside_castling = false;
+            }
+        }
+
+        if (this->black_queenside_castling) {
+            if(mov.from_x == 0 && mov.from_y == 0) {
+                this->black_queenside_castling = false;
+            } else if (mov.from_x == 4 && mov.from_y == 0) {
+                this->black_kingside_castling = false;
+                this->black_queenside_castling = false;
+            }
+        }
+
+        if (mov.to_x == 7 && mov.to_y == 7) {
+            this->white_kingside_castling = false;
+        } else if (mov.to_x == 0 && mov.to_y == 7) {
+            this->white_queenside_castling = false;
+        }
+    } else {
+        if(this->white_kingside_castling) {
+            if(mov.from_x == 7 && mov.from_y == 7) {
+                this->white_kingside_castling = false;
+            } else if (mov.from_x == 4 && mov.from_y == 7) {
+                this->white_kingside_castling = false;
+                this->white_queenside_castling = false;
+            }
+        }
+
+        if (this->white_queenside_castling) {
+            if(mov.from_x == 0 && mov.from_y == 7) {
+                this->white_queenside_castling = false;
+            } else if (mov.from_x == 4 && mov.from_y == 7) {
+                this->white_kingside_castling = false;
+                this->white_queenside_castling = false;
+            }
+        }
+
+        if (mov.to_x == 7 && mov.to_y == 0) {
+            this->black_kingside_castling = false;
+        } else if (mov.to_x == 0 && mov.to_y == 0) {
+            this->black_queenside_castling = false;
+        }
+    }
+
+    // Add en passant rights if applicable
+    if(!this->turn) {
+        // if the piece is a pawn
+        if(this->board[mov.from_y][mov.from_x] == 'p') {
+            // if the pawn is moving two spaces
+            if(mov.from_y == 1 && mov.to_y == 3) {
+                this->enPassantCol = mov.from_x;
+                this->enPassantRow = 2;
+            }
+        }
+    } else {
+        if(this->board[mov.from_y][mov.from_x] == 'P') {
+            if(mov.from_y == 6 && mov.to_y == 4) {
+                this->enPassantCol = mov.from_x;
+                this->enPassantRow = 5;
+            }
+        }
+    }
+
+    this->halfmove_clock++;
+
+    if(this->board[mov.from_y][mov.from_x] == 'p' || this->board[mov.from_y][mov.from_x] == 'P') {
+        this->halfmove_clock = 0;
+    }
+
+    char captured_piece = '.';
+
+    if(mov.to_x != mov.from_x && (this->board[mov.from_y][mov.from_x] == 'P' || this->board[mov.from_y][mov.from_x] == 'p') && this->board[mov.to_y][mov.to_x] == '.') {
+        if(this->verbose) {
+            std::cout << "Taking with en passant" << std::endl;
+            std::cout << "From piece is " << this->board[mov.from_y][mov.from_x] << std::endl;
+        }
+
+        if(!this->turn) {
+            captured_piece = this->board[mov.to_y-1][mov.to_x];
+            this->board[mov.to_y-1][mov.to_x] = '.';
+        } else {
+            captured_piece = this->board[mov.to_y+1][mov.to_x];
+            this->board[mov.to_y+1][mov.to_x] = '.';
+        }
+        this->board[mov.to_y][mov.to_x] = this->board[mov.from_y][mov.from_x];
+        this->board[mov.from_y][mov.from_x] = '.';
+    } else {
+        captured_piece = this->board[mov.to_y][mov.to_x];
+        this->board[mov.to_y][mov.to_x] = this->board[mov.from_y][mov.from_x];
+        this->board[mov.from_y][mov.from_x] = '.';
+    }
+
+    if(mov.promotion != '.') {
+        this->board[mov.to_y][mov.to_x] = mov.promotion;
+    }
+
+    if(!this->turn) {
+        this->fullmove_number++;
+    }
+
+    this->turn = !this->turn;
+
+    if (captured_piece != '.') {
+        this->halfmove_clock = 0;
+        return captured_piece;
+    }
+
+    return '.';
+}
+
 char Board::fake_push_move(Move * move) {
     if(move->from_x < 0 || move->from_x > 7) {
         std::cout << "fake_push_move Error: " << move->from_x << " " << move->from_y << " " << move->to_x << " " << move->to_y << std::endl;
@@ -1294,8 +1485,7 @@ bool Board::is_legal_move(MovC mov) {
 
     Board * dummy_board = new Board(*this);
 
-    Move move = mov.get_old_move();
-    dummy_board->push_move(&move);
+    dummy_board->push_movC(mov);
     dummy_board->turn = !dummy_board->turn;
 
     int * king_pos = dummy_board->get_king_pos();
