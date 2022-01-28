@@ -34,6 +34,9 @@ Move * arr_to_linked_list(Board& board, std::string * arr, int size) {
 }
 
 int main() {
+    Perft_Test test;
+    test.run_perft_test();
+    return 0;
     Minimax minimax;
     Board board;
     std::ifstream input_file;

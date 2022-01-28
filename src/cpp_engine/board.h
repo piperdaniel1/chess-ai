@@ -2,7 +2,29 @@
 #define BOARD_H
 
 #include <iostream>
+#include <vector>
 #include <string>
+
+class MovC {
+    public:
+    MovC();
+    MovC(int from_x, int from_y, int to_x, int to_y);
+    MovC(int from_x, int from_y, int to_x, int to_y, char promotion);
+    MovC(std::string);
+    ~MovC();
+    MovC(const MovC&);
+    MovC& operator=(const MovC&);
+    std::string get_fen();
+
+    int from_x;
+    int from_y;
+    int to_x;
+    int to_y;
+
+    char promotion;
+    MovC * next;
+};
+
 
 struct Move {
     int from_x = -1;

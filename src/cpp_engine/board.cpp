@@ -1,5 +1,80 @@
 #include "board.h"
 
+MovC::MovC() {
+    this->from_x = 0;
+    this->from_y = 0;
+    this->to_x = 0;
+    this->to_y = 0;
+
+    this->promotion = '.';
+    this->next = nullptr;
+}
+MovC::MovC(int from_x, int from_y, int to_x, int to_y) {
+    this->from_x = from_x;
+    this->from_y = from_y;
+    this->to_x = to_x;
+    this->to_y = to_y;
+
+    this->promotion = '.';
+    this->next = nullptr;
+}
+MovC::MovC(int from_x, int from_y, int to_x, int to_y, char promotion) {
+    this->from_x = from_x;
+    this->from_y = from_y;
+    this->to_x = to_x;
+    this->to_y = to_y;
+
+    this->promotion = promotion;
+    this->next = nullptr;
+}
+MovC::MovC(std::string fen) {
+    this->from_x = fen[0] - 'a';
+    this->from_y = 7 -(fen[1] - '1');
+    this->to_x = fen[2] - 'a';
+    this->to_y = 7 - (fen[3] - '1');
+    if (fen.length() == 5) {
+        this->promotion = fen[4];
+    } else {
+        this->promotion = '.';
+    }
+}
+MovC::~MovC() {
+    // nothing to do
+}
+MovC::MovC(const MovC& other) {
+    this->from_x = other.from_x;
+    this->from_y = other.from_y;
+    this->to_x = other.to_x;
+    this->to_y = other.to_y;
+
+    this->promotion = other.promotion;
+    this->next = other.next;
+}
+MovC& MovC::operator=(const MovC& other) {
+    this->from_x = other.from_x;
+    this->from_y = other.from_y;
+    this->to_x = other.to_x;
+    this->to_y = other.to_y;
+
+    this->promotion = other.promotion;
+    this->next = other.next;
+    
+    return *this;
+}
+std::string MovC::get_fen() {
+    std::string fen = "";
+    fen += (char)(this->from_x + 'a');
+    fen += (char)(7 - this->from_y + '1');
+    fen += (char)(this->to_x + 'a');
+    fen += (char)(7 - this->to_y + '1');
+
+    if(this->promotion != '.') {
+        fen += this->promotion;
+    }
+
+    return fen;
+}
+
 Board::Board() {
     //std::cout << "Initializing board..." << std::endl;
     this->black_pieces = new char[6];
