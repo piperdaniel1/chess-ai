@@ -1132,7 +1132,6 @@ Move * Board::get_bishop_moves(Move * moves, int row, int col) {
 }
 
 Move * Board::get_queen_moves(Move * moves, int row, int col) {
-
     moves = this->get_bishop_moves(moves, row, col);
     moves = this->get_rook_moves(moves, row, col);
 
@@ -1267,6 +1266,7 @@ Move * Board::convert_vector_to_linked_list(std::vector<MovC> movesC, Move * mov
         moves->from_y = movesC[i].from_y;
         moves->to_x = movesC[i].to_x;
         moves->to_y = movesC[i].to_y;
+        moves->promotion = movesC[i].promotion;
         moves->next = new Move;
         moves = moves->next;
     }
