@@ -1259,28 +1259,6 @@ bool Board::is_legal_move(MovC mov) {
     return !result;
 }
 
-Move * Board::get_legal_moves(bool v) {
-    std::vector <MovC> movesC;
-    this->get_pseudo_legal_moves(movesC);
-
-    std::vector <MovC> legal_moves;
-
-    Move * moves = new Move;
-
-    for(MovC mov : movesC) {
-        if (this->is_legal_move(mov)) {
-            legal_moves.push_back(mov);    
-        }
-    }
-
-    if(legal_moves.size() == 0) {
-        return nullptr;
-    }
-
-    this->convert_vector_to_linked_list(legal_moves, moves);
-    return moves;
-}
-
 void Board::get_legal_movC(std::vector<MovC>& legal_moves) {
     std::vector <MovC> movesC;
     this->get_pseudo_legal_moves(movesC);
