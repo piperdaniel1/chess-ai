@@ -1017,24 +1017,6 @@ void Board::get_rook_moves(std::vector<MovC>& movesC, int row, int col) {
     }
 }
 
-Move * Board::convert_vector_to_linked_list(std::vector<MovC> movesC, Move * moves) {
-    for (int i = 0; i < movesC.size(); i++) {
-        moves->from_x = movesC[i].from_x;
-        moves->from_y = movesC[i].from_y;
-        moves->to_x = movesC[i].to_x;
-        moves->to_y = movesC[i].to_y;
-        moves->promotion = movesC[i].promotion;
-        if(i == movesC.size() - 1) {
-            moves->next = nullptr;
-        } else {
-            moves->next = new Move();
-            moves = moves->next;
-        }
-    }
-
-    return moves;
-}
-
 // we don't deal with checking castling rights here, we assume
 // that the Board::castling_rights booleans are correct and up to date
 // those booleans get changed in push_move.
