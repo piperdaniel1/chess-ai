@@ -67,7 +67,6 @@ class Board {
     void get_castling_moves(std::vector<MovC>&);
     void clone_promotion_moves(std::vector <MovC> & moves, int, int, int, int);
     Move * convert_vector_to_linked_list(std::vector<MovC>, Move *);
-    char fake_push_move(Move * move);
     int min(int, int);
     int max(int, int);
 
