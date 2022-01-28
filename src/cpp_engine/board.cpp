@@ -392,20 +392,6 @@ Move * Board::convert_move_fen(std::string fen) {
     return move;
 }
 
-std::string Board::get_move_fen(Move * move) {
-    std::string fen = "";
-    fen += (char)(move->from_x + 'a');
-    fen += (char)(7 - move->from_y + '1');
-    fen += (char)(move->to_x + 'a');
-    fen += (char)(7 - move->to_y + '1');
-
-    if(move->promotion != '.') {
-        fen += move->promotion;
-    }
-
-    return fen;
-}
-
 char Board::push_movC(MovC mov) {
     if(mov.from_x < 0 || mov.from_x > 7) {
         std::cout << "push_move Error: " << mov.from_x << " " << mov.from_y << " " << mov.to_x << " " << mov.to_y << std::endl;

@@ -146,12 +146,12 @@ void Perft_Test::get_best_move(Board board, int depth) {
         } else {
             score = this->minimize(next_board, depth - 1, alpha, beta, false);
         }
-        Move old_move = mov.get_old_move();
-        std::string move_fen = board.get_move_fen(&old_move);
+        
+        std::string move_fen = mov.get_fen();
         if(move_fen.length() == 4) {
-            std::cout << board.get_move_fen(&old_move) << ":  " << this->positions_evaluated - last_eval << std::endl;
+            std::cout << move_fen << ":  " << this->positions_evaluated - last_eval << std::endl;
         } else {
-            std::cout << board.get_move_fen(&old_move) << ": " << this->positions_evaluated - last_eval << std::endl;
+            std::cout << move_fen << ": " << this->positions_evaluated - last_eval << std::endl;
         }
     }
 }
