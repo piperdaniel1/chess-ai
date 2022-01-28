@@ -108,7 +108,7 @@ int Perft_Test::maximize(Board * board, int depth, int alpha, int beta, bool ver
     return best_score;
 }
 
-Move * Perft_Test::get_best_move(Board board, int depth) {
+void Perft_Test::get_best_move(Board board, int depth) {
     this->positions_evaluated = 0;
     int alpha = -100000;
     int beta = 100000;
@@ -116,14 +116,12 @@ Move * Perft_Test::get_best_move(Board board, int depth) {
     // if board->turn is true, then we are maximizing
     // if board->turn is false, then we are minimizing
 
-    Move * move_list = board.get_legal_moves();
-    Move * curr_move = move_list;
+    std::vector<MovC> movesC;
+    board.get_legal_movC(movesC);
 
-
-    int game_over = this->eval.is_game_over(board, move_list);
+    int game_over = this->eval.is_game_overC(board, movesC);
     if (game_over != 0) {
         this->positions_evaluated++;
-        return nullptr;
     }
 
     int best_score = 0;
@@ -133,13 +131,13 @@ Move * Perft_Test::get_best_move(Board board, int depth) {
     } else {
         best_score = 100000;
     }
-    Move * best_move = nullptr;
+
     int score = 0;
     int last_eval = 0;
 
-    while (curr_move != nullptr) {
+    for (MovC mov : movesC) {
         Board * next_board = new Board(board);
-        next_board->push_move(curr_move);
+        next_board->push_movC(mov);
 
         last_eval = this->positions_evaluated;
         
@@ -148,47 +146,14 @@ Move * Perft_Test::get_best_move(Board board, int depth) {
         } else {
             score = this->minimize(next_board, depth - 1, alpha, beta, false);
         }
-        std::string move_fen = board.get_move_fen(curr_move);
+        Move old_move = mov.get_old_move();
+        std::string move_fen = board.get_move_fen(&old_move);
         if(move_fen.length() == 4) {
-            std::cout << board.get_move_fen(curr_move) << ":  " << this->positions_evaluated - last_eval << std::endl;
+            std::cout << board.get_move_fen(&old_move) << ":  " << this->positions_evaluated - last_eval << std::endl;
         } else {
-            std::cout << board.get_move_fen(curr_move) << ": " << this->positions_evaluated - last_eval << std::endl;
+            std::cout << board.get_move_fen(&old_move) << ": " << this->positions_evaluated - last_eval << std::endl;
         }
-
-        if(!board.turn) {
-            if (score > best_score) {
-                best_score = score;
-                best_move = curr_move;
-            }
-        } else {
-            if (score < best_score) {
-                best_score = score;
-                best_move = curr_move;
-            }
-        }
-
-        if(!board.turn) {
-            if (best_score > alpha) {
-                alpha = best_score;
-            }
-        } else {
-            // this is BUGGED as SHIT bro.
-            if (best_score < beta) {
-                beta = best_score;
-            }
-        }
-        curr_move = curr_move->next;
     }
-
-    Move * unfreed_move = new Move;
-    unfreed_move->from_x = best_move->from_x;
-    unfreed_move->from_y = best_move->from_y;
-    unfreed_move->to_y = best_move->to_y;
-    unfreed_move->to_x = best_move->to_x;
-
-    board.free_move_list(move_list);
-
-    return unfreed_move;
 }
 
 void Perft_Test::run_perft_test() {

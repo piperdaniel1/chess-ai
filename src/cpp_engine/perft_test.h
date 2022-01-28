@@ -11,7 +11,7 @@ class Perft_Test {
     public:
     Perft_Test();
     void run_perft_test();
-    Move * get_best_move(Board board, int depth);
+    void get_best_move(Board board, int depth);
     int maximize(Board * board, int depth, int alpha, int beta, bool verbose);
     int minimize(Board * board, int depth, int alpha, int beta, bool verbose);
     int positions_evaluated;
