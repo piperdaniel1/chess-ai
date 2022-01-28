@@ -1337,60 +1337,54 @@ Move * Board::get_rook_moves(Move * moves, int row, int col) {
     return moves;
 }
 
+Move * Board::convert_vector_to_linked_list(std::vector<MovC> movesC, Move * moves) {
+    for (int i = 0; i < movesC.size(); i++) {
+        moves->from_x = movesC[i].from_x;
+        moves->from_y = movesC[i].from_y;
+        moves->to_x = movesC[i].to_x;
+        moves->to_y = movesC[i].to_y;
+        moves->next = new Move;
+        moves = moves->next;
+    }
+
+    return moves;
+}
+
 // we don't deal with checking castling rights here, we assume
 // that the Board::castling_rights booleans are correct and up to date
 // those booleans get changed in push_move.
 Move * Board::get_castling_moves(Move * moves) {
+    std::vector <MovC> movesC;
+    
     if(!this->turn) {
         // check for black castling
         if(this->black_kingside_castling && 
           !this->is_king_in_check(0, 5) && !this->is_king_in_check(0,4)
           && this->board[0][5] == '.' && this->board[0][6] == '.') {
-            // TODO check if there is a check along the way
-            moves->from_x = 4;
-            moves->from_y = 0;
-            moves->to_x = 6;
-            moves->to_y = 0;
-            moves->next = new Move;
-            moves = moves->next;
+            movesC.push_back(MovC(4, 0, 6, 0));
         }
 
         if(this->black_queenside_castling && 
           !this->is_king_in_check(0,3) && !this->is_king_in_check(0,4)
           && this->board[0][1] == '.' && this->board[0][2] == '.' && this->board[0][3] == '.') {
-            moves->from_x = 4;
-            moves->from_y = 0;
-            moves->to_x = 2;
-            moves->to_y = 0;
-            moves->next = new Move;
-            moves = moves->next;
+            movesC.push_back(MovC(4, 0, 2, 0));
         }
     } else {
         // check for white castling
         if(this->white_kingside_castling && 
         !this->is_king_in_check(7, 5) && !this->is_king_in_check(7,4)
         && this->board[7][5] == '.' && this->board[7][6] == '.') {
-            moves->from_x = 4;
-            moves->from_y = 7;
-            moves->to_x = 6;
-            moves->to_y = 7;
-            moves->next = new Move;
-            moves = moves->next;
+            movesC.push_back(MovC(4, 7, 6, 7));
         }
 
         if(this->white_queenside_castling && 
         !this->is_king_in_check(7, 3) && !this->is_king_in_check(7,4)
         && this->board[7][1] == '.' && this->board[7][2] == '.' && this->board[7][3] == '.') {
-            moves->from_x = 4;
-            moves->from_y = 7;
-            moves->to_x = 2;
-            moves->to_y = 7;
-            moves->next = new Move;
-            moves = moves->next;
+            movesC.push_back(MovC(4, 7, 2, 7));
         }
     }
 
-    return moves;
+    return convert_vector_to_linked_list(movesC, moves);
 }
 
 void Board::free_move_list(Move * moves) {
