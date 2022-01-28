@@ -899,7 +899,7 @@ int Board::max(int a, int b) {
     return b;
 }
 
-Move * Board::clone_promotion_moves(Move * moves, int from_y, int from_x, int to_y, int to_x) {
+void Board::clone_promotion_moves(std::vector <MovC> & movesC, int from_y, int from_x, int to_y, int to_x) {
     char * promo_pieces;
     if(this->turn) {
         promo_pieces = this->white_pieces;
@@ -908,59 +908,36 @@ Move * Board::clone_promotion_moves(Move * moves, int from_y, int from_x, int to
     }
 
     for(int i=0; i<4; i++) {
-        moves->from_x = from_x;
-        moves->from_y = from_y;
-        moves->to_x = to_x;
-        moves->to_y = to_y;
-        moves->promotion = promo_pieces[i];
-
-        moves->next = new Move;
-        moves = moves->next;
+        movesC.push_back(MovC(from_x, from_y, to_x, to_y, promo_pieces[i]));
     }
-
-    return moves;
 }
 
 Move * Board::get_pawn_moves(Move * moves, int row, int col) {
     char * pieces = this->turn ? black_pieces : white_pieces;
+    std::vector<MovC> movesC;
 
     if(this->turn) {
         // check the square right in front of the pawn
         if(board[row-1][col] == '.') {
             if(row-1 == 0) {
-                moves = this->clone_promotion_moves(moves, row, col, row-1, col);
+                this->clone_promotion_moves(movesC, row, col, row-1, col);
             } else {
-                moves->from_x = col;
-                moves->from_y = row;
-                moves->to_x = col;
-                moves->to_y = row - 1;
-                moves->next = new Move;
-                moves = moves->next;
+                movesC.push_back(MovC(col, row, col, row-1));
             }
         }
 
         // check the square two in front of the pawn (if it is the first move)
         if(row == 6 && board[row-2][col] == '.' && board[row-1][col] == '.') {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = col;
-            moves->to_y = row - 2;
-            moves->next = new Move;
-            moves = moves->next;
+            movesC.push_back(MovC(col, row, col, row-2));
         }
 
         // check the square to the diagonal left of the pawn
         if(col - 1 >= 0 && (this->is_in_arr(board[row-1][col-1], pieces) || 
         (row-1 == this->enPassantRow && col-1 == this->enPassantCol && this->enPassantRow == 2))) {
             if(row-1 == 0) {
-                moves = this->clone_promotion_moves(moves, row, col, row-1, col-1);
+                this->clone_promotion_moves(movesC, row, col, row-1, col-1);
             } else {
-                moves->from_x = col;
-                moves->from_y = row;
-                moves->to_x = col - 1;
-                moves->to_y = row - 1;
-                moves->next = new Move;
-                moves = moves->next;
+                movesC.push_back(MovC(col, row, col-1, row-1));
             }
         }
 
@@ -968,53 +945,33 @@ Move * Board::get_pawn_moves(Move * moves, int row, int col) {
         if(col + 1 < 8 && (this->is_in_arr(board[row-1][col+1], pieces) || 
         (row-1 == this->enPassantRow && col+1 == this->enPassantCol && this->enPassantRow == 2))) {
             if(row-1 == 0) {
-                moves = this->clone_promotion_moves(moves, row, col, row-1, col+1);
+                this->clone_promotion_moves(movesC, row, col, row-1, col+1);
             } else {
-                moves->from_x = col;
-                moves->from_y = row;
-                moves->to_x = col + 1;
-                moves->to_y = row - 1;
-                moves->next = new Move;
-                moves = moves->next;
+                movesC.push_back(MovC(col, row, col+1, row-1));
             }
         }
     } else {
         // check the square right in front of the pawn
         if(board[row+1][col] == '.') {
             if(row+1 == 7) {
-                moves = this->clone_promotion_moves(moves, row, col, row+1, col);
+                this->clone_promotion_moves(movesC, row, col, row+1, col);
             } else {
-                moves->from_x = col;
-                moves->from_y = row;
-                moves->to_x = col;
-                moves->to_y = row + 1;
-                moves->next = new Move;
-                moves = moves->next;
+                movesC.push_back(MovC(col, row, col, row+1));
             }
         }
 
         // check the square two in front of the pawn (if it is the first move)
         if(row == 1 && board[row+2][col] == '.' && board[row+1][col] == '.') {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = col;
-            moves->to_y = row + 2;
-            moves->next = new Move;
-            moves = moves->next;
+            movesC.push_back(MovC(col, row, col, row+2));
         }
 
         // check the square to the diagonal "left" of the pawn
         if(col - 1 >= 0 && (this->is_in_arr(board[row+1][col-1], pieces) || 
         (row+1 == this->enPassantRow && col-1 == this->enPassantCol && this->enPassantRow == 5))) {
             if(row+1 == 7) {
-                moves = this->clone_promotion_moves(moves, row, col, row+1, col-1);
+                this->clone_promotion_moves(movesC, row, col, row+1, col-1);
             } else {
-                moves->from_x = col;
-                moves->from_y = row;
-                moves->to_x = col - 1;
-                moves->to_y = row + 1;
-                moves->next = new Move;
-                moves = moves->next;
+                movesC.push_back(MovC(col, row, col-1, row+1));
             }
         }
 
@@ -1022,19 +979,14 @@ Move * Board::get_pawn_moves(Move * moves, int row, int col) {
         if(col + 1 < 8 && (this->is_in_arr(board[row+1][col+1], pieces) ||
         (row+1 == this->enPassantRow && col+1 == this->enPassantCol && this->enPassantRow == 5))) {
             if(row+1 == 7) {
-                moves = this->clone_promotion_moves(moves, row, col, row+1, col+1);
+                this->clone_promotion_moves(movesC, row, col, row+1, col+1);
             } else {
-                moves->from_x = col;
-                moves->from_y = row;
-                moves->to_x = col + 1;
-                moves->to_y = row + 1;
-                moves->next = new Move;
-                moves = moves->next;
+                movesC.push_back(MovC(col, row, col+1, row+1));
             }
         }
     }
 
-    return moves;
+    return this->convert_vector_to_linked_list(movesC, moves);
 }
 
 Move * Board::get_bishop_moves(Move * moves, int row, int col) {
