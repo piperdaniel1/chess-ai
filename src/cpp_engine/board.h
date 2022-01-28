@@ -55,7 +55,6 @@ class Board {
     int enPassantCol;
     int enPassantRow;
 
-    bool check_on_board();
     bool is_legal_move(MovC mov);
     bool is_in_arr(char piece, char arr[]);
     void get_rook_moves(std::vector<MovC>&, int, int);

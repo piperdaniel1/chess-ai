@@ -1154,15 +1154,3 @@ void Board::print_self() {
 
     std::cout << "a b c d e f g h" << std::endl;
 }
-
-bool Board::check_on_board() {
-    for(int row=0; row<8; row++) {
-        for(int col=0; col<8; col++) {
-            if(this->board[row][col] == '.') {
-                return false;
-            }
-        }
-    }
-
-    return false;
-}
