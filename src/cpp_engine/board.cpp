@@ -1168,79 +1168,41 @@ Move * Board::get_king_moves(Move * moves, int row, int col) {
 }
 
 Move * Board::get_knight_moves(Move * moves, int row, int col) {
+    std::vector<MovC> movesC;
+
     if (row - 2 >= 0 && col - 1 >= 0 && (this->board[row - 2][col - 1] == '.' || is_in_arr(this->board[row - 2][col - 1], this->turn ? black_pieces : white_pieces))) {
-        moves->from_x = col;
-        moves->from_y = row;
-        moves->to_x = col - 1;
-        moves->to_y = row - 2;
-        moves->next = new Move;
-        moves = moves->next;
+        movesC.push_back(MovC(col, row, col - 1, row - 2));
     }
 
     if (row - 2 >= 0 && col + 1 <= 7 && (this->board[row - 2][col + 1] == '.' || is_in_arr(this->board[row - 2][col + 1], this->turn ? black_pieces : white_pieces))) {
-        moves->from_x = col;
-        moves->from_y = row;
-        moves->to_x = col + 1;
-        moves->to_y = row - 2;
-        moves->next = new Move;
-        moves = moves->next;
+        movesC.push_back(MovC(col, row, col + 1, row - 2));
     }
 
     if (row - 1 >= 0 && col - 2 >= 0 && (this->board[row - 1][col - 2] == '.' || is_in_arr(this->board[row - 1][col - 2], this->turn ? black_pieces : white_pieces))) {
-        moves->from_x = col;
-        moves->from_y = row;
-        moves->to_x = col - 2;
-        moves->to_y = row - 1;
-        moves->next = new Move;
-        moves = moves->next;
+        movesC.push_back(MovC(col, row, col - 2, row - 1));
     }
 
     if (row - 1 >= 0 && col + 2 <= 7 && (this->board[row - 1][col + 2] == '.' || is_in_arr(this->board[row - 1][col + 2], this->turn ? black_pieces : white_pieces))) {
-        moves->from_x = col;
-        moves->from_y = row;
-        moves->to_x = col + 2;
-        moves->to_y = row - 1;
-        moves->next = new Move;
-        moves = moves->next;
+        movesC.push_back(MovC(col, row, col + 2, row - 1));
     }
 
     if (row + 2 <= 7 && col - 1 >= 0 && (this->board[row + 2][col - 1] == '.' || is_in_arr(this->board[row + 2][col - 1], turn ? black_pieces : white_pieces))) {
-        moves->from_x = col;
-        moves->from_y = row;
-        moves->to_x = col - 1;
-        moves->to_y = row + 2;
-        moves->next = new Move;
-        moves = moves->next;
+        movesC.push_back(MovC(col, row, col - 1, row + 2));
     }
 
     if (row + 2 <= 7 && col + 1 <= 7 && (this->board[row + 2][col + 1] == '.' || is_in_arr(this->board[row + 2][col + 1], this->turn ? black_pieces : white_pieces))) {
-        moves->from_x = col;
-        moves->from_y = row;
-        moves->to_x = col + 1;
-        moves->to_y = row + 2;
-        moves->next = new Move;
-        moves = moves->next;
+        movesC.push_back(MovC(col, row, col + 1, row + 2));
     }
 
     if (row + 1 <= 7 && col - 2 >= 0 && (this->board[row + 1][col - 2] == '.' || is_in_arr(this->board[row + 1][col - 2], this->turn ? black_pieces : white_pieces))) {
-        moves->from_x = col;
-        moves->from_y = row;
-        moves->to_x = col - 2;
-        moves->to_y = row + 1;
-        moves->next = new Move;
-        moves = moves->next;
+        movesC.push_back(MovC(col, row, col - 2, row + 1));
     }
 
     if (row + 1 <= 7 && col + 2 <= 7 && (this->board[row + 1][col + 2] == '.' || is_in_arr(this->board[row + 1][col + 2], this->turn ? black_pieces : white_pieces))) {
-        moves->from_x = col;
-        moves->from_y = row;
-        moves->to_x = col + 2;
-        moves->to_y = row + 1;
-        moves->next = new Move;
-        moves = moves->next;
+        movesC.push_back(MovC(col, row, col + 2, row + 1));
     }
 
-    return moves;
+    return this->convert_vector_to_linked_list(movesC, moves);
 }
 
 Move * Board::get_rook_moves(Move * moves, int row, int col) {
@@ -1296,7 +1258,7 @@ Move * Board::get_rook_moves(Move * moves, int row, int col) {
         }
     }
 
-    return convert_vector_to_linked_list(movesC, moves);
+    return this->convert_vector_to_linked_list(movesC, moves);
 }
 
 Move * Board::convert_vector_to_linked_list(std::vector<MovC> movesC, Move * moves) {
@@ -1346,7 +1308,7 @@ Move * Board::get_castling_moves(Move * moves) {
         }
     }
 
-    return convert_vector_to_linked_list(movesC, moves);
+    return this->convert_vector_to_linked_list(movesC, moves);
 }
 
 void Board::free_move_list(Move * moves) {
