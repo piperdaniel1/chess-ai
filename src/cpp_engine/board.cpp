@@ -890,19 +890,6 @@ char Board::fake_push_move(Move * move) {
     return '.';
 }
 
-// for internal use
-/*char Board::fake_push_move(Move * move) {
-    char captured_piece = this->board[move->to_y][move->to_x];
-    this->board[move->to_y][move->to_x] = this->board[move->from_y][move->from_x];
-    this->board[move->from_y][move->from_x] = '.';
-
-    if (captured_piece != '.') {
-        return captured_piece;
-    }
-
-    return '.';
-}*/
-
 // Assumes that arr is length six
 bool Board::is_in_arr(char piece, char * arr) {
     for (int i = 0; i < 6; i++) {
@@ -1521,6 +1508,17 @@ Move * Board::get_legal_moves(bool v) {
 
     this->convert_vector_to_linked_list(legal_moves, moves);
     return moves;
+}
+
+void Board::get_legal_movC(std::vector<MovC>& legal_moves) {
+    std::vector <MovC> movesC;
+    this->get_pseudo_legal_moves(movesC);
+
+    for(MovC mov : movesC) {
+        if (this->is_legal_move(mov)) {
+            legal_moves.push_back(mov);    
+        }
+    }
 }
 
 void Board::print_self() {

@@ -85,6 +85,7 @@ class Board {
     char push_movC(MovC mov);
     void get_pseudo_legal_moves(std::vector<MovC>&);
     Move * get_legal_moves(bool v = false);
+    void get_legal_movC(std::vector<MovC>&);
     bool is_king_in_check(int, int);
     // half moves since last capture or pawn move
     int halfmove_clock;
