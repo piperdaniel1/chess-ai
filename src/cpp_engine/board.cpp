@@ -912,9 +912,8 @@ void Board::clone_promotion_moves(std::vector <MovC> & movesC, int from_y, int f
     }
 }
 
-Move * Board::get_pawn_moves(Move * moves, int row, int col) {
+void Board::get_pawn_moves(std::vector<MovC>& movesC, int row, int col) {
     char * pieces = this->turn ? black_pieces : white_pieces;
-    std::vector<MovC> movesC;
 
     if(this->turn) {
         // check the square right in front of the pawn
@@ -985,13 +984,10 @@ Move * Board::get_pawn_moves(Move * moves, int row, int col) {
             }
         }
     }
-
-    return this->convert_vector_to_linked_list(movesC, moves);
 }
 
-Move * Board::get_bishop_moves(Move * moves, int row, int col) {
+void Board::get_bishop_moves(std::vector<MovC>& movesC, int row, int col) {
     char * pieces = this->turn ? black_pieces : white_pieces;
-    std::vector <MovC> movesC;
 
     // check towards the top left
     for (int i=1; i<=min(row, col); i++) {
@@ -1040,20 +1036,15 @@ Move * Board::get_bishop_moves(Move * moves, int row, int col) {
             break;
         }
     }
-
-    return this->convert_vector_to_linked_list(movesC, moves);
 }
 
-Move * Board::get_queen_moves(Move * moves, int row, int col) {
-    moves = this->get_bishop_moves(moves, row, col);
-    moves = this->get_rook_moves(moves, row, col);
-
-    return moves;
+void Board::get_queen_moves(std::vector<MovC>& movesC, int row, int col) {
+    this->get_bishop_moves(movesC, row, col);
+    this->get_rook_moves(movesC, row, col);
 }
 
-Move * Board::get_king_moves(Move * moves, int row, int col) {
+void Board::get_king_moves(std::vector<MovC>& movesC, int row, int col) {
     char * pieces = this->turn ? black_pieces : white_pieces;
-    std::vector <MovC> movesC;
 
     // check for moves in all directions
     for (int i = -1; i <= 1; i++) {
@@ -1071,13 +1062,9 @@ Move * Board::get_king_moves(Move * moves, int row, int col) {
             }
         }
     }
-
-    return this->convert_vector_to_linked_list(movesC, moves);
 }
 
-Move * Board::get_knight_moves(Move * moves, int row, int col) {
-    std::vector<MovC> movesC;
-
+void Board::get_knight_moves(std::vector<MovC>& movesC, int row, int col) {
     if (row - 2 >= 0 && col - 1 >= 0 && (this->board[row - 2][col - 1] == '.' || is_in_arr(this->board[row - 2][col - 1], this->turn ? black_pieces : white_pieces))) {
         movesC.push_back(MovC(col, row, col - 1, row - 2));
     }
@@ -1109,13 +1096,9 @@ Move * Board::get_knight_moves(Move * moves, int row, int col) {
     if (row + 1 <= 7 && col + 2 <= 7 && (this->board[row + 1][col + 2] == '.' || is_in_arr(this->board[row + 1][col + 2], this->turn ? black_pieces : white_pieces))) {
         movesC.push_back(MovC(col, row, col + 2, row + 1));
     }
-
-    return this->convert_vector_to_linked_list(movesC, moves);
 }
 
-Move * Board::get_rook_moves(Move * moves, int row, int col) {
-    std::vector <MovC> movesC;
-
+void Board::get_rook_moves(std::vector<MovC>& movesC, int row, int col) {
     char * pieces = this->turn ? black_pieces : white_pieces;
     
     // check up
@@ -1165,8 +1148,6 @@ Move * Board::get_rook_moves(Move * moves, int row, int col) {
             break;
         }
     }
-
-    return this->convert_vector_to_linked_list(movesC, moves);
 }
 
 Move * Board::convert_vector_to_linked_list(std::vector<MovC> movesC, Move * moves) {
@@ -1186,9 +1167,7 @@ Move * Board::convert_vector_to_linked_list(std::vector<MovC> movesC, Move * mov
 // we don't deal with checking castling rights here, we assume
 // that the Board::castling_rights booleans are correct and up to date
 // those booleans get changed in push_move.
-Move * Board::get_castling_moves(Move * moves) {
-    std::vector <MovC> movesC;
-    
+void Board::get_castling_moves(std::vector<MovC>& movesC) {
     if(!this->turn) {
         // check for black castling
         if(this->black_kingside_castling && 
@@ -1216,8 +1195,6 @@ Move * Board::get_castling_moves(Move * moves) {
             movesC.push_back(MovC(4, 7, 2, 7));
         }
     }
-
-    return this->convert_vector_to_linked_list(movesC, moves);
 }
 
 void Board::free_move_list(Move * moves) {
@@ -1231,11 +1208,11 @@ void Board::free_move_list(Move * moves) {
     }
 }
 
-Move * Board::get_pseudo_legal_moves() {
-    //std::cout << "Getting pseudo legal moves..." << std::endl;
-    
+Move * Board::get_pseudo_legal_moves() {    
     Move * moves = new Move;
     Move * list_end = moves;
+
+    std::vector <MovC> movesC;
 
     char piece;
     for(int row=0; row<8; row++) {
@@ -1248,43 +1225,45 @@ Move * Board::get_pseudo_legal_moves() {
 
             if (this->turn == false) {
                 if(piece == 'r') {
-                    list_end = this->get_rook_moves(list_end, row, col);
+                    this->get_rook_moves(movesC, row, col);
                 } else if(piece == 'k') {
-                    list_end = this->get_king_moves(list_end, row, col);
+                    this->get_king_moves(movesC, row, col);
                 } else if(piece == 'b') {
-                    list_end = this->get_bishop_moves(list_end, row, col);
+                    this->get_bishop_moves(movesC, row, col);
                 } else if(piece == 'q') {
-                    list_end = this->get_queen_moves(list_end, row, col);
+                    this->get_queen_moves(movesC, row, col);
                 } else if(piece == 'n') {
-                    list_end = this->get_knight_moves(list_end, row, col);
+                    this->get_knight_moves(movesC, row, col);
                 } else if(piece == 'p') {
-                    list_end = this->get_pawn_moves(list_end, row, col);
+                    this->get_pawn_moves(movesC, row, col);
                 }
             } else if (this->turn == true) {
                 if(piece == 'R') {
-                    list_end = this->get_rook_moves(list_end, row, col);
+                    this->get_rook_moves(movesC, row, col);
                 } else if(piece == 'K') {
-                    list_end = this->get_king_moves(list_end, row, col);
+                    this->get_king_moves(movesC, row, col);
                 } else if(piece == 'B') {
-                    list_end = this->get_bishop_moves(list_end, row, col);
+                    this->get_bishop_moves(movesC, row, col);
                 } else if(piece == 'Q') {
-                    list_end = this->get_queen_moves(list_end, row, col);
+                    this->get_queen_moves(movesC, row, col);
                 } else if(piece == 'N') {
-                    list_end = this->get_knight_moves(list_end, row, col);
+                    this->get_knight_moves(movesC, row, col);
                 } else if(piece == 'P') {
-                    list_end = this->get_pawn_moves(list_end, row, col);
+                    this->get_pawn_moves(movesC, row, col);
                 }
             }
         }
     }
 
-    this->get_castling_moves(list_end);
+    this->get_castling_moves(movesC);
 
-    if(moves == list_end) {
+    if(movesC.size() == 0) {
         // no moves were found
         delete moves;
         return nullptr;
     }
+
+    list_end = this->convert_vector_to_linked_list(movesC, moves);
 
     return moves;
 }
