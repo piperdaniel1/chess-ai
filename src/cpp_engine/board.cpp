@@ -434,6 +434,90 @@ void Board::import_board_fen(std::string fen) {
     }
 }
 
+void Board::pull_movC(MovC& mov) {
+    // * 1. If the mov is not a valid move, print an error message.
+    if(mov.from_x < 0 || mov.from_x > 7) {
+        std::cout << "pull_movC Error: from_x out of bounds" <<  std::endl;
+        std::cout << "MovC: " << mov.from_x << " " << mov.from_y << " " << mov.to_x << " " << mov.to_y << std::endl;
+        return;
+    }
+
+    // * 2. Set enPassantRow and enPassantCol to the enPassant square
+    this->enPassantCol = mov.enPassantCue.col;
+    this->enPassantRow = mov.enPassantCue.row;
+
+    // * 3. Set the castling flags to the values stored inside the mov.
+    this->white_kingside_castling = mov.whiteKingSideCue;
+    this->white_queenside_castling = mov.whiteQueenSideCue;
+    this->black_kingside_castling = mov.blackKingSideCue;
+    this->black_queenside_castling = mov.blackQueenSideCue;
+
+    // * 4. Set the move counts to the values stored inside the mov.
+    this->halfmove_clock = mov.halfMoveCount;
+    this->fullmove_number = mov.fullMoveCount;
+
+    // * 5. Reverse whose turn it is.
+    this->turn = !this->turn;
+
+    // * 6. Check if the castling flag is true.
+    // *    - If so, reverse the move as it if is a castling move and exit.
+    if(mov.is_castling) {
+        // This means that black is castling
+        if(mov.from_y == 0) {
+            // This means that it is a queenside castling move
+            if(mov.to_x == 2) {
+                // 0 1 2 3 4
+                // . . k r . . . .
+                // to
+                // 0 1 2 3 4
+                // r . . . k . . .
+                this->board[mov.from_y][0] = 'r';
+                this->board[mov.from_y][4] = 'k';
+                this->board[mov.from_y][3] = '.';
+                this->board[mov.from_y][2] = '.';
+            // This means that it is a kingside castling move
+            } else if (mov.to_x == 6) {
+                // 0 1 2 3 4 5 6 7
+                // . . . . . r k .
+                // to
+                // 0 1 2 3 4 5 6 7
+                // . . . . k . . r
+                this->board[mov.from_y][7] = 'r';
+                this->board[mov.from_y][4] = 'k';
+                this->board[mov.from_y][5] = '.';
+                this->board[mov.from_y][6] = '.';
+            }
+        // This means that white is castling
+        } else {
+            // This means that it is a queenside castling move
+            if(mov.to_x == 2) {
+                // 0 1 2 3 4
+                // . . k r . . . .
+                // to
+                // 0 1 2 3 4
+                // r . . . k . . .
+                this->board[mov.from_y][0] = 'r';
+                this->board[mov.from_y][4] = 'k';
+                this->board[mov.from_y][3] = '.';
+                this->board[mov.from_y][2] = '.';
+            // This means that it is a kingside castling move
+            } else if (mov.to_x == 6) {
+                // 0 1 2 3 4 5 6 7
+                // . . . . . r k .
+                // to
+                // 0 1 2 3 4 5 6 7
+                // . . . . k . . r
+                this->board[mov.from_y][7] = 'r';
+                this->board[mov.from_y][4] = 'k';
+                this->board[mov.from_y][5] = '.';
+                this->board[mov.from_y][6] = '.';
+            }
+        }
+        return;
+    }
+
+}
+
 // Design for void Board::pull_movC(MovC mov);
 /*
  * 1. If the mov is not a valid move, print an error message.
@@ -455,7 +539,7 @@ void Board::import_board_fen(std::string fen) {
 
 void Board::push_movC(MovC& mov) {
     if(mov.from_x < 0 || mov.from_x > 7) {
-        std::cout << "push_move Error: " << mov.from_x << " " << mov.from_y << " " << mov.to_x << " " << mov.to_y << std::endl;
+        std::cout << "push_movC Error: " << mov.from_x << " " << mov.from_y << " " << mov.to_x << " " << mov.to_y << std::endl;
         this->print_self();
         return;
     }

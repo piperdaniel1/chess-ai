@@ -105,6 +105,7 @@ class Board {
     void set_piece(int row, int col, char piece);
     char get_piece(int row, int col);
     void print_self();
+    void pull_movC(MovC& mov);
     void push_movC(MovC& mov);
     void get_pseudo_legal_moves(std::vector<MovC>&);
     void get_legal_movC(std::vector<MovC>&);
