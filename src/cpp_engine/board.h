@@ -22,6 +22,7 @@ struct Move {
 
 class MovC {
     public:
+    // Constructors / Operators
     MovC();
     MovC(int from_x, int from_y, int to_x, int to_y);
     MovC(int from_x, int from_y, int to_x, int to_y, char promotion);
@@ -30,16 +31,35 @@ class MovC {
     ~MovC();
     MovC(const MovC&);
     MovC& operator=(const MovC&);
+
+    // General purpose functions
     std::string get_fen();
     Move get_old_move();
 
+    // Basic move fields
     int from_x;
     int from_y;
     int to_x;
     int to_y;
-
     char promotion;
+
+    // Outdated field
     MovC * next;
+
+    // Board state cues for PullMove
+    Square enPassantCue;
+    bool whiteKingSideCue;
+    bool whiteQueenSideCue;
+    bool blackKingSideCue;
+    bool blackQueenSideCue;
+
+    // Move type cues for PullMove
+    bool is_castling;
+    bool is_enpassant;
+    char captured_piece;
+
+    private:
+    void init_cues();
 };
 
 class Board {
@@ -80,7 +100,7 @@ class Board {
     void set_piece(int row, int col, char piece);
     char get_piece(int row, int col);
     void print_self();
-    char push_movC(MovC mov);
+    void push_movC(MovC& mov);
     void get_pseudo_legal_moves(std::vector<MovC>&);
     void get_legal_movC(std::vector<MovC>&);
     bool is_king_in_check(int, int);

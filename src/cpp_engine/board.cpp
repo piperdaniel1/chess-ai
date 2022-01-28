@@ -1,5 +1,16 @@
 #include "board.h"
 
+
+void MovC::init_cues() {
+    this->whiteKingSideCue = true;
+    this->whiteQueenSideCue = true;
+    this->blackKingSideCue = true;
+    this->whiteQueenSideCue = true;
+
+    this->is_castling = false;
+    this->is_enpassant = false;
+    this->captured_piece = '.';
+}
 MovC::MovC() {
     this->from_x = 0;
     this->from_y = 0;
@@ -8,6 +19,8 @@ MovC::MovC() {
 
     this->promotion = '.';
     this->next = nullptr;
+
+    this->init_cues();
 }
 MovC::MovC(int from_x, int from_y, int to_x, int to_y) {
     this->from_x = from_x;
@@ -17,6 +30,8 @@ MovC::MovC(int from_x, int from_y, int to_x, int to_y) {
 
     this->promotion = '.';
     this->next = nullptr;
+
+    this->init_cues();
 }
 MovC::MovC(int from_x, int from_y, int to_x, int to_y, char promotion) {
     this->from_x = from_x;
@@ -26,6 +41,8 @@ MovC::MovC(int from_x, int from_y, int to_x, int to_y, char promotion) {
 
     this->promotion = promotion;
     this->next = nullptr;
+
+    this->init_cues();
 }
 MovC::MovC(std::string fen) {
     this->from_x = fen[0] - 'a';
@@ -37,6 +54,8 @@ MovC::MovC(std::string fen) {
     } else {
         this->promotion = '.';
     }
+
+    this->init_cues();
 }
 MovC::MovC(Move move) {
     this->from_x = move.from_x;
@@ -46,6 +65,8 @@ MovC::MovC(Move move) {
 
     this->promotion = move.promotion;
     this->next = nullptr;
+
+    this->init_cues();
 }
 MovC::~MovC() {
     // nothing to do
@@ -58,6 +79,16 @@ MovC::MovC(const MovC& other) {
 
     this->promotion = other.promotion;
     this->next = other.next;
+
+    this->enPassantCue = other.enPassantCue;
+    this->whiteKingSideCue = other.whiteKingSideCue;
+    this->whiteQueenSideCue = other.whiteQueenSideCue;
+    this->blackKingSideCue = other.blackKingSideCue;
+    this->blackQueenSideCue = other.blackQueenSideCue;
+
+    this->is_castling = other.is_castling;
+    this->is_enpassant = other.is_enpassant;
+    this->captured_piece = other.captured_piece;
 }
 MovC& MovC::operator=(const MovC& other) {
     this->from_x = other.from_x;
@@ -67,6 +98,16 @@ MovC& MovC::operator=(const MovC& other) {
 
     this->promotion = other.promotion;
     this->next = other.next;
+
+    this->enPassantCue = other.enPassantCue;
+    this->whiteKingSideCue = other.whiteKingSideCue;
+    this->whiteQueenSideCue = other.whiteQueenSideCue;
+    this->blackKingSideCue = other.blackKingSideCue;
+    this->blackQueenSideCue = other.blackQueenSideCue;
+
+    this->is_castling = other.is_castling;
+    this->is_enpassant = other.is_enpassant;
+    this->captured_piece = other.captured_piece;
     
     return *this;
 }
@@ -378,17 +419,42 @@ void Board::import_board_fen(std::string fen) {
     }
 }
 
-char Board::push_movC(MovC mov) {
+// Design for void Board::pull_movC(MovC mov);
+/*
+ * 1. If the mov is not a valid move, print an error message.
+ * 2. Set enPassantRow and enPassantCol to the enPassant square
+ *    that is stored inside the mov.
+ * 3. Set the castling flags to the values stored inside the mov.
+ * 4. Set the move counts to the values stored inside the mov.
+ * 5. Reverse whose turn it is.
+ * 6. Check if the castling flag is true.
+ *    - If so, reverse the move as it if is a castling move and exit.
+ * 7. Check if the en passant flag is true.
+ *    - If so, reverse the move as if it is an en passant move and exit.
+ * 8. Reverse the move normally, remembering to respawn the captured piece.
+ * 9. If the promotion field is not blank revert the piece that moved back to
+ *    a pawn of the correct color. This can be determined by looking at the
+ *    to_y of the move.
+ * 10. Exit.
+ */
+
+void Board::push_movC(MovC& mov) {
     if(mov.from_x < 0 || mov.from_x > 7) {
         std::cout << "push_move Error: " << mov.from_x << " " << mov.from_y << " " << mov.to_x << " " << mov.to_y << std::endl;
         this->print_self();
-        return '.';
-    }    
-
-    if(this->verbose) {
-        std::cout << "before" << std::endl;
-        this->print_self();
+        return;
     }
+
+    /*
+     * The current enPassant settings will have to be stored into the mov at this point,
+     * for use later in PullMove so we can revert to the correct state.
+     * 
+     * The current castling flags will also have to be stored into the mov at this point,
+     * for use later in PullMove so we can revert them to the correct state.
+     * 
+     * The current halfMoveCount and fullMoveCount will also have to be stored into the mov
+     * at this point, for use later in PullMove.
+     */
 
     // Remove en passant
     this->enPassantRow = -1;
@@ -405,7 +471,11 @@ char Board::push_movC(MovC mov) {
                 this->turn = !this->turn;
                 this->black_kingside_castling = false;
                 this->black_queenside_castling = false;
-                return '.';
+                /*
+                 * We need to set the castling field in mov to true at this point so we
+                 * know how to revert the move.
+                 */
+                return;
             }
         }
         if (this->black_kingside_castling) {
@@ -418,7 +488,11 @@ char Board::push_movC(MovC mov) {
                 this->turn = !this->turn;
                 this->black_kingside_castling = false;
                 this->black_queenside_castling = false;
-                return '.';
+                /*
+                 * We need to set the castling field in mov to true at this point so we
+                 * know how to revert the move.
+                 */
+                return;
             }
         }
     } else {
@@ -432,7 +506,11 @@ char Board::push_movC(MovC mov) {
                 this->turn = !this->turn;
                 this->white_kingside_castling = false;
                 this->white_queenside_castling = false;
-                return '.';
+                /*
+                 * We need to set the castling field in mov to true at this point so we
+                 * know how to revert the move.
+                 */
+                return;
             }
         } 
         if (this->white_kingside_castling) {
@@ -445,7 +523,11 @@ char Board::push_movC(MovC mov) {
                 this->turn = !this->turn;
                 this->white_kingside_castling = false;
                 this->white_queenside_castling = false;
-                return '.';
+                /*
+                 * We need to set the castling field in mov to true at this point so we
+                 * know how to revert the move.
+                 */
+                return;
             }
         }
     }
@@ -531,11 +613,11 @@ char Board::push_movC(MovC mov) {
     char captured_piece = '.';
 
     if(mov.to_x != mov.from_x && (this->board[mov.from_y][mov.from_x] == 'P' || this->board[mov.from_y][mov.from_x] == 'p') && this->board[mov.to_y][mov.to_x] == '.') {
-        if(this->verbose) {
-            std::cout << "Taking with en passant" << std::endl;
-            std::cout << "From piece is " << this->board[mov.from_y][mov.from_x] << std::endl;
-        }
-
+        /*
+         * The en passant flag will have to be set
+         * inside the mov at this point for later use
+         * inside Pull_Move.
+         */
         if(!this->turn) {
             captured_piece = this->board[mov.to_y-1][mov.to_x];
             this->board[mov.to_y-1][mov.to_x] = '.';
@@ -563,10 +645,13 @@ char Board::push_movC(MovC mov) {
 
     if (captured_piece != '.') {
         this->halfmove_clock = 0;
-        return captured_piece;
+        /*
+         * The captured piece will have to be stored in the mov at this point
+         * for use in the pull_move function later.
+         */
     }
 
-    return '.';
+    return;
 }
 
 // Assumes that arr is length six
