@@ -1,5 +1,81 @@
 #include "board.h"
 
+Move::Move() {
+    this->from_col = 0;
+    this->from_row = 0;
+    this->to_col = 0;
+    this->to_row = 0;
+
+    this->promotion = '.';
+    this->next = nullptr;
+}
+Move::Move(int from_col, int from_row, int to_col, int to_row) {
+    this->from_col = from_col;
+    this->from_row = from_row;
+    this->to_col = to_col;
+    this->to_row = to_row;
+
+    this->promotion = '.';
+    this->next = nullptr;
+}
+Move::Move(int from_col, int from_row, int to_col, int to_row, char promotion) {
+    this->from_col = from_col;
+    this->from_row = from_row;
+    this->to_col = to_col;
+    this->to_row = to_row;
+
+    this->promotion = promotion;
+    this->next = nullptr;
+}
+Move::Move(std::string fen) {
+    this->from_col = fen[0] - 'a';
+    this->from_row = 7 -(fen[1] - '1');
+    this->to_col = fen[2] - 'a';
+    this->to_row = 7 - (fen[3] - '1');
+    if (fen.length() == 5) {
+        this->promotion = fen[4];
+    }
+}
+Move::~Move() {
+    // nothing to do
+}
+Move::Move(const Move& other) {
+    this->from_col = other.from_col;
+    this->from_row = other.from_row;
+    this->to_col = other.to_col;
+    this->to_row = other.to_row;
+
+    this->promotion = other.promotion;
+    this->next = other.next;
+}
+Move& Move::operator=(const Move& other) {
+    this->from_col = other.from_col;
+    this->from_row = other.from_row;
+    this->to_col = other.to_col;
+    this->to_row = other.to_row;
+
+    this->promotion = other.promotion;
+    this->next = other.next;
+    
+    return *this;
+}
+std::string Move::operator<<(const Move&) {
+    return this->get_fen();
+}
+std::string Move::get_fen() {
+    std::string fen = "";
+    fen += (char)(this->from_col + 'a');
+    fen += (char)(7 - this->from_row + '1');
+    fen += (char)(this->to_col + 'a');
+    fen += (char)(7 - this->to_row + '1');
+
+    if(this->promotion != '.') {
+        fen += this->promotion;
+    }
+
+    return fen;
+}
+
 Board::Board() {
     //std::cout << "Initializing board..." << std::endl;
     this->black_pieces = new char[6];
@@ -287,10 +363,10 @@ void Board::import_board_fen(std::string fen) {
 Move * Board::convert_move_fen(std::string fen) {
     // should convert something like "e2e4" to a Move struct with from_x = 4, from_y = 1, to_x = 4, to_y = 3
     Move * move = new Move();
-    move->from_x = fen[0] - 'a';
-    move->from_y = 7 -(fen[1] - '1');
-    move->to_x = fen[2] - 'a';
-    move->to_y = 7 - (fen[3] - '1');
+    move->from_col = fen[0] - 'a';
+    move->from_row = 7 -(fen[1] - '1');
+    move->to_col = fen[2] - 'a';
+    move->to_row = 7 - (fen[3] - '1');
     if (fen.length() == 5) {
         move->promotion = fen[4];
     }
@@ -298,12 +374,13 @@ Move * Board::convert_move_fen(std::string fen) {
     return move;
 }
 
+// depecrated, should just use << operator on move directly.
 std::string Board::get_move_fen(Move * move) {
     std::string fen = "";
-    fen += (char)(move->from_x + 'a');
-    fen += (char)(7 - move->from_y + '1');
-    fen += (char)(move->to_x + 'a');
-    fen += (char)(7 - move->to_y + '1');
+    fen += (char)(move->from_col + 'a');
+    fen += (char)(7 - move->from_row + '1');
+    fen += (char)(move->to_col + 'a');
+    fen += (char)(7 - move->to_row + '1');
 
     if(move->promotion != '.') {
         fen += move->promotion;
@@ -312,11 +389,10 @@ std::string Board::get_move_fen(Move * move) {
     return fen;
 }
 
-
 // assumes that the move is legal does not support castling
 char Board::push_move(Move * move) {
-    if(move->from_x < 0 || move->from_x > 7) {
-        std::cout << "push_move Error: " << move->from_x << " " << move->from_y << " " << move->to_x << " " << move->to_y << std::endl;
+    if(move->from_col < 0 || move->from_col > 7) {
+        std::cout << "push_move Error: " << move->from_col << " " << move->from_row << " " << move->to_col << " " << move->to_row << std::endl;
         this->print_self();
         return '.';
     }    
@@ -333,7 +409,7 @@ char Board::push_move(Move * move) {
     // execute castling move if applicable
     if(!this->turn) {
         if(this->black_queenside_castling) {
-            if(move->from_x == 4 && move->from_y == 0 && move->to_x == 2 && move->to_y == 0) {
+            if(move->from_col == 4 && move->from_row == 0 && move->to_col == 2 && move->to_row == 0) {
                 this->board[0][2] = 'k';
                 this->board[0][3] = 'r';
                 this->board[0][0] = '.';
@@ -345,7 +421,7 @@ char Board::push_move(Move * move) {
             }
         }
         if (this->black_kingside_castling) {
-            if(move->from_x == 4 && move->from_y == 0 && move->to_x == 6 && move->to_y == 0) {
+            if(move->from_col == 4 && move->from_row == 0 && move->to_col == 6 && move->to_row == 0) {
                 // execute black kingside castle
                 this->board[0][6] = 'k';
                 this->board[0][5] = 'r';
@@ -359,7 +435,7 @@ char Board::push_move(Move * move) {
         }
     } else {
         if(this->white_queenside_castling) {
-            if(move->from_x == 4 && move->from_y == 7 && move->to_x == 2 && move->to_y == 7) {
+            if(move->from_col == 4 && move->from_row == 7 && move->to_col == 2 && move->to_row == 7) {
                 // execute white qeenside castle
                 this->board[7][2] = 'K';
                 this->board[7][3] = 'R';
@@ -372,7 +448,7 @@ char Board::push_move(Move * move) {
             }
         } 
         if (this->white_kingside_castling) {
-            if(move->from_x == 4 && move->from_y == 7 && move->to_x == 6 && move->to_y == 7) {
+            if(move->from_col == 4 && move->from_row == 7 && move->to_col == 6 && move->to_row == 7) {
                 // execute white kingside castle
                 this->board[7][6] = 'K';
                 this->board[7][5] = 'R';
@@ -390,51 +466,51 @@ char Board::push_move(Move * move) {
     if(!this->turn) {
         if(this->black_kingside_castling) {
             // kingside rook moves
-            if(move->from_x == 7 && move->from_y == 0) {
+            if(move->from_col == 7 && move->from_row == 0) {
                 this->black_kingside_castling = false;
             // king moves
-            } else if (move->from_x == 4 && move->from_y == 0) {
+            } else if (move->from_col == 4 && move->from_row == 0) {
                 this->black_kingside_castling = false;
                 this->black_queenside_castling = false;
             }
         }
 
         if (this->black_queenside_castling) {
-            if(move->from_x == 0 && move->from_y == 0) {
+            if(move->from_col == 0 && move->from_row == 0) {
                 this->black_queenside_castling = false;
-            } else if (move->from_x == 4 && move->from_y == 0) {
+            } else if (move->from_col == 4 && move->from_row == 0) {
                 this->black_kingside_castling = false;
                 this->black_queenside_castling = false;
             }
         }
 
-        if (move->to_x == 7 && move->to_y == 7) {
+        if (move->to_col == 7 && move->to_row == 7) {
             this->white_kingside_castling = false;
-        } else if (move->to_x == 0 && move->to_y == 7) {
+        } else if (move->to_col == 0 && move->to_row == 7) {
             this->white_queenside_castling = false;
         }
     } else {
         if(this->white_kingside_castling) {
-            if(move->from_x == 7 && move->from_y == 7) {
+            if(move->from_col == 7 && move->from_row == 7) {
                 this->white_kingside_castling = false;
-            } else if (move->from_x == 4 && move->from_y == 7) {
+            } else if (move->from_col == 4 && move->from_row == 7) {
                 this->white_kingside_castling = false;
                 this->white_queenside_castling = false;
             }
         }
 
         if (this->white_queenside_castling) {
-            if(move->from_x == 0 && move->from_y == 7) {
+            if(move->from_col == 0 && move->from_row == 7) {
                 this->white_queenside_castling = false;
-            } else if (move->from_x == 4 && move->from_y == 7) {
+            } else if (move->from_col == 4 && move->from_row == 7) {
                 this->white_kingside_castling = false;
                 this->white_queenside_castling = false;
             }
         }
 
-        if (move->to_x == 7 && move->to_y == 0) {
+        if (move->to_col == 7 && move->to_row == 0) {
             this->black_kingside_castling = false;
-        } else if (move->to_x == 0 && move->to_y == 0) {
+        } else if (move->to_col == 0 && move->to_row == 0) {
             this->black_queenside_castling = false;
         }
     }
@@ -442,17 +518,17 @@ char Board::push_move(Move * move) {
     // Add en passant rights if applicable
     if(!this->turn) {
         // if the piece is a pawn
-        if(this->board[move->from_y][move->from_x] == 'p') {
+        if(this->board[move->from_row][move->from_col] == 'p') {
             // if the pawn is moving two spaces
-            if(move->from_y == 1 && move->to_y == 3) {
-                this->enPassantCol = move->from_x;
+            if(move->from_row == 1 && move->to_row == 3) {
+                this->enPassantCol = move->from_col;
                 this->enPassantRow = 2;
             }
         }
     } else {
-        if(this->board[move->from_y][move->from_x] == 'P') {
-            if(move->from_y == 6 && move->to_y == 4) {
-                this->enPassantCol = move->from_x;
+        if(this->board[move->from_row][move->from_col] == 'P') {
+            if(move->from_row == 6 && move->to_row == 4) {
+                this->enPassantCol = move->from_col;
                 this->enPassantRow = 5;
             }
         }
@@ -461,43 +537,43 @@ char Board::push_move(Move * move) {
     this->halfmove_clock++;
 
     // if the piece is a pawn
-    if(this->board[move->from_y][move->from_x] == 'p' || this->board[move->from_y][move->from_x] == 'P') {
+    if(this->board[move->from_row][move->from_col] == 'p' || this->board[move->from_row][move->from_col] == 'P') {
         this->halfmove_clock = 0;
     }
 
-    //if(move->from_x == 1 && move->from_y == 1 && move->to_x == 1 && move->to_y == 0) {
+    //if(move->from_col == 1 && move->from_row == 1 && move->to_col == 1 && move->to_row == 0) {
     //    std::cout << "before:" << std::endl;
     //    this->print_self();
     //}
     char captured_piece = '.';
     // execute move for en passant
-    if(move->to_x != move->from_x && (this->board[move->from_y][move->from_x] == 'P' || this->board[move->from_y][move->from_x] == 'p') && this->board[move->to_y][move->to_x] == '.') {
+    if(move->to_col != move->from_col && (this->board[move->from_row][move->from_col] == 'P' || this->board[move->from_row][move->from_col] == 'p') && this->board[move->to_row][move->to_col] == '.') {
         if(this->verbose) {
             std::cout << "Taking with en passant" << std::endl;
             // from piece
-            std::cout << "From piece is " << this->board[move->from_y][move->from_x] << std::endl;
+            std::cout << "From piece is " << this->board[move->from_row][move->from_col] << std::endl;
         }
         //take with en passant
         if(!this->turn) {
-            captured_piece = this->board[move->to_y-1][move->to_x];
-            this->board[move->to_y-1][move->to_x] = '.';
+            captured_piece = this->board[move->to_row-1][move->to_col];
+            this->board[move->to_row-1][move->to_col] = '.';
         } else {
-            captured_piece = this->board[move->to_y+1][move->to_x];
-            this->board[move->to_y+1][move->to_x] = '.';
+            captured_piece = this->board[move->to_row+1][move->to_col];
+            this->board[move->to_row+1][move->to_col] = '.';
         }
-        this->board[move->to_y][move->to_x] = this->board[move->from_y][move->from_x];
-        this->board[move->from_y][move->from_x] = '.';
+        this->board[move->to_row][move->to_col] = this->board[move->from_row][move->from_col];
+        this->board[move->from_row][move->from_col] = '.';
     } else {
-        captured_piece = this->board[move->to_y][move->to_x];
-        this->board[move->to_y][move->to_x] = this->board[move->from_y][move->from_x];
-        this->board[move->from_y][move->from_x] = '.';
+        captured_piece = this->board[move->to_row][move->to_col];
+        this->board[move->to_row][move->to_col] = this->board[move->from_row][move->from_col];
+        this->board[move->from_row][move->from_col] = '.';
     }
 
     if(move->promotion != '.') {
-        this->board[move->to_y][move->to_x] = move->promotion;
+        this->board[move->to_row][move->to_col] = move->promotion;
     }
 
-    /*if(move->from_x == 1 && move->from_y == 1 && move->to_x == 1 && move->to_y == 0) {
+    /*if(move->from_col == 1 && move->from_row == 1 && move->to_col == 1 && move->to_row == 0) {
         std::cout << "after:" << std::endl;
         this->print_self();
     }*/
@@ -522,15 +598,15 @@ char Board::push_move(Move * move) {
 }
 
 char Board::fake_push_move(Move * move) {
-    if(move->from_x < 0 || move->from_x > 7) {
-        std::cout << "fake_push_move Error: " << move->from_x << " " << move->from_y << " " << move->to_x << " " << move->to_y << std::endl;
+    if(move->from_col < 0 || move->from_col > 7) {
+        std::cout << "fake_push_move Error: " << move->from_col << " " << move->from_row << " " << move->to_col << " " << move->to_row << std::endl;
         this->print_self();
         return '.';
     }    
     // execute castling move if applicable
     if(!this->turn) {
         if(this->black_queenside_castling) {
-            if(move->from_x == 4 && move->from_y == 0 && move->to_x == 2 && move->to_y == 0) {
+            if(move->from_col == 4 && move->from_row == 0 && move->to_col == 2 && move->to_row == 0) {
                 this->board[0][2] = 'k';
                 this->board[0][3] = 'r';
                 this->board[0][0] = '.';
@@ -542,7 +618,7 @@ char Board::fake_push_move(Move * move) {
             }
         }
         if (this->black_kingside_castling) {
-            if(move->from_x == 4 && move->from_y == 0 && move->to_x == 6 && move->to_y == 0) {
+            if(move->from_col == 4 && move->from_row == 0 && move->to_col == 6 && move->to_row == 0) {
                 // execute black kingside castle
                 this->board[0][6] = 'k';
                 this->board[0][5] = 'r';
@@ -556,7 +632,7 @@ char Board::fake_push_move(Move * move) {
         }
     } else {
         if(this->white_queenside_castling) {
-            if(move->from_x == 4 && move->from_y == 7 && move->to_x == 2 && move->to_y == 7) {
+            if(move->from_col == 4 && move->from_row == 7 && move->to_col == 2 && move->to_row == 7) {
                 // execute white qeenside castle
                 this->board[7][2] = 'K';
                 this->board[7][3] = 'R';
@@ -569,7 +645,7 @@ char Board::fake_push_move(Move * move) {
             }
         } 
         if (this->white_kingside_castling) {
-            if(move->from_x == 4 && move->from_y == 7 && move->to_x == 6 && move->to_y == 7) {
+            if(move->from_col == 4 && move->from_row == 7 && move->to_col == 6 && move->to_row == 7) {
                 // execute white kingside castle
                 this->board[7][6] = 'K';
                 this->board[7][5] = 'R';
@@ -585,25 +661,25 @@ char Board::fake_push_move(Move * move) {
 
     char captured_piece = '.';
     // execute move for en passant
-    if(move->to_x != move->from_x && (this->board[move->from_y][move->from_x] == 'P' || this->board[move->from_y][move->from_x] == 'p') && this->board[move->to_y][move->to_x] == '.') {
+    if(move->to_col != move->from_col && (this->board[move->from_row][move->from_col] == 'P' || this->board[move->from_row][move->from_col] == 'p') && this->board[move->to_row][move->to_col] == '.') {
         //take with en passant
         if(!this->turn) {
-            captured_piece = this->board[move->to_y-1][move->to_x];
-            this->board[move->to_y-1][move->to_x] = '.';
+            captured_piece = this->board[move->to_row-1][move->to_col];
+            this->board[move->to_row-1][move->to_col] = '.';
         } else {
-            captured_piece = this->board[move->to_y+1][move->to_x];
-            this->board[move->to_y+1][move->to_x] = '.';
+            captured_piece = this->board[move->to_row+1][move->to_col];
+            this->board[move->to_row+1][move->to_col] = '.';
         }
-        this->board[move->to_y][move->to_x] = this->board[move->from_y][move->from_x];
-        this->board[move->from_y][move->from_x] = '.';
+        this->board[move->to_row][move->to_col] = this->board[move->from_row][move->from_col];
+        this->board[move->from_row][move->from_col] = '.';
     } else {
-        captured_piece = this->board[move->to_y][move->to_x];
-        this->board[move->to_y][move->to_x] = this->board[move->from_y][move->from_x];
-        this->board[move->from_y][move->from_x] = '.';
+        captured_piece = this->board[move->to_row][move->to_col];
+        this->board[move->to_row][move->to_col] = this->board[move->from_row][move->from_col];
+        this->board[move->from_row][move->from_col] = '.';
     }
 
     if(move->promotion != '.') {
-        this->board[move->to_y][move->to_x] = move->promotion;
+        this->board[move->to_row][move->to_col] = move->promotion;
     }
 
     if (captured_piece != '.') {
@@ -615,9 +691,9 @@ char Board::fake_push_move(Move * move) {
 
 // for internal use
 /*char Board::fake_push_move(Move * move) {
-    char captured_piece = this->board[move->to_y][move->to_x];
-    this->board[move->to_y][move->to_x] = this->board[move->from_y][move->from_x];
-    this->board[move->from_y][move->from_x] = '.';
+    char captured_piece = this->board[move->to_row][move->to_col];
+    this->board[move->to_row][move->to_col] = this->board[move->from_row][move->from_col];
+    this->board[move->from_row][move->from_col] = '.';
 
     if (captured_piece != '.') {
         return captured_piece;
@@ -832,10 +908,10 @@ Move * Board::clone_promotion_moves(Move * moves, int from_y, int from_x, int to
     }
 
     for(int i=0; i<4; i++) {
-        moves->from_x = from_x;
-        moves->from_y = from_y;
-        moves->to_x = to_x;
-        moves->to_y = to_y;
+        moves->from_col = from_x;
+        moves->from_row = from_y;
+        moves->to_col = to_x;
+        moves->to_row = to_y;
         moves->promotion = promo_pieces[i];
 
         moves->next = new Move;
@@ -854,10 +930,10 @@ Move * Board::get_pawn_moves(Move * moves, int row, int col) {
             if(row-1 == 0) {
                 moves = this->clone_promotion_moves(moves, row, col, row-1, col);
             } else {
-                moves->from_x = col;
-                moves->from_y = row;
-                moves->to_x = col;
-                moves->to_y = row - 1;
+                moves->from_col = col;
+                moves->from_row = row;
+                moves->to_col = col;
+                moves->to_row = row - 1;
                 moves->next = new Move;
                 moves = moves->next;
             }
@@ -865,10 +941,10 @@ Move * Board::get_pawn_moves(Move * moves, int row, int col) {
 
         // check the square two in front of the pawn (if it is the first move)
         if(row == 6 && board[row-2][col] == '.' && board[row-1][col] == '.') {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = col;
-            moves->to_y = row - 2;
+            moves->from_col = col;
+            moves->from_row = row;
+            moves->to_col = col;
+            moves->to_row = row - 2;
             moves->next = new Move;
             moves = moves->next;
         }
@@ -879,10 +955,10 @@ Move * Board::get_pawn_moves(Move * moves, int row, int col) {
             if(row-1 == 0) {
                 moves = this->clone_promotion_moves(moves, row, col, row-1, col-1);
             } else {
-                moves->from_x = col;
-                moves->from_y = row;
-                moves->to_x = col - 1;
-                moves->to_y = row - 1;
+                moves->from_col = col;
+                moves->from_row = row;
+                moves->to_col = col - 1;
+                moves->to_row = row - 1;
                 moves->next = new Move;
                 moves = moves->next;
             }
@@ -894,10 +970,10 @@ Move * Board::get_pawn_moves(Move * moves, int row, int col) {
             if(row-1 == 0) {
                 moves = this->clone_promotion_moves(moves, row, col, row-1, col+1);
             } else {
-                moves->from_x = col;
-                moves->from_y = row;
-                moves->to_x = col + 1;
-                moves->to_y = row - 1;
+                moves->from_col = col;
+                moves->from_row = row;
+                moves->to_col = col + 1;
+                moves->to_row = row - 1;
                 moves->next = new Move;
                 moves = moves->next;
             }
@@ -908,10 +984,10 @@ Move * Board::get_pawn_moves(Move * moves, int row, int col) {
             if(row+1 == 7) {
                 moves = this->clone_promotion_moves(moves, row, col, row+1, col);
             } else {
-                moves->from_x = col;
-                moves->from_y = row;
-                moves->to_x = col;
-                moves->to_y = row + 1;
+                moves->from_col = col;
+                moves->from_row = row;
+                moves->to_col = col;
+                moves->to_row = row + 1;
                 moves->next = new Move;
                 moves = moves->next;
             }
@@ -919,10 +995,10 @@ Move * Board::get_pawn_moves(Move * moves, int row, int col) {
 
         // check the square two in front of the pawn (if it is the first move)
         if(row == 1 && board[row+2][col] == '.' && board[row+1][col] == '.') {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = col;
-            moves->to_y = row + 2;
+            moves->from_col = col;
+            moves->from_row = row;
+            moves->to_col = col;
+            moves->to_row = row + 2;
             moves->next = new Move;
             moves = moves->next;
         }
@@ -933,10 +1009,10 @@ Move * Board::get_pawn_moves(Move * moves, int row, int col) {
             if(row+1 == 7) {
                 moves = this->clone_promotion_moves(moves, row, col, row+1, col-1);
             } else {
-                moves->from_x = col;
-                moves->from_y = row;
-                moves->to_x = col - 1;
-                moves->to_y = row + 1;
+                moves->from_col = col;
+                moves->from_row = row;
+                moves->to_col = col - 1;
+                moves->to_row = row + 1;
                 moves->next = new Move;
                 moves = moves->next;
             }
@@ -948,10 +1024,10 @@ Move * Board::get_pawn_moves(Move * moves, int row, int col) {
             if(row+1 == 7) {
                 moves = this->clone_promotion_moves(moves, row, col, row+1, col+1);
             } else {
-                moves->from_x = col;
-                moves->from_y = row;
-                moves->to_x = col + 1;
-                moves->to_y = row + 1;
+                moves->from_col = col;
+                moves->from_row = row;
+                moves->to_col = col + 1;
+                moves->to_row = row + 1;
                 moves->next = new Move;
                 moves = moves->next;
             }
@@ -967,17 +1043,17 @@ Move * Board::get_bishop_moves(Move * moves, int row, int col) {
     // check towards the top left
     for (int i=1; i<=min(row, col); i++) {
         if (this->board[row-i][col-i] == '.') {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = col - i;
-            moves->to_y = row - i;
+            moves->from_col = col;
+            moves->from_row = row;
+            moves->to_col = col - i;
+            moves->to_row = row - i;
             moves->next = new Move;
             moves = moves->next;
         } else if (is_in_arr(this->board[row-i][col-i], pieces)) {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = col - i;
-            moves->to_y = row - i;
+            moves->from_col = col;
+            moves->from_row = row;
+            moves->to_col = col - i;
+            moves->to_row = row - i;
             moves->next = new Move;
             moves = moves->next;
             break;
@@ -989,17 +1065,17 @@ Move * Board::get_bishop_moves(Move * moves, int row, int col) {
     // check towards the top right
     for (int i=1; i<=min(row, 7-col); i++) {
         if (this->board[row-i][col+i] == '.') {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = col + i;
-            moves->to_y = row - i;
+            moves->from_col = col;
+            moves->from_row = row;
+            moves->to_col = col + i;
+            moves->to_row = row - i;
             moves->next = new Move;
             moves = moves->next;
         } else if (is_in_arr(this->board[row-i][col+i], pieces)) {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = col + i;
-            moves->to_y = row - i;
+            moves->from_col = col;
+            moves->from_row = row;
+            moves->to_col = col + i;
+            moves->to_row = row - i;
             moves->next = new Move;
             moves = moves->next;
             break;
@@ -1011,17 +1087,17 @@ Move * Board::get_bishop_moves(Move * moves, int row, int col) {
     // check towards the bottom left
     for (int i=1; i<=min(7-row, col); i++) {
         if (this->board[row+i][col-i] == '.') {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = col - i;
-            moves->to_y = row + i;
+            moves->from_col = col;
+            moves->from_row = row;
+            moves->to_col = col - i;
+            moves->to_row = row + i;
             moves->next = new Move;
             moves = moves->next;
         } else if (is_in_arr(this->board[row+i][col-i], pieces)) {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = col - i;
-            moves->to_y = row + i;
+            moves->from_col = col;
+            moves->from_row = row;
+            moves->to_col = col - i;
+            moves->to_row = row + i;
             moves->next = new Move;
             moves = moves->next;
             break;
@@ -1033,17 +1109,17 @@ Move * Board::get_bishop_moves(Move * moves, int row, int col) {
     // check towards the bottom right
     for (int i=1; i<=min(7-row, 7-col); i++) {
         if (this->board[row+i][col+i] == '.') {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = col + i;
-            moves->to_y = row + i;
+            moves->from_col = col;
+            moves->from_row = row;
+            moves->to_col = col + i;
+            moves->to_row = row + i;
             moves->next = new Move;
             moves = moves->next;
         } else if (is_in_arr(this->board[row+i][col+i], pieces)) {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = col + i;
-            moves->to_y = row + i;
+            moves->from_col = col;
+            moves->from_row = row;
+            moves->to_col = col + i;
+            moves->to_row = row + i;
             moves->next = new Move;
             moves = moves->next;
             break;
@@ -1078,10 +1154,10 @@ Move * Board::get_king_moves(Move * moves, int row, int col) {
             }
 
             if (this->board[row + i][col + j] == '.' || is_in_arr(this->board[row + i][col + j], pieces)) {
-                moves->from_x = col;
-                moves->from_y = row;
-                moves->to_x = col + j;
-                moves->to_y = row + i;
+                moves->from_col = col;
+                moves->from_row = row;
+                moves->to_col = col + j;
+                moves->to_row = row + i;
                 moves->next = new Move;
                 moves = moves->next;
             }
@@ -1093,73 +1169,73 @@ Move * Board::get_king_moves(Move * moves, int row, int col) {
 
 Move * Board::get_knight_moves(Move * moves, int row, int col) {
     if (row - 2 >= 0 && col - 1 >= 0 && (this->board[row - 2][col - 1] == '.' || is_in_arr(this->board[row - 2][col - 1], this->turn ? black_pieces : white_pieces))) {
-        moves->from_x = col;
-        moves->from_y = row;
-        moves->to_x = col - 1;
-        moves->to_y = row - 2;
+        moves->from_col = col;
+        moves->from_row = row;
+        moves->to_col = col - 1;
+        moves->to_row = row - 2;
         moves->next = new Move;
         moves = moves->next;
     }
 
     if (row - 2 >= 0 && col + 1 <= 7 && (this->board[row - 2][col + 1] == '.' || is_in_arr(this->board[row - 2][col + 1], this->turn ? black_pieces : white_pieces))) {
-        moves->from_x = col;
-        moves->from_y = row;
-        moves->to_x = col + 1;
-        moves->to_y = row - 2;
+        moves->from_col = col;
+        moves->from_row = row;
+        moves->to_col = col + 1;
+        moves->to_row = row - 2;
         moves->next = new Move;
         moves = moves->next;
     }
 
     if (row - 1 >= 0 && col - 2 >= 0 && (this->board[row - 1][col - 2] == '.' || is_in_arr(this->board[row - 1][col - 2], this->turn ? black_pieces : white_pieces))) {
-        moves->from_x = col;
-        moves->from_y = row;
-        moves->to_x = col - 2;
-        moves->to_y = row - 1;
+        moves->from_col = col;
+        moves->from_row = row;
+        moves->to_col = col - 2;
+        moves->to_row = row - 1;
         moves->next = new Move;
         moves = moves->next;
     }
 
     if (row - 1 >= 0 && col + 2 <= 7 && (this->board[row - 1][col + 2] == '.' || is_in_arr(this->board[row - 1][col + 2], this->turn ? black_pieces : white_pieces))) {
-        moves->from_x = col;
-        moves->from_y = row;
-        moves->to_x = col + 2;
-        moves->to_y = row - 1;
+        moves->from_col = col;
+        moves->from_row = row;
+        moves->to_col = col + 2;
+        moves->to_row = row - 1;
         moves->next = new Move;
         moves = moves->next;
     }
 
     if (row + 2 <= 7 && col - 1 >= 0 && (this->board[row + 2][col - 1] == '.' || is_in_arr(this->board[row + 2][col - 1], turn ? black_pieces : white_pieces))) {
-        moves->from_x = col;
-        moves->from_y = row;
-        moves->to_x = col - 1;
-        moves->to_y = row + 2;
+        moves->from_col = col;
+        moves->from_row = row;
+        moves->to_col = col - 1;
+        moves->to_row = row + 2;
         moves->next = new Move;
         moves = moves->next;
     }
 
     if (row + 2 <= 7 && col + 1 <= 7 && (this->board[row + 2][col + 1] == '.' || is_in_arr(this->board[row + 2][col + 1], this->turn ? black_pieces : white_pieces))) {
-        moves->from_x = col;
-        moves->from_y = row;
-        moves->to_x = col + 1;
-        moves->to_y = row + 2;
+        moves->from_col = col;
+        moves->from_row = row;
+        moves->to_col = col + 1;
+        moves->to_row = row + 2;
         moves->next = new Move;
         moves = moves->next;
     }
 
     if (row + 1 <= 7 && col - 2 >= 0 && (this->board[row + 1][col - 2] == '.' || is_in_arr(this->board[row + 1][col - 2], this->turn ? black_pieces : white_pieces))) {
-        moves->from_x = col;
-        moves->from_y = row;
-        moves->to_x = col - 2;
-        moves->to_y = row + 1;
+        moves->from_col = col;
+        moves->from_row = row;
+        moves->to_col = col - 2;
+        moves->to_row = row + 1;
         moves->next = new Move;
         moves = moves->next;
     }
 
     if (row + 1 <= 7 && col + 2 <= 7 && (this->board[row + 1][col + 2] == '.' || is_in_arr(this->board[row + 1][col + 2], this->turn ? black_pieces : white_pieces))) {
-        moves->from_x = col;
-        moves->from_y = row;
-        moves->to_x = col + 2;
-        moves->to_y = row + 1;
+        moves->from_col = col;
+        moves->from_row = row;
+        moves->to_col = col + 2;
+        moves->to_row = row + 1;
         moves->next = new Move;
         moves = moves->next;
     }
@@ -1173,17 +1249,17 @@ Move * Board::get_rook_moves(Move * moves, int row, int col) {
     // check up
     for (int i = row - 1; i >= 0; i--) {
         if (this->board[i][col] == '.') {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = col;
-            moves->to_y = i;
+            moves->from_col = col;
+            moves->from_row = row;
+            moves->to_col = col;
+            moves->to_row = i;
             moves->next = new Move;
             moves = moves->next;
         } else if ( is_in_arr(this->board[i][col], pieces)) {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = col;
-            moves->to_y = i;
+            moves->from_col = col;
+            moves->from_row = row;
+            moves->to_col = col;
+            moves->to_row = i;
             moves->next = new Move;
             moves = moves->next;
             break;
@@ -1195,17 +1271,17 @@ Move * Board::get_rook_moves(Move * moves, int row, int col) {
     // check down
     for (int i = row + 1; i < 8; i++) {
         if (this->board[i][col] == '.') {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = col;
-            moves->to_y = i;
+            moves->from_col = col;
+            moves->from_row = row;
+            moves->to_col = col;
+            moves->to_row = i;
             moves->next = new Move;
             moves = moves->next;
         } else if (is_in_arr(this->board[i][col], pieces)) {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = col;
-            moves->to_y = i;
+            moves->from_col = col;
+            moves->from_row = row;
+            moves->to_col = col;
+            moves->to_row = i;
             moves->next = new Move;
             moves = moves->next;
             break;
@@ -1217,17 +1293,17 @@ Move * Board::get_rook_moves(Move * moves, int row, int col) {
     // check left
     for (int i = col - 1; i >= 0; i--) {
         if (this->board[row][i] == '.') {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = i;
-            moves->to_y = row;
+            moves->from_col = col;
+            moves->from_row = row;
+            moves->to_col = i;
+            moves->to_row = row;
             moves->next = new Move;
             moves = moves->next;
         } else if (is_in_arr(this->board[row][i], pieces)) {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = i;
-            moves->to_y = row;
+            moves->from_col = col;
+            moves->from_row = row;
+            moves->to_col = i;
+            moves->to_row = row;
             moves->next = new Move;
             moves = moves->next;
             break;
@@ -1239,17 +1315,17 @@ Move * Board::get_rook_moves(Move * moves, int row, int col) {
     // check right
     for (int i = col + 1; i < 8; i++) {
         if (this->board[row][i] == '.') {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = i;
-            moves->to_y = row;
+            moves->from_col = col;
+            moves->from_row = row;
+            moves->to_col = i;
+            moves->to_row = row;
             moves->next = new Move;
             moves = moves->next;
         } else if (is_in_arr(this->board[row][i], pieces)) {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = i;
-            moves->to_y = row;
+            moves->from_col = col;
+            moves->from_row = row;
+            moves->to_col = i;
+            moves->to_row = row;
             moves->next = new Move;
             moves = moves->next;
             break;
@@ -1271,10 +1347,10 @@ Move * Board::get_castling_moves(Move * moves) {
           !this->is_king_in_check(0, 5) && !this->is_king_in_check(0,4)
           && this->board[0][5] == '.' && this->board[0][6] == '.') {
             // TODO check if there is a check along the way
-            moves->from_x = 4;
-            moves->from_y = 0;
-            moves->to_x = 6;
-            moves->to_y = 0;
+            moves->from_col = 4;
+            moves->from_row = 0;
+            moves->to_col = 6;
+            moves->to_row = 0;
             moves->next = new Move;
             moves = moves->next;
         }
@@ -1282,10 +1358,10 @@ Move * Board::get_castling_moves(Move * moves) {
         if(this->black_queenside_castling && 
           !this->is_king_in_check(0,3) && !this->is_king_in_check(0,4)
           && this->board[0][1] == '.' && this->board[0][2] == '.' && this->board[0][3] == '.') {
-            moves->from_x = 4;
-            moves->from_y = 0;
-            moves->to_x = 2;
-            moves->to_y = 0;
+            moves->from_col = 4;
+            moves->from_row = 0;
+            moves->to_col = 2;
+            moves->to_row = 0;
             moves->next = new Move;
             moves = moves->next;
         }
@@ -1294,10 +1370,10 @@ Move * Board::get_castling_moves(Move * moves) {
         if(this->white_kingside_castling && 
         !this->is_king_in_check(7, 5) && !this->is_king_in_check(7,4)
         && this->board[7][5] == '.' && this->board[7][6] == '.') {
-            moves->from_x = 4;
-            moves->from_y = 7;
-            moves->to_x = 6;
-            moves->to_y = 7;
+            moves->from_col = 4;
+            moves->from_row = 7;
+            moves->to_col = 6;
+            moves->to_row = 7;
             moves->next = new Move;
             moves = moves->next;
         }
@@ -1305,10 +1381,10 @@ Move * Board::get_castling_moves(Move * moves) {
         if(this->white_queenside_castling && 
         !this->is_king_in_check(7, 3) && !this->is_king_in_check(7,4)
         && this->board[7][1] == '.' && this->board[7][2] == '.' && this->board[7][3] == '.') {
-            moves->from_x = 4;
-            moves->from_y = 7;
-            moves->to_x = 2;
-            moves->to_y = 7;
+            moves->from_col = 4;
+            moves->from_row = 7;
+            moves->to_col = 2;
+            moves->to_row = 7;
             moves->next = new Move;
             moves = moves->next;
         }
@@ -1322,7 +1398,7 @@ void Board::free_move_list(Move * moves) {
     while (moves != nullptr) {
         temp = moves;
         moves = moves->next;
-        if(temp->from_x >= 0 and temp->from_x <=7) {
+        if(temp->from_col >= 0 and temp->from_col <=7) {
             delete temp;
         }
     }
@@ -1407,7 +1483,7 @@ int * Board::get_king_pos() {
 }
 
 bool Board::is_legal_move(Move * move) {
-    if(move->from_x == -1) {
+    if(move->from_col == -1) {
         return false;
     }
 
@@ -1441,7 +1517,7 @@ Move * Board::get_legal_moves(bool v) {
     Move * curr_move = pseudo_legal_moves;
     // print out the moves
     while (curr_move->next != nullptr) {
-        std::cout << "Move: (" << curr_move->from_x << ", " << curr_move->from_y << ") to (" << curr_move->to_x << ", " << curr_move->to_y << ")" << std::endl;
+        std::cout << "Move: (" << curr_move->from_col << ", " << curr_move->from_row << ") to (" << curr_move->to_col << ", " << curr_move->to_row << ")" << std::endl;
         curr_move = curr_move->next;
     }
     std::cout << std::endl;*/
@@ -1458,10 +1534,10 @@ Move * Board::get_legal_moves(bool v) {
         pseudo_legal_moves = pseudo_legal_moves->next;
 
         if (this->is_legal_move(temp)) {
-            list_end->from_x = temp->from_x;
-            list_end->from_y = temp->from_y;
-            list_end->to_x = temp->to_x;
-            list_end->to_y = temp->to_y;
+            list_end->from_col = temp->from_col;
+            list_end->from_row = temp->from_row;
+            list_end->to_col = temp->to_col;
+            list_end->to_row = temp->to_row;
             list_end->promotion = temp->promotion;
             list_end->next = new Move;
             prev_end = list_end;

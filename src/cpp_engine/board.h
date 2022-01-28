@@ -4,14 +4,25 @@
 #include <iostream>
 #include <string>
 
-struct Move {
-    int from_x = -1;
-    int from_y = -1;
-    int to_x = -1;
-    int to_y = -1;
+class Move {
+    public:
+    Move();
+    Move(int from_col, int from_row, int to_col, int to_row);
+    Move(int from_col, int from_row, int to_col, int to_row, char promotion);
+    Move(std::string);
+    ~Move();
+    Move(const Move&);
+    Move& operator=(const Move&);
+    std::string operator<<(const Move&);
+    std::string get_fen();
 
-    char promotion = '.';
-    Move * next = nullptr;
+    int from_col;
+    int from_row;
+    int to_col;
+    int to_row;
+
+    char promotion;
+    Move * next;
 };
 
 class Board {

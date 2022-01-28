@@ -10,6 +10,7 @@ class Perft_Test {
     Evaluator eval = Evaluator();
     public:
     Perft_Test();
+    void integrity_test();
     void run_perft_test();
     Move * get_best_move(Board board, int depth);
     int maximize(Board * board, int depth, int alpha, int beta, bool verbose);
