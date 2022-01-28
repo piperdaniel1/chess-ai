@@ -6,8 +6,11 @@
 #include <string>
 
 struct Square {
-    int row = -1;
-    int col = -1;
+    Square();
+    Square(int, int);
+
+    int row;
+    int col;
 };
 
 struct Move {
@@ -52,6 +55,8 @@ class MovC {
     bool whiteQueenSideCue;
     bool blackKingSideCue;
     bool blackQueenSideCue;
+    int halfMoveCount;
+    int fullMoveCount;
 
     // Move type cues for PullMove
     bool is_castling;

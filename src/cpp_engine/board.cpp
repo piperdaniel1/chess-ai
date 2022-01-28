@@ -1,5 +1,14 @@
 #include "board.h"
 
+Square::Square() {
+    row = -1;
+    col = -1;
+}
+
+Square::Square(int row, int col) {
+    this->row = row;
+    this->col = col;
+}
 
 void MovC::init_cues() {
     this->whiteKingSideCue = true;
@@ -10,6 +19,8 @@ void MovC::init_cues() {
     this->is_castling = false;
     this->is_enpassant = false;
     this->captured_piece = '.';
+    this->halfMoveCount = 0;
+    this->fullMoveCount = 0;
 }
 MovC::MovC() {
     this->from_x = 0;
@@ -89,6 +100,8 @@ MovC::MovC(const MovC& other) {
     this->is_castling = other.is_castling;
     this->is_enpassant = other.is_enpassant;
     this->captured_piece = other.captured_piece;
+    this->halfMoveCount = other.halfMoveCount;
+    this->fullMoveCount = other.fullMoveCount;
 }
 MovC& MovC::operator=(const MovC& other) {
     this->from_x = other.from_x;
@@ -108,6 +121,8 @@ MovC& MovC::operator=(const MovC& other) {
     this->is_castling = other.is_castling;
     this->is_enpassant = other.is_enpassant;
     this->captured_piece = other.captured_piece;
+    this->halfMoveCount = other.halfMoveCount;
+    this->fullMoveCount = other.fullMoveCount;
     
     return *this;
 }
@@ -445,6 +460,15 @@ void Board::push_movC(MovC& mov) {
         return;
     }
 
+    // Set cues in the mov to be used in pull_movC later.
+    mov.blackKingSideCue = this->black_kingside_castling;
+    mov.blackQueenSideCue = this->black_queenside_castling;
+    mov.whiteKingSideCue = this->white_kingside_castling;
+    mov.whiteQueenSideCue = this->white_queenside_castling;
+    mov.enPassantCue = Square(this->enPassantRow, this->enPassantCol);
+    mov.halfMoveCount = this->halfmove_clock;
+    mov.fullMoveCount = this->fullmove_number;
+
     /*
      * The current enPassant settings will have to be stored into the mov at this point,
      * for use later in PullMove so we can revert to the correct state.
@@ -475,6 +499,7 @@ void Board::push_movC(MovC& mov) {
                  * We need to set the castling field in mov to true at this point so we
                  * know how to revert the move.
                  */
+                mov.is_castling = true;
                 return;
             }
         }
@@ -492,6 +517,7 @@ void Board::push_movC(MovC& mov) {
                  * We need to set the castling field in mov to true at this point so we
                  * know how to revert the move.
                  */
+                mov.is_castling = true;
                 return;
             }
         }
@@ -510,6 +536,7 @@ void Board::push_movC(MovC& mov) {
                  * We need to set the castling field in mov to true at this point so we
                  * know how to revert the move.
                  */
+                mov.is_castling = true;
                 return;
             }
         } 
@@ -527,6 +554,7 @@ void Board::push_movC(MovC& mov) {
                  * We need to set the castling field in mov to true at this point so we
                  * know how to revert the move.
                  */
+                mov.is_castling = true;
                 return;
             }
         }
@@ -618,6 +646,7 @@ void Board::push_movC(MovC& mov) {
          * inside the mov at this point for later use
          * inside Pull_Move.
          */
+        mov.is_enpassant = true;
         if(!this->turn) {
             captured_piece = this->board[mov.to_y-1][mov.to_x];
             this->board[mov.to_y-1][mov.to_x] = '.';
@@ -645,6 +674,7 @@ void Board::push_movC(MovC& mov) {
 
     if (captured_piece != '.') {
         this->halfmove_clock = 0;
+        mov.captured_piece = captured_piece;
         /*
          * The captured piece will have to be stored in the mov at this point
          * for use in the pull_move function later.
