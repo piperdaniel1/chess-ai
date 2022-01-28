@@ -1039,23 +1039,14 @@ Move * Board::get_pawn_moves(Move * moves, int row, int col) {
 
 Move * Board::get_bishop_moves(Move * moves, int row, int col) {
     char * pieces = this->turn ? black_pieces : white_pieces;
+    std::vector <MovC> movesC;
 
     // check towards the top left
     for (int i=1; i<=min(row, col); i++) {
         if (this->board[row-i][col-i] == '.') {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = col - i;
-            moves->to_y = row - i;
-            moves->next = new Move;
-            moves = moves->next;
+            movesC.push_back(MovC(col, row, col-i, row-i));
         } else if (is_in_arr(this->board[row-i][col-i], pieces)) {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = col - i;
-            moves->to_y = row - i;
-            moves->next = new Move;
-            moves = moves->next;
+            movesC.push_back(MovC(col, row, col-i, row-i));
             break;
         } else {
             break;
@@ -1065,19 +1056,9 @@ Move * Board::get_bishop_moves(Move * moves, int row, int col) {
     // check towards the top right
     for (int i=1; i<=min(row, 7-col); i++) {
         if (this->board[row-i][col+i] == '.') {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = col + i;
-            moves->to_y = row - i;
-            moves->next = new Move;
-            moves = moves->next;
+            movesC.push_back(MovC(col, row, col+i, row-i));
         } else if (is_in_arr(this->board[row-i][col+i], pieces)) {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = col + i;
-            moves->to_y = row - i;
-            moves->next = new Move;
-            moves = moves->next;
+            movesC.push_back(MovC(col, row, col+i, row-i));
             break;
         } else {
             break;
@@ -1087,19 +1068,9 @@ Move * Board::get_bishop_moves(Move * moves, int row, int col) {
     // check towards the bottom left
     for (int i=1; i<=min(7-row, col); i++) {
         if (this->board[row+i][col-i] == '.') {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = col - i;
-            moves->to_y = row + i;
-            moves->next = new Move;
-            moves = moves->next;
+            movesC.push_back(MovC(col, row, col-i, row+i));
         } else if (is_in_arr(this->board[row+i][col-i], pieces)) {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = col - i;
-            moves->to_y = row + i;
-            moves->next = new Move;
-            moves = moves->next;
+            movesC.push_back(MovC(col, row, col-i, row+i));
             break;
         } else {
             break;
@@ -1109,26 +1080,16 @@ Move * Board::get_bishop_moves(Move * moves, int row, int col) {
     // check towards the bottom right
     for (int i=1; i<=min(7-row, 7-col); i++) {
         if (this->board[row+i][col+i] == '.') {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = col + i;
-            moves->to_y = row + i;
-            moves->next = new Move;
-            moves = moves->next;
+            movesC.push_back(MovC(col, row, col+i, row+i));
         } else if (is_in_arr(this->board[row+i][col+i], pieces)) {
-            moves->from_x = col;
-            moves->from_y = row;
-            moves->to_x = col + i;
-            moves->to_y = row + i;
-            moves->next = new Move;
-            moves = moves->next;
+            movesC.push_back(MovC(col, row, col+i, row+i));
             break;
         } else {
             break;
         }
     }
 
-    return moves;
+    return this->convert_vector_to_linked_list(movesC, moves);
 }
 
 Move * Board::get_queen_moves(Move * moves, int row, int col) {
