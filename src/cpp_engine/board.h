@@ -82,7 +82,6 @@ class Board {
     void set_piece(int row, int col, char piece);
     char get_piece(int row, int col);
     void print_self();
-    char push_move(Move * move);
     char push_movC(MovC mov);
     void get_pseudo_legal_moves(std::vector<MovC>&);
     Move * get_legal_moves(bool v = false);
