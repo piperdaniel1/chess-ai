@@ -1160,17 +1160,6 @@ void Board::get_castling_moves(std::vector<MovC>& movesC) {
     }
 }
 
-void Board::free_move_list(Move * moves) {
-    Move * temp;
-    while (moves != nullptr) {
-        temp = moves;
-        moves = moves->next;
-        if(temp->from_x >= 0 and temp->from_x <=7) {
-            delete temp;
-        }
-    }
-}
-
 void Board::get_pseudo_legal_moves(std::vector<MovC>& movesC) {    
     char piece;
     for(int row=0; row<8; row++) {

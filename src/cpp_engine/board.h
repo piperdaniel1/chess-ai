@@ -51,7 +51,6 @@ class Board {
     int enPassantRow;
 
     bool check_on_board();
-    void pull_move(Move *, int);
     bool is_legal_move(MovC mov);
     bool is_in_arr(char piece, char arr[]);
     void get_rook_moves(std::vector<MovC>&, int, int);
@@ -75,7 +74,6 @@ class Board {
     int * get_king_pos();
     void print_board_metadata();
     void import_board_fen(std::string);
-    void free_move_list(Move * moves);
     void clear_board();
     void set_piece(int row, int col, char piece);
     char get_piece(int row, int col);
