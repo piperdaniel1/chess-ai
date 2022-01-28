@@ -74,6 +74,16 @@ std::string MovC::get_fen() {
 
     return fen;
 }
+Move MovC::get_old_move() {
+    Move move;
+    move.from_x = this->from_x;
+    move.from_y = this->from_y;
+    move.to_x = this->to_x;
+    move.to_y = this->to_y;
+    move.promotion = this->promotion;
+
+    return move;
+}
 
 Board::Board() {
     //std::cout << "Initializing board..." << std::endl;
@@ -1157,8 +1167,12 @@ Move * Board::convert_vector_to_linked_list(std::vector<MovC> movesC, Move * mov
         moves->to_x = movesC[i].to_x;
         moves->to_y = movesC[i].to_y;
         moves->promotion = movesC[i].promotion;
-        moves->next = new Move;
-        moves = moves->next;
+        if(i == movesC.size() - 1) {
+            moves->next = nullptr;
+        } else {
+            moves->next = new Move();
+            moves = moves->next;
+        }
     }
 
     return moves;
@@ -1273,14 +1287,15 @@ int * Board::get_king_pos() {
     return nullptr;
 }
 
-bool Board::is_legal_move(Move * move) {
-    if(move->from_x == -1) {
+bool Board::is_legal_move(MovC mov) {
+    if(mov.from_x == -1) {
         return false;
     }
 
     Board * dummy_board = new Board(*this);
 
-    dummy_board->push_move(move);
+    Move move = mov.get_old_move();
+    dummy_board->push_move(&move);
     dummy_board->turn = !dummy_board->turn;
 
     int * king_pos = dummy_board->get_king_pos();
@@ -1300,48 +1315,21 @@ Move * Board::get_legal_moves(bool v) {
     std::vector <MovC> movesC;
     this->get_pseudo_legal_moves(movesC);
 
-    Move * pseudo_legal_moves = new Move;
-    this->convert_vector_to_linked_list(movesC, pseudo_legal_moves);
-
-    if(movesC.size() == 0) {
-        // there are no legal moves in this position
-        return nullptr;
-    }
+    std::vector <MovC> legal_moves;
 
     Move * moves = new Move;
-    Move * list_end = moves;
-    Move * prev_end;
-    int legal_moves = 0;
 
-    Move * temp;
-
-    while (pseudo_legal_moves != nullptr) {
-        temp = pseudo_legal_moves;
-        pseudo_legal_moves = pseudo_legal_moves->next;
-
-        if (this->is_legal_move(temp)) {
-            list_end->from_x = temp->from_x;
-            list_end->from_y = temp->from_y;
-            list_end->to_x = temp->to_x;
-            list_end->to_y = temp->to_y;
-            list_end->promotion = temp->promotion;
-            list_end->next = new Move;
-            prev_end = list_end;
-            list_end = list_end->next;
-            legal_moves++;
+    for(MovC mov : movesC) {
+        if (this->is_legal_move(mov)) {
+            legal_moves.push_back(mov);    
         }
-        delete temp;
     }
 
-    if(legal_moves == 0) {
-        delete moves;
+    if(legal_moves.size() == 0) {
         return nullptr;
     }
 
-    if (prev_end != nullptr) {
-        prev_end->next = nullptr;
-    }
-
+    this->convert_vector_to_linked_list(legal_moves, moves);
     return moves;
 }
 

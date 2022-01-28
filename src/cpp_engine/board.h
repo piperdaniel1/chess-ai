@@ -5,6 +5,16 @@
 #include <vector>
 #include <string>
 
+struct Move {
+    int from_x = -1;
+    int from_y = -1;
+    int to_x = -1;
+    int to_y = -1;
+
+    char promotion = '.';
+    Move * next = nullptr;
+};
+
 class MovC {
     public:
     MovC();
@@ -15,6 +25,7 @@ class MovC {
     MovC(const MovC&);
     MovC& operator=(const MovC&);
     std::string get_fen();
+    Move get_old_move();
 
     int from_x;
     int from_y;
@@ -23,17 +34,6 @@ class MovC {
 
     char promotion;
     MovC * next;
-};
-
-
-struct Move {
-    int from_x = -1;
-    int from_y = -1;
-    int to_x = -1;
-    int to_y = -1;
-
-    char promotion = '.';
-    Move * next = nullptr;
 };
 
 class Board {
@@ -51,7 +51,7 @@ class Board {
 
     bool check_on_board();
     void pull_move(Move *, int);
-    bool is_legal_move(Move * move);
+    bool is_legal_move(MovC mov);
     bool is_in_arr(char piece, char arr[]);
     void get_rook_moves(std::vector<MovC>&, int, int);
     void get_king_moves(std::vector<MovC>&, int, int);
