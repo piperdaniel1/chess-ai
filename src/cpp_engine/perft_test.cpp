@@ -195,28 +195,14 @@ Move * Perft_Test::get_best_move(Board board, int depth) {
     }
 
     Move * unfreed_move = new Move;
-    *unfreed_move = *best_move;
+    unfreed_move->from_x = best_move->from_x;
+    unfreed_move->from_y = best_move->from_y;
+    unfreed_move->to_y = best_move->to_y;
+    unfreed_move->to_x = best_move->to_x;
 
     board.free_move_list(move_list);
 
     return unfreed_move;
-}
-
-void Perft_Test::integrity_test() {
-    Board test_board;
-    test_board.import_board_fen("r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1");
-    std::string new_move;
-    int depth = 4;
-    while(1) {
-        test_board.print_self();
-        this->get_best_move(test_board, depth);
-        std::cout << "Test finished: " << this->positions_evaluated << " total positions." << std::endl;
-        std::cout << "Enter next move: ";
-        std::cin >> new_move;
-        Move next_move = Move(new_move);
-        test_board.push_move(&next_move);
-        depth--;
-    }
 }
 
 void Perft_Test::run_perft_test() {

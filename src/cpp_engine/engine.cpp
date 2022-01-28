@@ -17,7 +17,11 @@ Move * arr_to_linked_list(Board& board, std::string * arr, int size) {
     Move * converted_move;
     for (int i = 0; i < size; i++) {
         converted_move = board.convert_move_fen(arr[i]);
-        *curr = *converted_move;
+        curr->from_x = converted_move->from_x;
+        curr->from_y = converted_move->from_y;
+        curr->to_x = converted_move->to_x;
+        curr->to_y = converted_move->to_y;
+        curr->promotion = converted_move->promotion;
 
         if (i != size - 1) {
             curr->next = new Move();
@@ -30,10 +34,6 @@ Move * arr_to_linked_list(Board& board, std::string * arr, int size) {
 }
 
 int main() {
-    Perft_Test test;
-    test.integrity_test();
-    return 0;
-
     Minimax minimax;
     Board board;
     std::ifstream input_file;
