@@ -1205,24 +1205,23 @@ void Board::get_pseudo_legal_moves(std::vector<MovC>& movesC) {
     this->get_castling_moves(movesC);
 }
 
-int * Board::get_king_pos() {
+Square Board::get_king_pos() {
+    Square pos;
     for(int i=0; i<8; i++) {
         for(int j=0; j<8; j++) {
             if(this->board[i][j] == 'k' and this->turn == false) {
-                int * king_pos = new int[2];
-                king_pos[0] = i;
-                king_pos[1] = j;
-                return king_pos;
+                pos.row = i;
+                pos.col = j;
+                return pos;
             } else if (this->board[i][j] == 'K' and this->turn == true) {
-                int * king_pos = new int[2];
-                king_pos[0] = i;
-                king_pos[1] = j;
-                return king_pos;
+                pos.row = i;
+                pos.col = j;
+                return pos;
             }
         }
     }
 
-    return nullptr;
+    return pos;
 }
 
 bool Board::is_legal_move(MovC mov) {
@@ -1235,15 +1234,10 @@ bool Board::is_legal_move(MovC mov) {
     dummy_board->push_movC(mov);
     dummy_board->turn = !dummy_board->turn;
 
-    int * king_pos = dummy_board->get_king_pos();
-
-    int row = king_pos[0];
-    int col = king_pos[1];
-
-    bool result = dummy_board->is_king_in_check(row, col);
+    Square king_pos = dummy_board->get_king_pos();
+    bool result = dummy_board->is_king_in_check(king_pos.row, king_pos.col);
 
     delete dummy_board;
-    delete [] king_pos;
 
     return !result;
 }

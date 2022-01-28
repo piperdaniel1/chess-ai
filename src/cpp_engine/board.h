@@ -5,6 +5,11 @@
 #include <vector>
 #include <string>
 
+struct Square {
+    int row = -1;
+    int col = -1;
+};
+
 struct Move {
     int from_x = -1;
     int from_y = -1;
@@ -71,7 +76,7 @@ class Board {
     Board();
     ~Board();
     Board(const Board &);
-    int * get_king_pos();
+    Square get_king_pos();
     void print_board_metadata();
     void import_board_fen(std::string);
     void clear_board();

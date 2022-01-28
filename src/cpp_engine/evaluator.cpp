@@ -20,9 +20,8 @@ int Evaluator::is_game_over(Board board, Move * move_list) {
         num_moves = 1;
     }
     
-    int * king_pos = board.get_king_pos();
-    bool check_status = board.is_king_in_check(king_pos[0], king_pos[1]);
-    delete [] king_pos;
+    Square king_pos = board.get_king_pos();
+    bool check_status = board.is_king_in_check(king_pos.row, king_pos.col);
 
     if (num_moves == 0 && check_status) {
         if(board.turn) {
@@ -38,9 +37,8 @@ int Evaluator::is_game_over(Board board, Move * move_list) {
 }
 
 int Evaluator::is_game_overC(Board board, std::vector<MovC>& legal_moves) {
-    int * king_pos = board.get_king_pos();
-    bool check_status = board.is_king_in_check(king_pos[0], king_pos[1]);
-    delete [] king_pos;
+    Square king_pos = board.get_king_pos();
+    bool check_status = board.is_king_in_check(king_pos.row, king_pos.col);
 
     if (legal_moves.size() == 0 && check_status) {
         if(board.turn) {
