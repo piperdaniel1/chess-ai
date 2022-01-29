@@ -544,11 +544,40 @@ void Board::pull_movC(MovC& mov) {
             // Replace the pawn that was taken
             this->board[3][mov.to_x] = 'p';
         }
-
+        return;
+    // * 8. Reverse the move normally, remembering to respawn the captured piece.
     } else {
-        
+        // Set from square to what is in the to square
+        // Set to sqaure to the captured piece
+        this->board[mov.from_y][mov.from_x] = this->board[mov.to_y][mov.to_x];
+        this->board[mov.to_y][mov.to_x] = mov.captured_piece;
+
+        // * 9. If the promotion field is not blank revert the piece that moved back to
+        // *    a pawn of the correct color. This can be determined by looking at the
+        // *    to_y of the move.
+        if(mov.promotion != '.') {
+            // White is promoting to something
+            // . . ! . . . . . 0 to_y
+            // . . P . . . . . 1 from_y
+            // . . . . . . . . 2
+            // . . . . . . . . 3
+            // 0 1 2 3 4 5 6 7
+            if(mov.to_y == 0) {
+                this->board[mov.from_y][mov.from_x] = 'P';
+            // Black is promoting to something
+            // . . . . . . . . 4
+            // . . . . . . . . 5
+            // . . . . p . . . 6 from_y
+            // . . . . ! . . . 7 to_y
+            // 0 1 2 3 4 5 6 7
+            } else {
+                this->board[mov.from_y][mov.from_x] = 'p';
+            }
+        }
     }
 
+    // * 10. Exit.
+    return;
 }
 
 // Design for void Board::pull_movC(MovC mov);
