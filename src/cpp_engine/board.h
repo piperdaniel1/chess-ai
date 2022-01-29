@@ -81,6 +81,7 @@ class Board {
     int enPassantRow;
 
     bool is_legal_move(MovC mov);
+    void print_board_state(char b[8][8]);
     bool f_is_legal(MovC mov);
     bool is_in_arr(char piece, char arr[]);
     void get_rook_moves(std::vector<MovC>&, int, int);

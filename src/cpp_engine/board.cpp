@@ -505,8 +505,8 @@ void Board::pull_movC(MovC& mov) {
                 // to
                 // 0 1 2 3 4
                 // r . . . k . . .
-                this->board[mov.from_y][0] = 'r';
-                this->board[mov.from_y][4] = 'k';
+                this->board[mov.from_y][0] = 'R';
+                this->board[mov.from_y][4] = 'K';
                 this->board[mov.from_y][3] = '.';
                 this->board[mov.from_y][2] = '.';
             // This means that it is a kingside castling move
@@ -516,8 +516,8 @@ void Board::pull_movC(MovC& mov) {
                 // to
                 // 0 1 2 3 4 5 6 7
                 // . . . . k . . r
-                this->board[mov.from_y][7] = 'r';
-                this->board[mov.from_y][4] = 'k';
+                this->board[mov.from_y][7] = 'R';
+                this->board[mov.from_y][4] = 'K';
                 this->board[mov.from_y][5] = '.';
                 this->board[mov.from_y][6] = '.';
             }
@@ -1384,14 +1384,34 @@ Square Board::get_king_pos() {
     return pos;
 }
 
+void Board::print_board_state(char b[8][8]) {
+    for(int i=0; i<8; i++) {
+        for(int j=0; j<8; j++) {
+            std::cout << b[i][j] << " ";
+        }
+        std::cout << std::endl;
+    }
+}
+
 /*
- * Fast legal move checker that is probably unsafe
+ * Fast legal move checker that is probably unsafe.
+ * Has built in error detection that hopefully can be disabled in the future.
  */
 bool Board::f_is_legal(MovC mov) {
     if(mov.from_x == -1) {
         return false;
     }
 
+    /*
+     * Store the board state before the move is made.
+     */
+    /*char initial_board[8][8];
+    for(int i=0; i<8; i++) {
+        for(int j=0; j<8; j++) {
+            initial_board[i][j] = this->board[i][j];
+        }
+    }*/
+    
     this->push_movC(mov);
     this->turn = !this->turn;
 
@@ -1400,6 +1420,20 @@ bool Board::f_is_legal(MovC mov) {
 
     this->turn = !this->turn;
     this->pull_movC(mov);
+
+    /*for(int i=0; i<8; i++) {
+        for(int j=0; j<8; j++) {
+            if(initial_board[i][j] != this->board[i][j]) {
+                std::cout << "Error: Board state changed during legal move check." << std::endl;
+                std::cout << "Initial board state: " << std::endl;
+                this->print_board_state(initial_board);
+                std::cout << "Final board state: " << std::endl;
+                this->print_board_state(this->board);
+                std::cout << "Move: " << mov.get_fen() << std::endl;
+                return false;
+            }
+        }
+    }*/
 
     return !result;
 }
