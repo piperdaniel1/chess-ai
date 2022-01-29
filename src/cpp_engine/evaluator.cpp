@@ -36,7 +36,7 @@ int Evaluator::is_game_over(Board board, Move * move_list) {
     return 0;
 }
 
-int Evaluator::is_game_overC(Board board, std::vector<MovC>& legal_moves) {
+int Evaluator::is_game_overC(Board& board, std::vector<MovC>& legal_moves) {
     Square king_pos = board.get_king_pos();
     bool check_status = board.is_king_in_check(king_pos.row, king_pos.col);
 
@@ -103,7 +103,7 @@ int Evaluator::evaluate(Board board, Move * legal_moves, bool verbose=false) {
     return score;
 }
 
-int Evaluator::evaluateC(Board board, std::vector<MovC>& legal_moves, bool verbose) {
+int Evaluator::evaluateC(Board& board, std::vector<MovC>& legal_moves, bool verbose) {
     int game_over_status = this->is_game_overC(board, legal_moves);
     if (game_over_status != 0) {
         if (game_over_status == 1) {

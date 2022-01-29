@@ -5,39 +5,34 @@ Perft_Test::Perft_Test() {
     std::cout << "Initializing Perft_Test..." << std::endl;
 }
 
-int Perft_Test::minimize(Board * board, int depth, int alpha, int beta, bool verbose=false) {
+int Perft_Test::minimize(Board& board, int depth, int alpha, int beta, bool verbose=false) {
     std::vector<MovC> movesC;
-    board->get_legal_movC(movesC);
+    board.get_legal_movC(movesC);
 
-    int game_over = this->eval.is_game_overC(*board, movesC);
+    int game_over = this->eval.is_game_overC(board, movesC);
     if (game_over != 0) {
         this->positions_evaluated++;
         if (game_over == 1) {
-            delete board;
             return 100000;
         } else if (game_over == 2) {
-            delete board;
             return -100000;
         } else if (game_over == 3) {
-            delete board;
             return 0;
         }
     }
 
     if (depth == 0) {
         this->positions_evaluated++;
-        int final_eval = this->eval.evaluateC(*board, movesC, false);
-        delete board;
+        int final_eval = this->eval.evaluateC(board, movesC, false);
         return final_eval;
     }
 
     int best_score = 100000;
     int score = 0;
     for(MovC mov : movesC) {
-        Board * next_board = new Board(*board);
-        next_board->push_movC(mov);
-
-        score = this->maximize(next_board, depth - 1, alpha, beta, false);
+        board.push_movC(mov);
+        score = this->maximize(board, depth - 1, alpha, beta, false);
+        board.pull_movC(mov);
 
         if (score < best_score) {
             best_score = score;
@@ -52,44 +47,37 @@ int Perft_Test::minimize(Board * board, int depth, int alpha, int beta, bool ver
         }
     }
 
-    delete board;
     return best_score;
 }
 
-int Perft_Test::maximize(Board * board, int depth, int alpha, int beta, bool verbose = false) {
+int Perft_Test::maximize(Board& board, int depth, int alpha, int beta, bool verbose = false) {
     std::vector<MovC> movesC;
-    board->get_legal_movC(movesC);
+    board.get_legal_movC(movesC);
 
-    int game_over = this->eval.is_game_overC(*board, movesC);
+    int game_over = this->eval.is_game_overC(board, movesC);
     if (game_over != 0) {
         this->positions_evaluated++;
         if (game_over == 1) {
-            delete board;
             return 100000;
         } else if (game_over == 2) {
-            delete board;
             return -100000;
         } else if (game_over == 3) {
-            delete board;
             return 0;
         }
     }
 
     if (depth == 0) {
         this->positions_evaluated++;
-        int final_eval = this->eval.evaluateC(*board, movesC, false);
-        delete board;
+        int final_eval = this->eval.evaluateC(board, movesC, false);
         return final_eval;
     }
 
     int best_score = -100000;
     int score = 0;
     for(MovC mov : movesC) {
-        Board * next_board = new Board(*board);
-
-        next_board->push_movC(mov);
-
-        score = this->minimize(next_board, depth - 1, alpha, beta, false);
+        board.push_movC(mov);
+        score = this->minimize(board, depth - 1, alpha, beta, false);
+        board.pull_movC(mov);
 
         if (score > best_score) {
             best_score = score;
@@ -104,11 +92,10 @@ int Perft_Test::maximize(Board * board, int depth, int alpha, int beta, bool ver
         }
     }
 
-    delete board;
     return best_score;
 }
 
-void Perft_Test::get_best_move(Board board, int depth) {
+void Perft_Test::get_best_move(Board& board, int depth) {
     this->positions_evaluated = 0;
     int alpha = -100000;
     int beta = 100000;
@@ -136,16 +123,17 @@ void Perft_Test::get_best_move(Board board, int depth) {
     int last_eval = 0;
 
     for (MovC mov : movesC) {
-        Board * next_board = new Board(board);
-        next_board->push_movC(mov);
+        board.push_movC(mov);
 
         last_eval = this->positions_evaluated;
         
         if(!board.turn) {
-            score = this->maximize(next_board, depth - 1, alpha, beta, false);
+            score = this->maximize(board, depth - 1, alpha, beta, false);
         } else {
-            score = this->minimize(next_board, depth - 1, alpha, beta, false);
+            score = this->minimize(board, depth - 1, alpha, beta, false);
         }
+
+        board.pull_movC(mov);
         
         std::string move_fen = mov.get_fen();
         if(move_fen.length() == 4) {

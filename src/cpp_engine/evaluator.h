@@ -11,9 +11,9 @@ class Evaluator {
     Evaluator();
     ~Evaluator();
     int evaluate(Board board, Move * legal_moves, bool verbose);
-    int evaluateC(Board board, std::vector<MovC>& legal_moves, bool verbose);
+    int evaluateC(Board& board, std::vector<MovC>& legal_moves, bool verbose);
     int is_game_over(Board board, Move * legal_moves);
-    int is_game_overC(Board board, std::vector<MovC>& legal_moves);
+    int is_game_overC(Board& board, std::vector<MovC>& legal_moves);
 };
 
 #endif
