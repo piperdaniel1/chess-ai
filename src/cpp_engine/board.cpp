@@ -514,6 +514,39 @@ void Board::pull_movC(MovC& mov) {
             }
         }
         return;
+    // * 7. Check if the en passant flag is true.
+    // *    - If so, reverse the move as if it is an en passant move and exit.
+    } else if (mov.is_enpassant) {
+        // black is taking white with en passant
+        // . . P p . . . . 4
+        // . . ! . . . . . 5
+        // . . . . . . . . 6
+        // . . . . K . . . 7
+        // 0 1 2 3 4 5 6 7
+        if(mov.to_y == 5) {
+            // Swap the from and to squares
+            this->board[mov.from_y][mov.from_x] = this->board[mov.to_y][mov.to_x];
+            this->board[mov.to_y][mov.to_x] = '.';
+
+            // Replace the pawn that was taken
+            this->board[4][mov.to_x] = 'P';
+        // white is taking black with en passant
+        // . . . . k . . . 0
+        // . . . . . . . . 1
+        // . . ! . . . . . 2
+        // . . p P . . . . 3
+        // 0 1 2 3 4 5 6 7
+        } else if (mov.to_y == 2) {
+            // Swap the from and to squares
+            this->board[mov.from_y][mov.from_x] = this->board[mov.to_y][mov.to_x];
+            this->board[mov.to_y][mov.to_x] = '.';
+
+            // Replace the pawn that was taken
+            this->board[3][mov.to_x] = 'p';
+        }
+
+    } else {
+        
     }
 
 }
