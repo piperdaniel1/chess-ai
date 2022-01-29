@@ -11,15 +11,18 @@ class Opening_Entry:
 class Opening_Book:
     def __init__(self, book_file = "millionbase-2.5.pgn"):
         self.book_file = book_file
-        try:
+        '''try:
             pickle_book = open('hashed_book.p', 'rb')
             pickle_table = open('hashed_table.p', 'rb')
 
             self.book_tt = pickle.load(pickle_book)
             self.zorbist_table = pickle.load(pickle_table)
+
+            print("Opening book loaded from file")
         except FileNotFoundError:
+            print("Opening book not loaded from file")
             self.book_tt = [[None]] * 2000000
-            self.zorbist_table = [[random.randint(1,2**64 - 1) for i in range(12)] for j in range(64)]
+            self.zorbist_table = [[random.randint(1,2**64 - 1) for i in range(12)] for j in range(64)]'''
 
     def get_zorbist_hash(self, board):
         piece_map = board.piece_map()

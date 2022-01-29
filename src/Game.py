@@ -6,8 +6,10 @@ import time
 import pygame
 from threading import Thread, Event
 import os
+import pickle
 
 from python_engine.Minimax import Minimax
+from python_engine.Opening_Book import Opening_Book
 
 '''
 ChessTimer class
@@ -15,6 +17,12 @@ ChessTimer class
 This class will be used to keep track of the time left on a given
 player's clock.
 '''
+
+class Opening_Entry:
+    def __init__(self, key=0, next_move=0):
+        self.key = key
+        self.next_move = next_move
+
 class ChessTimer:
     def __init__(self, minutes : float = 5, seconds : float = 0):
         self.minutes = minutes
@@ -101,7 +109,7 @@ class ChessWindow:
         self.LOCAL_OFFSET = -12.5
         self.screen = self.setup_board()
         self.selected_square = None
-        self.internal_board = chess.Board("8/4k3/3r4/8/4K3/8/8/8 w - - 0 1")
+        self.internal_board = chess.Board("8/4q3/2k5/8/4K3/8/8/8 w - - 0 1")
         self.minimax = Minimax()
         self.stop_timer = Event()
         self.timer = TimerThread(self.stop_timer, self.internal_board)
@@ -112,6 +120,13 @@ class ChessWindow:
         self.player_move = True
         self.moves_to_render = []
         self.sent_to_engine = False
+        self.opening_book = Opening_Book()
+
+        pickle_book = open('hashed_book.p', 'rb')
+        pickle_table = open('hashed_table.p', 'rb')
+
+        self.opening_book.book_tt = pickle.load(pickle_book)
+        self.opening_book.zorbist_table = pickle.load(pickle_table)
     
     def start_cpp_engine(self):
         os.system(f'./cpp_engine/a.out')
@@ -122,8 +137,15 @@ class ChessWindow:
     It returns the move in the from of a Chess.Move object.
     '''
     def send_board_to_engine(self):
-        with open("input_file.txt", "w") as f:
-            f.write(str(self.internal_board.fen()))
+        move = self.opening_book.decode(self.opening_book.get_zorbist_hash(self.internal_board))
+        print(move)
+        
+        if move is not None:
+            with open("output_file.txt", "w") as f:
+                f.write(move.uci())
+        else:
+            with open("input_file.txt", "w") as f:
+                f.write(str(self.internal_board.fen()))
 
     def check_engine_status(self):
         # check contents of output file

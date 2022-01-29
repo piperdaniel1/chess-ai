@@ -16,7 +16,7 @@ class TT_Table {
     int size =  20000000;
     Entry null_entry;
     Entry * table;
-    std::uint64_t hash_table[8][8][6];
+    std::uint64_t hash_table[8][8][12];
     int get_corresponding_num(char piece);
 
     public:

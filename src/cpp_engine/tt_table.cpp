@@ -27,8 +27,6 @@ TT_Table::TT_Table() {
         this->table[i].eval = 0;
         this->table[i].hash = 0;
     }
-
-    std::cout << "Hash: " << this->table[5000].hash << std::endl;
 }
 
 TT_Table::~TT_Table() {
