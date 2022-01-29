@@ -434,6 +434,15 @@ void Board::import_board_fen(std::string fen) {
     }
 }
 
+/*
+ * Reverses a move that has been pushed previously using push_movC
+ * It is neccessary that this move has been previously pushed using push_movC
+ * because otherwise it would not have the internal cues that allow the pull_movC
+ * function to understand the context of the move.
+ * 
+ * Also, if you attempt to pull a move that is not the last move that was pushed
+ * then the function's behavior is undefined.
+ */
 void Board::pull_movC(MovC& mov) {
     // * 1. If the mov is not a valid move, print an error message.
     if(mov.from_x < 0 || mov.from_x > 7) {
@@ -1375,6 +1384,26 @@ Square Board::get_king_pos() {
     return pos;
 }
 
+/*
+ * Fast legal move checker that is probably unsafe
+ */
+bool Board::f_is_legal(MovC mov) {
+    if(mov.from_x == -1) {
+        return false;
+    }
+
+    this->push_movC(mov);
+    this->turn = !this->turn;
+
+    Square king_pos = this->get_king_pos();
+    bool result = this->is_king_in_check(king_pos.row, king_pos.col);
+
+    this->turn = !this->turn;
+    this->pull_movC(mov);
+
+    return !result;
+}
+
 bool Board::is_legal_move(MovC mov) {
     if(mov.from_x == -1) {
         return false;
@@ -1398,7 +1427,7 @@ void Board::get_legal_movC(std::vector<MovC>& legal_moves) {
     this->get_pseudo_legal_moves(movesC);
 
     for(MovC mov : movesC) {
-        if (this->is_legal_move(mov)) {
+        if (this->f_is_legal(mov)) {
             legal_moves.push_back(mov);    
         }
     }
