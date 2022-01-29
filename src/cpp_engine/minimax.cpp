@@ -57,6 +57,10 @@ int Minimax::minimize(Board * board, int depth, int alpha, int beta, bool verbos
             this->tt_table.store_board(next_board->board, depth, score);
         }
 
+        if(score < -1000) {
+            score += 10;
+        }
+
         if (score < best_score) {
             best_score = score;
         }
@@ -119,6 +123,10 @@ int Minimax::maximize(Board * board, int depth, int alpha, int beta, bool verbos
             score = this->minimize(next_board, depth - 1, alpha, beta, false);
 
             this->tt_table.store_board(next_board->board, depth, score);
+        }
+
+        if(score < -1000) {
+            score += 10;
         }
 
         if (score > best_score) {
@@ -231,6 +239,5 @@ void Minimax::get_best_move(Board board, int depth, int& num_moves, std::vector<
             swaps = 0;
         }
     }
-
     std::cout << "Current best move is evaluated at " << scores[0] << std::endl;
 }

@@ -96,7 +96,8 @@ int main() {
             curr_depth++;
             std::cout << "Depth " << curr_depth-1 << " complete, " << minimax.positions_evaluated << " positions evaluated." << std::endl;
             std::cout << "Beginning depth " << curr_depth << "..." << std::endl;
-            if(curr_depth > 20) {
+            
+            if(curr_depth > 25) {
                 break;
             }
         }

@@ -24,6 +24,7 @@ class Minimax {
     int minimize(Board * board, int depth, int alpha, int beta, bool verbose);
     std::uint64_t get_time();
     int positions_evaluated;
+    int score_of_best_move;
 };
 
 #endif
