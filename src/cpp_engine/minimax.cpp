@@ -231,4 +231,6 @@ void Minimax::get_best_move(Board board, int depth, int& num_moves, std::vector<
             swaps = 0;
         }
     }
+
+    std::cout << "Current best move is evaluated at " << scores[0] << std::endl;
 }

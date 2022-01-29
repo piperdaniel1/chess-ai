@@ -34,9 +34,9 @@ Move * arr_to_linked_list(Board& board, std::vector<MovC> arr, int size) {
 }
 
 int main() {
-    Perft_Test test;
-    test.run_perft_test();
-    return 0;
+    //Perft_Test test;
+    //test.run_perft_test();
+    //return 0;
     Minimax minimax;
     Board board;
     std::ifstream input_file;
@@ -96,6 +96,9 @@ int main() {
             curr_depth++;
             std::cout << "Depth " << curr_depth-1 << " complete, " << minimax.positions_evaluated << " positions evaluated." << std::endl;
             std::cout << "Beginning depth " << curr_depth << "..." << std::endl;
+            if(curr_depth > 20) {
+                break;
+            }
         }
 
         // print the best move
