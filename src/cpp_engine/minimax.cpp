@@ -24,13 +24,10 @@ int Minimax::minimize(Board * board, int depth, int alpha, int beta, bool verbos
     if (game_over != 0) {
         this->positions_evaluated++;
         if (game_over == 1) {
-            delete board;
             return 100000;
         } else if (game_over == 2) {
-            delete board;
             return -100000;
         } else if (game_over == 3) {
-            delete board;
             return 0;
         }
     }
@@ -38,26 +35,26 @@ int Minimax::minimize(Board * board, int depth, int alpha, int beta, bool verbos
     if (depth == 0) {
         this->positions_evaluated++;
         int final_eval = this->eval.evaluateC(*board, movesC, false);
-        delete board;
         return final_eval;
     }
 
     int best_score = 100000;
     int score = 0;
     for (MovC mov : movesC) {
-        Board * next_board = new Board(*board);
-        next_board->push_movC(mov);
+        board->push_movC(mov);
 
-        Entry tt_entry = this->tt_table.query_board(next_board->board);
+        Entry tt_entry = this->tt_table.query_board(board->board);
         if (tt_entry.depth >= depth) {
             score = tt_entry.eval;
         } else {
-            score = this->maximize(next_board, depth - 1, alpha, beta, false);
+            score = this->maximize(board, depth - 1, alpha, beta, false);
 
-            this->tt_table.store_board(next_board->board, depth, score);
+            this->tt_table.store_board(board->board, depth, score);
         }
 
-        if(score < -1000) {
+        board->pull_movC(mov);
+
+        if(score < -10000) {
             score += 10;
         }
 
@@ -74,7 +71,6 @@ int Minimax::minimize(Board * board, int depth, int alpha, int beta, bool verbos
         }
     }
 
-    delete board;
     return best_score;
 }
 
@@ -91,13 +87,10 @@ int Minimax::maximize(Board * board, int depth, int alpha, int beta, bool verbos
     if (game_over != 0) {
         this->positions_evaluated++;
         if (game_over == 1) {
-            delete board;
             return 100000;
         } else if (game_over == 2) {
-            delete board;
             return -100000;
         } else if (game_over == 3) {
-            delete board;
             return 0;
         }
     }
@@ -105,27 +98,26 @@ int Minimax::maximize(Board * board, int depth, int alpha, int beta, bool verbos
     if (depth == 0) {
         this->positions_evaluated++;
         int final_eval = this->eval.evaluateC(*board, movesC, false);
-        delete board;
         return final_eval;
     }
 
     int best_score = -100000;
     int score = 0;
     for(MovC mov : movesC) {
-        Board * next_board = new Board(*board);
+        board->push_movC(mov);
 
-        next_board->push_movC(mov);
-
-        Entry tt_entry = this->tt_table.query_board(next_board->board);
+        Entry tt_entry = this->tt_table.query_board(board->board);
         if (tt_entry.depth >= depth) {
             score = tt_entry.eval;
         } else {
-            score = this->minimize(next_board, depth - 1, alpha, beta, false);
+            score = this->minimize(board, depth - 1, alpha, beta, false);
 
-            this->tt_table.store_board(next_board->board, depth, score);
+            this->tt_table.store_board(board->board, depth, score);
         }
 
-        if(score < -1000) {
+        board->pull_movC(mov);
+
+        if(score < -10000) {
             score += 10;
         }
 
@@ -142,11 +134,11 @@ int Minimax::maximize(Board * board, int depth, int alpha, int beta, bool verbos
         }
     }
 
-    delete board;
     return best_score;
 }
 
 void Minimax::get_best_move(Board board, int depth, int& num_moves, std::vector<MovC>& sorted_legal_moves, std::uint64_t max) {
+    this->eval.evaluateC(board, sorted_legal_moves, true);
     this->start_time = get_time();
     this->cut_search_early = false;
     this->max_time = max;

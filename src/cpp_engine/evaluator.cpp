@@ -124,25 +124,35 @@ int Evaluator::evaluateC(Board& board, std::vector<MovC>& legal_moves, bool verb
         for (col = 0; col < 8; col++) {
             char piece = board.get_piece(row, col);
             if (piece == 'p') {
-                score -= 10;
+                score -= 100;
+                score -= this->pawn_map[row][col];
             } else if (piece == 'r') {
-                score -= 50;
+                score -= 500;
+                score -= this->rook_map[row][col];
             } else if (piece == 'n') {
-                score -= 30;
+                score -= 300;
+                score -= this->knight_map[row][col];
             } else if (piece == 'b') {
-                score -= 30;
+                score -= 300;
+                score -= this->bishop_map[row][col];
             } else if (piece == 'q') {
-                score -= 90;
+                score -= 900;
+                score -= this->queen_map[row][col];
             } else if (piece == 'P') {
-                score += 10;
+                score += 100;
+                score += this->pawn_map[7-row][col];
             } else if (piece == 'R') {
-                score += 50;
+                score += 500;
+                score += this->rook_map[7-row][col];
             } else if (piece == 'N') {
-                score += 30;
+                score += 300;
+                score += this->knight_map[7-row][col];
             } else if (piece == 'B') {
-                score += 30;
+                score += 300;
+                score += this->bishop_map[7-row][col];
             } else if (piece == 'Q') {
-                score += 90;
+                score += 900;
+                score += this->queen_map[7-row][col];
             }
         }
     }
