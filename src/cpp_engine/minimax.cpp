@@ -1,6 +1,35 @@
 // this file will contain the minimax algorithm
 #include "minimax.h"
 
+Node::Node() {
+    this->b = Board();
+    this->depth = 0;
+    this->tt_table = false;
+}
+
+Node::~Node() {
+    this->children.clear();
+}
+
+Node::Node(Board b, int d) {
+    this->b = b;
+    this->depth = d;
+    this->tt_table = false;
+}
+
+Node::Node(Board b, int d, std::string fen) {
+    this->b = b;
+    this->depth = d;
+    this->tt_table = false;
+    this->last_fen = fen;
+}
+
+void Node::print() {
+    this->b.print_self();
+    std::cout << "Depth: " << this->depth << std::endl;
+    std::cout << "Score: " << this->score << std::endl;
+}
+
 Minimax::Minimax() {
     std::cout << "Initializing minimax..." << std::endl;
     this->v2 = false;
@@ -11,7 +40,7 @@ std::uint64_t Minimax::get_time() {
     std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
-int Minimax::minimize(Board * board, int depth, int alpha, int beta, bool verbose=false) {
+int Minimax::minimize(Board * board, int depth, int alpha, int beta, Node& cache_node, bool verbose=false) {
     if (this->get_time() - this->start_time > this->max_time) {
         this->cut_search_early = true;
         return 0;
@@ -43,11 +72,14 @@ int Minimax::minimize(Board * board, int depth, int alpha, int beta, bool verbos
     for (MovC mov : movesC) {
         board->push_movC(mov);
 
+        cache_node.children.push_back(Node(*board, depth, mov.get_fen()));
+
         Entry tt_entry = this->tt_table.query_board(board->board);
         if (tt_entry.depth >= depth) {
             score = tt_entry.eval;
+            cache_node.children.back().tt_table = true;
         } else {
-            score = this->maximize(board, depth - 1, alpha, beta, false);
+            score = this->maximize(board, depth - 1, alpha, beta, cache_node.children.back(), false);
 
             this->tt_table.store_board(board->board, depth, score);
         }
@@ -59,6 +91,7 @@ int Minimax::minimize(Board * board, int depth, int alpha, int beta, bool verbos
         }
 
         if (score < best_score) {
+            cache_node.score = score;
             best_score = score;
         }
 
@@ -74,7 +107,7 @@ int Minimax::minimize(Board * board, int depth, int alpha, int beta, bool verbos
     return best_score;
 }
 
-int Minimax::maximize(Board * board, int depth, int alpha, int beta, bool verbose = false) {
+int Minimax::maximize(Board * board, int depth, int alpha, int beta, Node& cache_node, bool verbose = false) {
     if (this->get_time() - this->start_time > this->max_time) {
         this->cut_search_early = true;
         return 0;
@@ -106,11 +139,14 @@ int Minimax::maximize(Board * board, int depth, int alpha, int beta, bool verbos
     for(MovC mov : movesC) {
         board->push_movC(mov);
 
+        cache_node.children.push_back(Node(*board, depth, mov.get_fen()));
+
         Entry tt_entry = this->tt_table.query_board(board->board);
         if (tt_entry.depth >= depth) {
             score = tt_entry.eval;
+            cache_node.children.back().tt_table = true;
         } else {
-            score = this->minimize(board, depth - 1, alpha, beta, false);
+            score = this->minimize(board, depth - 1, alpha, beta, cache_node.children.back(), false);
 
             this->tt_table.store_board(board->board, depth, score);
         }
@@ -122,6 +158,7 @@ int Minimax::maximize(Board * board, int depth, int alpha, int beta, bool verbos
         }
 
         if (score > best_score) {
+            cache_node.score = score;
             best_score = score;
         }
 
@@ -138,6 +175,11 @@ int Minimax::maximize(Board * board, int depth, int alpha, int beta, bool verbos
 }
 
 void Minimax::get_best_move(Board board, int depth, int& num_moves, std::vector<MovC>& sorted_legal_moves, std::uint64_t max) {
+    this->root_node.b = board;
+    this->root_node.depth = depth;
+    this->root_node.children.clear();
+    this->root_node.last_fen = "root";
+
     this->eval.evaluateC(board, sorted_legal_moves, true);
     this->start_time = get_time();
     this->cut_search_early = false;
@@ -166,15 +208,18 @@ void Minimax::get_best_move(Board board, int depth, int& num_moves, std::vector<
     for(MovC mov : sorted_legal_moves) {
         Board * next_board = new Board(board);
         next_board->push_movC(mov);
+        
+        this->root_node.children.push_back(Node(*next_board, depth, mov.get_fen()));
 
         Entry tt_entry = this->tt_table.query_board(next_board->board);
         if (tt_entry.depth >= depth) {
             score = tt_entry.eval;
+            this->root_node.children.back().tt_table = true;
         } else {
             if(!board.turn) {
-                score = this->maximize(next_board, depth - 1, alpha, beta, false);
+                score = this->maximize(next_board, depth - 1, alpha, beta, root_node.children.back(), false);
             } else {
-                score = this->minimize(next_board, depth - 1, alpha, beta, false);
+                score = this->minimize(next_board, depth - 1, alpha, beta, root_node.children.back(), false);
             }
 
             this->tt_table.store_board(next_board->board, depth, score);
@@ -186,11 +231,13 @@ void Minimax::get_best_move(Board board, int depth, int& num_moves, std::vector<
         // minimizing
         if(!board.turn) {
             if (best_score < beta) {
+                this->root_node.score = score;
                 beta = best_score;
             }
         // maximizing
         } else {
             if (best_score > alpha) {
+                this->root_node.score = score;
                 alpha = best_score;
             }
         }

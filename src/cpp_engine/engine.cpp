@@ -80,7 +80,7 @@ int main() {
         std::vector<MovC> sorted_moves;
         board.get_legal_movC(sorted_moves);
         std::uint64_t start = minimax.get_time();
-        std::uint64_t max = start + 5000;
+        std::uint64_t max = start + 1000;
         
         minimax.score_of_best_move = 100000;
 
@@ -107,6 +107,66 @@ int main() {
         // print the best move
         std::cout << "Best move: " << vetted_moves[0].get_fen() << std::endl;
         std::cout << "Evaluated " << minimax.positions_evaluated << " positions." << std::endl;
+
+        std::cout << std::endl;
+        std::cout << "Cached tree:" << std::endl;
+        Node curr_node = minimax.root_node;
+
+        while(true) {
+            std::cout << "Current node (" << curr_node.last_fen << "):" << std::endl;
+            curr_node.print();
+            std::cout << "This node has " << curr_node.children.size() << " children." << std::endl;
+            if (curr_node.tt_table) {
+                std::cout << "This node came from the engine's transposition table." << std::endl;
+            } else {
+                std::cout << "This node did not come from the engine's transposition table." << std::endl;
+            }
+
+            int max_score = 0;
+            int min_score = 0;
+            int lowest_ind = 0;
+            int highest_ind = 0;
+            for(int i=0; i<curr_node.children.size(); i++) {
+                if(curr_node.children[i].score > max_score || i == 0) {
+                    max_score = curr_node.children[i].score;
+                    highest_ind = i;
+                }
+
+                if(curr_node.children[i].score < min_score || i == 0) {
+                    min_score = curr_node.children[i].score;
+                    lowest_ind = i;
+                }
+            }
+
+            std::cout << "Node #" << highest_ind << " has the highest score of " << max_score << "." << std::endl;
+            std::cout << "Node #" << lowest_ind << " has the lowest score of " << min_score << "." << std::endl;
+
+            std::string choice;
+            std::cout << "Would you like to look at the children(y/n)? ";
+            std::cin >> choice;
+            if(choice == "yes" || choice == "y" || choice == "Y" || choice == "Yes") {
+                for(int i=0; i<curr_node.children.size(); i++) {
+                    std::cout << "\nChild #" << i << " (" << curr_node.children[i].last_fen << "):" << std::endl;
+                    curr_node.children[i].print();
+                    if (curr_node.children[i].score == max_score) {
+                        std::cout << "(!!) This child has the highest score." << std::endl;
+                    } else if (curr_node.children[i].score == min_score) {
+                        std::cout << "(!!) This child has the lowest score." << std::endl;
+                    }
+                }
+
+                std::cout << "Which child would you like to traverse to? ";
+                int input;
+                std::cin >> input;
+                if(input == -1) {
+                    break;
+                } else {
+                    curr_node = curr_node.children[input];
+                }
+            } else {
+                break;
+            }
+        }
 
         // write the best move to the output file
         myFile.open("output_file.txt");
