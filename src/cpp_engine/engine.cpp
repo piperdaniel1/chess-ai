@@ -80,7 +80,7 @@ int main() {
         std::vector<MovC> sorted_moves;
         board.get_legal_movC(sorted_moves);
         std::uint64_t start = minimax.get_time();
-        std::uint64_t max = start + 1000;
+        std::uint64_t max = start + 5000;
         
         minimax.score_of_best_move = 100000;
 
@@ -97,6 +97,9 @@ int main() {
 
             curr_depth++;
             std::cout << "Depth " << curr_depth-1 << " complete, " << minimax.positions_evaluated << " positions evaluated." << std::endl;
+            if (curr_depth > 4) {
+                break;
+            }
             std::cout << "Beginning depth " << curr_depth << "..." << std::endl;
             
             if(curr_depth > 25 || minimax.score_of_best_move < -1000) {

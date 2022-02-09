@@ -230,14 +230,22 @@ void Minimax::get_best_move(Board board, int depth, int& num_moves, std::vector<
 
         // minimizing
         if(!board.turn) {
-            if (best_score < beta) {
+            if (score < best_score) {
+                best_score = score;
                 this->root_node.score = score;
+            }
+
+            if (best_score < beta) {
                 beta = best_score;
             }
         // maximizing
         } else {
-            if (best_score > alpha) {
+            if (score > best_score) {
+                best_score = score;
                 this->root_node.score = score;
+            }
+
+            if (best_score > alpha) {
                 alpha = best_score;
             }
         }

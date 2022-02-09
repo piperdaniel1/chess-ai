@@ -4,6 +4,7 @@
 #include <iostream>
 #include <time.h>
 #include <random>
+#include "board.h"
 
 struct Entry {
     int depth;

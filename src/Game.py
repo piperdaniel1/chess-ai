@@ -109,7 +109,7 @@ class ChessWindow:
         self.LOCAL_OFFSET = -12.5
         self.screen = self.setup_board()
         self.selected_square = None
-        self.internal_board = chess.Board()
+        self.internal_board = chess.Board("r1b1kb1r/pppp1pp1/3qpn1p/4n3/3P4/1PPBP3/P4PPP/RNBQ1RK1 w kq - 0 9")
         self.minimax = Minimax()
         self.stop_timer = Event()
         self.timer = TimerThread(self.stop_timer, self.internal_board)
