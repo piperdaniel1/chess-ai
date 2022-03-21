@@ -111,7 +111,7 @@ int main() {
         std::cout << "Best move: " << vetted_moves[0].get_fen() << std::endl;
         std::cout << "Evaluated " << minimax.positions_evaluated << " positions." << std::endl;
 
-        std::cout << std::endl;
+        /*std::cout << std::endl;
         std::cout << "Cached tree:" << std::endl;
         Node curr_node = minimax.root_node;
 
@@ -169,7 +169,7 @@ int main() {
             } else {
                 break;
             }
-        }
+        }*/
 
         // write the best move to the output file
         myFile.open("output_file.txt");
