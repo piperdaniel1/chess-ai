@@ -18,16 +18,27 @@ This class will be used to keep track of the time left on a given
 player's clock.
 '''
 
+# Used for the opening book
 class Opening_Entry:
+    # Key = zorbist hash of position
+    # Next_move = the move the GM used in this position
     def __init__(self, key=0, next_move=0):
         self.key = key
         self.next_move = next_move
 
+'''
+Used in the TimerThread class. Represents one of the chess
+clocks. Supports adding move bonus, and subtracting individual seconds / tenth of a seconds.
+'''
 class ChessTimer:
     def __init__(self, minutes : float = 5, seconds : float = 0):
         self.minutes = minutes
         self.seconds = seconds
     
+    '''
+    Returns a string representation of the clock.
+    Used for printing the clock to the GUI.
+    '''
     def __str__(self):
         self.minutes = int(self.minutes)
         self.seconds = round(self.seconds, 1)
@@ -62,8 +73,10 @@ class ChessTimer:
             self.minutes += 1
 
 '''
-Wrapper for ChessTimer class.
-Automatically ticks the timer every second in the background.
+Wrapper for two ChessTimer classes (one for black, one for white).
+Automatically ticks the active timer every second in the background.
+There is only ever one instance of the TimerThread in a given game,
+it isn't really the most efficient use of a class.
 '''
 class TimerThread(Thread):
     def __init__(self, event, board: chess.Board, mins = 5, secs = 0):
@@ -92,6 +105,7 @@ and queries the chess engines for their move.
 '''
 class ChessWindow:
     def __init__(self):
+        # Compile the CPP backend of the chess engine
         os.system("g++ -o cpp_engine/a.out cpp_engine/engine.cpp cpp_engine/minimax.cpp cpp_engine/tt_table.cpp cpp_engine/evaluator.cpp cpp_engine/board.cpp cpp_engine/perft_test.cpp")
         with open("output_file.txt", "w") as f:
             f.write("")
@@ -99,23 +113,31 @@ class ChessWindow:
             os.remove("input_file.txt")
         except FileNotFoundError:
             pass
-
+        
+        # Spawn a thread to start the CPP engine
         Thread(target=self.start_cpp_engine).start()
 
-        # everyone loves magic numbers 
+        # Initializing the GUI and constants
         pygame.init()
         self.GLOBAL_OFFSET = 25
         self.GRID_SIZE = 900 / 8 - (50 / 8) - 2
         self.LOCAL_OFFSET = -12.5
+        self.legal_move = pygame.image.load("assets/pieces/legal-move.png")
+        self.legal_move = pygame.transform.scale(self.legal_move, (90, 90))
+
+        # Put the pieces on the board
         self.screen = self.setup_board()
         self.selected_square = None
+
+        # Initialize base classes / start timer
         self.internal_board = chess.Board()
         self.minimax = Minimax()
         self.stop_timer = Event()
         self.timer = TimerThread(self.stop_timer, self.internal_board)
         self.timer.start()
-        self.legal_move = pygame.image.load("assets/pieces/legal-move.png")
-        self.legal_move = pygame.transform.scale(self.legal_move, (90, 90))
+
+
+        
         self.moves_made = 0
         self.player_move = True
         self.moves_to_render = []
