@@ -8,10 +8,12 @@ import pygame
 from threading import Thread, Event
 import cProfile
 
-from Minimax import Minimax
-from Board_Scorer import Board_Scorer
+from rust_minimax import RustMinimax
+from board_scorer import Board_Scorer
 from Opening_Book import Opening_Book, Opening_Entry
 
+# The ChessTimer class is used to keep track of the time left for one player
+# Abstracts away the details of keeping track of minutes and seconds
 class ChessTimer:
     def __init__(self, minutes : float = 5, seconds : float = 0):
         self.minutes = minutes
@@ -30,7 +32,7 @@ class ChessTimer:
             return "0{}:0{}".format(self.minutes, self.seconds)
 
     def get_seconds_remaining(self):
-        return self.minutes * 60 + self.seconds
+        return int(self.minutes * 60 + self.seconds)
     
     def tick(self):
         self.seconds -= 1
@@ -50,6 +52,9 @@ class ChessTimer:
             self.seconds -= 60
             self.minutes += 1
 
+# This class runs two timers, one for each player
+# Makes sure to keep track of whose turn it is and to switch the timers
+# when the turn changes
 class TimerThread(Thread):
     def __init__(self, event, board: chess.Board, mins = 5, secs = 0):
         Thread.__init__(self)
@@ -69,6 +74,7 @@ class TimerThread(Thread):
             else:
                 self.black_clock.tick_accurately()
 
+# Master class to print the game to the screen and handle user input / minimax
 class ChessWindow:
     def __init__(self):
         # everyone loves magic numbers 
@@ -76,71 +82,56 @@ class ChessWindow:
         self.GLOBAL_OFFSET = 25
         self.GRID_SIZE = 900 / 8 - (50 / 8) - 2
         self.LOCAL_OFFSET = -12.5
+
+        # Setup the pygame window and other assets
         self.screen = self.setup_board()
-        self.selected_square = None
+        self.legal_move = pygame.image.load("pieces/legal-move.png")
+        self.legal_move = pygame.transform.scale(self.legal_move, (90, 90))
+
+        # Initialize the internal board state self.selected_square = None
         self.internal_board = chess.Board()
-        self.minimax = Minimax()
+        self.moves_made = 0
+        self.player_move = True
+
+        # Initialize the minimax algorithm
+        self.rust_minimax = RustMinimax()
+
+        # Initialize the thread for the timer
         self.stop_timer = Event()
         self.timer = TimerThread(self.stop_timer, self.internal_board)
         self.timer.start()
-        self.legal_move = pygame.image.load("pieces/legal-move.png")
-        self.legal_move = pygame.transform.scale(self.legal_move, (90, 90))
-        self.moves_made = 0
-        self.player_move = True
     
+    # Returns the move that the minimax algorithm has determined is the best move
     def get_move_from_minimax(self, is_white):
+        # Capture the current starting time
         curr_time = time.time()
         end_time = 0
         depth = 4
         
-        self.minimax.time_remaining = self.timer.black_clock.get_seconds_remaining()
-        self.minimax.opponent_time_remaining = self.timer.white_clock.get_seconds_remaining()
-        educated_move, move_chain = self.minimax.find_best_move(deepcopy(self.internal_board), False, -1000, 1000, self.moves_made)
+        # Run the minimax algorithm on the current board
+        move = self.rust_minimax.get_move(self.internal_board)
+
+        # Capture the end time
         end_time = time.time()
 
-        if move_chain != None:
-            anim_board = self.internal_board.copy()
-            for move in move_chain:
-                try:
-                    move = move[0]
-                except:
-                    pass
+        # This code displays the move chain that the minimax algorithm thinks is
+        # going to happen
+        print(f"Found the move {move} in {round(end_time - curr_time, 1)} seconds.                 ")
 
-                if type(move) == str:
-                    continue
+        # Debug mode that allows us to see the entire minimax tree
+        return move
 
-                try:
-                    self.internal_board.push(move)
-                except AssertionError:
-                    print("board started with this fen: " + anim_board.fen())
-                    print("this move is somehow illegal")
-                    print("move:", move)
-                    print(self.internal_board)
-                    print("board fen:", self.internal_board.fen())
-                    print("move stack:", self.internal_board.move_stack)
-                    raise AssertionError
-
-                self.draw_board()
-                pygame.display.flip()
-                time.sleep(2.5)
-
-            self.internal_board = anim_board
-
-        print(f"Found the move {educated_move} in {round(end_time - curr_time, 1)} seconds. (d={self.minimax.max_depth-1})                   ")
-
-        if self.minimax.dump_minimax_tree == True:
-            print("entering debug mode")
-            self.minimax.view_tree()
-
-        return educated_move
-
+    # Blits the board to the screen using the pygame library
     def draw_board(self):
+        # This seems horrifically inefficient in retrospect, especially loading
+        # the image for the board every time
         self.screen.fill((255, 255, 255))
         picture = pygame.image.load("pieces/png-versions/board.png")
 
         self.screen.blit(picture, (0,0))
         map = self.internal_board.piece_map()
 
+        # Draw the pieces on the board
         for key in range(64):
             try:
                 piece = map[key]
@@ -148,28 +139,36 @@ class ChessWindow:
             except KeyError:
                 pass
 
+        # Draw the chess clock
         font = pygame.font.SysFont('Consolas', 100)
 
-        if self.internal_board.turn == True:
-            self.screen.blit(font.render(self.timer.black_clock.__str__(), True, (0, 0, 0)), (920, 300))
-            pygame.draw.line(self.screen, (0, 0, 0), (920, 450), (1330, 450), 5)
-            self.screen.blit(font.render(self.timer.white_clock.__str__(), True, (0, 125, 0)), (920, 500))
-        else:
-            self.screen.blit(font.render(self.timer.black_clock.__str__(), True, (0, 125, 0)), (920, 300))
-            pygame.draw.line(self.screen, (0, 0, 0), (920, 450), (1330, 450), 5)
-            self.screen.blit(font.render(self.timer.white_clock.__str__(), True, (0, 0, 0)), (920, 500))
+        black_clock_str = self.timer.black_clock.__str__()
+        white_clock_str = self.timer.white_clock.__str__()
 
+        assert(black_clock_str is not None)
+        assert(white_clock_str is not None)
+
+        if self.internal_board.turn == True:
+            self.screen.blit(font.render(black_clock_str, True, (0, 0, 0)), (920, 300))
+            pygame.draw.line(self.screen, (0, 0, 0), (920, 450), (1330, 450), 5)
+            self.screen.blit(font.render(white_clock_str, True, (0, 125, 0)), (920, 500))
+        else:
+            self.screen.blit(font.render(black_clock_str, True, (0, 125, 0)), (920, 300))
+            pygame.draw.line(self.screen, (0, 0, 0), (920, 450), (1330, 450), 5)
+            self.screen.blit(font.render(white_clock_str, True, (0, 0, 0)), (920, 500))
+
+    # Simple helper functions to convert between chess and grid positions
     def convert_gridpos_to_chesspos(self, grid_pos):
         row, col = grid_pos
 
         return (row * 8) + col
-    
     def convert_chesspos_to_gridpos(self, chess_pos):
         row = chess_pos % 8
         col = chess_pos // 8
 
         return (row, col)
 
+    # R
     def trim_moves(self, moves, target_square : int):
         c = 0
         while c < len(moves): 
@@ -202,8 +201,8 @@ class ChessWindow:
         pygame.display.flip()
 
         while running == False:
+            # Run the minimax algorithm if it is the computer's turn
             if not self.player_move:
-                self.minimax.positions_searched = 0
                 move = self.get_move_from_minimax(True)
 
                 if self.timer.black_clock.get_seconds_remaining() <= 0:
@@ -212,6 +211,8 @@ class ChessWindow:
                     self.timer.stopped = True
                     print("Game over. You won because black ran out of time!")
                     quit()
+
+                assert(move is not None)
 
                 self.internal_board.push(move)
                 self.timer.black_clock.apply_move_bonus(self.timer.move_bonus)
@@ -226,13 +227,17 @@ class ChessWindow:
                 print("current FEN:", self.internal_board.fen())
 
                 print("")
-                if self.minimax.eval.get_score_of_board(self.internal_board, verbose=True) in [-1000, 1000]:
+
+                if self.internal_board.is_checkmate() \
+                        or self.internal_board.is_stalemate() or \
+                        self.internal_board.is_insufficient_material():
                     print("Looks like the game is over.")
                     print("Here's the move stack in case you want to look back:")
                     print(self.internal_board.move_stack)
                     print(self.internal_board)
                     print(self.internal_board.fen())
             
+            # Exit the game if the player has run out of time
             if self.timer.white_clock.get_seconds_remaining() <= 0:
                 running = True
                 pygame.quit()
@@ -386,16 +391,14 @@ class ChessWindow:
 
 if __name__ == "__main__":
     window = ChessWindow()
-    window.minimax.dump_minimax_tree = False
-    window.minimax.move_chaining = False
     window.internal_board.set_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
-    #window.internal_board.set_fen("r1b2rk1/1p3p2/1p2p1PQ/2bn4/3p4/2PB4/P4PP1/RNB1K2R b KQ - 0 1")
-    window.minimax.MAX_SECONDS = 15
     window.timer.white_clock.minutes = 10
     window.timer.black_clock.minutes = 10
     window.timer.white_clock.seconds = 0
     window.timer.black_clock.seconds = 0
     window.timer.move_bonus = 0
+
+    window.selected_square = None
 
     try:
         window.run_game()

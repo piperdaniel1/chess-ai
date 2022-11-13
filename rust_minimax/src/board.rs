@@ -1,3 +1,5 @@
+#[allow(unused)]
+
 use std::fmt::Error;
 
 const BLACK_TURN: bool = false;
@@ -138,6 +140,7 @@ pub struct Board {
 #[derive(Debug, Clone, Copy, PartialEq)]
 struct Square { row: u8, col: u8 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Move { from: Square, to: Square, promotion: Option<u8> }
 
 // These PrevMove objects are used to keep track of the previous move
@@ -223,7 +226,7 @@ impl Square {
     fn get_square_string(&self) -> String {
         let mut s = String::new();
         s.push((self.col + 97) as char);
-        s.push((self.row + 49) as char);
+        s.push(((7-self.row) + 49) as char);
         s
     }
 
@@ -239,7 +242,7 @@ impl Square {
             panic!("Invalid square string");
         }
 
-        let y = chars.next().unwrap() as u8 - 49;
+        let y = 7 - (chars.next().unwrap() as u8 - 49);
 
         if y > 7 {
             panic!("Invalid square string");
@@ -906,12 +909,21 @@ impl Board {
                         row: RANK_FIVE,
                         col: prev_move.inner_move.to.col,
                     }, BLACK_PAWN);
+                    
+                    // Remove the pawn from the en passant square
+                    self.set_square(&prev_move.inner_move.to, EMPTY_SQUARE);
+
                     en_passant_capture = true;
                 } else if self.get_square(&prev_move.inner_move.from) == BLACK_PAWN {
+                    // Restore the captured piece
                     self.set_square(&Square {
                         row: RANK_FOUR,
                         col: prev_move.inner_move.to.col,
                     }, WHITE_PAWN);
+
+                    // Remove the pawn from the en passant square
+                    self.set_square(&prev_move.inner_move.to, EMPTY_SQUARE);
+
                     en_passant_capture = true;
                 }
             }
@@ -1017,20 +1029,32 @@ mod tests {
     fn test_complex_push_pop() {
         let mut board = Board::new();
 
-        let starting_fen = board.fen();
-
-        // The first twenty moves from the game between Bobby Fischer
+        // The moves from the legendary game between Bobby Fischer and Donald Byrne
         // in the 1956 "Match of the Century" in New York City: https://www.chessgames.com/perl/chessgame?gid=1008361
-        // Tests castling and captures
+
+        // Tests most of the special cases in the push and pop functions
+
+        let current_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+        assert_eq!(board.fen(), current_fen);
+
         board.push(Move::new_from_string("g1f3").unwrap()).unwrap();
         board.push(Move::new_from_string("g8f6").unwrap()).unwrap();
         board.push(Move::new_from_string("c2c4").unwrap()).unwrap();
+
+        // This tests the en passant square
+        let current_fen = "rnbqkb1r/pppppppp/5n2/8/2P5/5N2/PP1PPPPP/RNBQKB1R b KQkq c3 0 2";
+        assert_eq!(board.fen(), current_fen);
+
         board.push(Move::new_from_string("g7g6").unwrap()).unwrap();
         board.push(Move::new_from_string("b1c3").unwrap()).unwrap();
         board.push(Move::new_from_string("f8g7").unwrap()).unwrap();
         board.push(Move::new_from_string("d2d4").unwrap()).unwrap();
         board.push(Move::new_from_string("e8g8").unwrap()).unwrap();
         board.push(Move::new_from_string("c1f4").unwrap()).unwrap();
+
+        let current_fen = "rnbq1rk1/ppppppbp/5np1/8/2PP1B2/2N2N2/PP2PPPP/R2QKB1R b KQ - 2 5";
+        assert_eq!(board.fen(), current_fen);
+
         board.push(Move::new_from_string("d7d5").unwrap()).unwrap();
         board.push(Move::new_from_string("d1b3").unwrap()).unwrap();
         board.push(Move::new_from_string("d5c4").unwrap()).unwrap();
@@ -1041,6 +1065,10 @@ mod tests {
         board.push(Move::new_from_string("a1d1").unwrap()).unwrap();
         board.push(Move::new_from_string("d7b6").unwrap()).unwrap();
         board.push(Move::new_from_string("c4c5").unwrap()).unwrap();
+
+        let current_fen = "r1bq1rk1/pp2ppbp/1np2np1/2Q5/3PPB2/2N2N2/PP3PPP/3RKB1R b K - 4 10";
+        assert_eq!(board.fen(), current_fen);
+
         board.push(Move::new_from_string("c8g4").unwrap()).unwrap();
         board.push(Move::new_from_string("f4g5").unwrap()).unwrap();
         board.push(Move::new_from_string("b6a4").unwrap()).unwrap();
@@ -1051,6 +1079,10 @@ mod tests {
         board.push(Move::new_from_string("g5e7").unwrap()).unwrap();
         board.push(Move::new_from_string("d8b6").unwrap()).unwrap();
         board.push(Move::new_from_string("f1c4").unwrap()).unwrap();
+
+        let current_fen = "r4rk1/pp2Bpbp/1qp3p1/8/2BPn1b1/Q1P2N2/P4PPP/3RK2R b K - 2 15";
+        assert_eq!(board.fen(), current_fen);
+
         board.push(Move::new_from_string("e4c3").unwrap()).unwrap();
         board.push(Move::new_from_string("e7c5").unwrap()).unwrap();
         board.push(Move::new_from_string("f8e8").unwrap()).unwrap();
@@ -1061,7 +1093,68 @@ mod tests {
         board.push(Move::new_from_string("f1g1").unwrap()).unwrap();
         board.push(Move::new_from_string("c3e2").unwrap()).unwrap();
         board.push(Move::new_from_string("g1f1").unwrap()).unwrap();
+
+        let current_fen = "r3r1k1/pp3pbp/1Bp3p1/8/2bP4/Q4N2/P3nPPP/3R1K1R b - - 3 20";
+        assert_eq!(board.fen(), current_fen);
+
         board.push(Move::new_from_string("e2d4").unwrap()).unwrap();
+        board.push(Move::new_from_string("f1g1").unwrap()).unwrap();
+        board.push(Move::new_from_string("d4e2").unwrap()).unwrap();
+        board.push(Move::new_from_string("g1f1").unwrap()).unwrap();
+        board.push(Move::new_from_string("e2c3").unwrap()).unwrap();
+        board.push(Move::new_from_string("f1g1").unwrap()).unwrap();
+        board.push(Move::new_from_string("a7b6").unwrap()).unwrap();
+        board.push(Move::new_from_string("a3b4").unwrap()).unwrap();
+        board.push(Move::new_from_string("a8a4").unwrap()).unwrap();
+        board.push(Move::new_from_string("b4b6").unwrap()).unwrap();
+
+        let current_fen = "4r1k1/1p3pbp/1Qp3p1/8/r1b5/2n2N2/P4PPP/3R2KR b - - 0 25";
+        assert_eq!(board.fen(), current_fen);
+
+        board.push(Move::new_from_string("c3d1").unwrap()).unwrap();
+        board.push(Move::new_from_string("h2h3").unwrap()).unwrap();
+        board.push(Move::new_from_string("a4a2").unwrap()).unwrap();
+        board.push(Move::new_from_string("g1h2").unwrap()).unwrap();
+        board.push(Move::new_from_string("d1f2").unwrap()).unwrap();
+        board.push(Move::new_from_string("h1e1").unwrap()).unwrap();
+        board.push(Move::new_from_string("e8e1").unwrap()).unwrap();
+        board.push(Move::new_from_string("b6d8").unwrap()).unwrap();
+        board.push(Move::new_from_string("g7f8").unwrap()).unwrap();
+        board.push(Move::new_from_string("f3e1").unwrap()).unwrap();
+
+        let current_fen = "3Q1bk1/1p3p1p/2p3p1/8/2b5/7P/r4nPK/4N3 b - - 0 30";
+        assert_eq!(board.fen(), current_fen);
+
+        board.push(Move::new_from_string("c4d5").unwrap()).unwrap();
+        board.push(Move::new_from_string("e1f3").unwrap()).unwrap();
+        board.push(Move::new_from_string("f2e4").unwrap()).unwrap();
+        board.push(Move::new_from_string("d8b8").unwrap()).unwrap();
+        board.push(Move::new_from_string("b7b5").unwrap()).unwrap();
+        board.push(Move::new_from_string("h3h4").unwrap()).unwrap();
+        board.push(Move::new_from_string("h7h5").unwrap()).unwrap();
+        board.push(Move::new_from_string("f3e5").unwrap()).unwrap();
+        board.push(Move::new_from_string("g8g7").unwrap()).unwrap();
+        board.push(Move::new_from_string("h2g1").unwrap()).unwrap();
+
+        let current_fen = "1Q3b2/5pk1/2p3p1/1p1bN2p/4n2P/8/r5P1/6K1 b - - 3 35";
+        assert_eq!(board.fen(), current_fen);
+
+        board.push(Move::new_from_string("f8c5").unwrap()).unwrap();
+        board.push(Move::new_from_string("g1f1").unwrap()).unwrap();
+        board.push(Move::new_from_string("e4g3").unwrap()).unwrap();
+        board.push(Move::new_from_string("f1e1").unwrap()).unwrap();
+        board.push(Move::new_from_string("c5b4").unwrap()).unwrap();
+        board.push(Move::new_from_string("e1d1").unwrap()).unwrap();
+        board.push(Move::new_from_string("d5b3").unwrap()).unwrap();
+        board.push(Move::new_from_string("d1c1").unwrap()).unwrap();
+        board.push(Move::new_from_string("g3e2").unwrap()).unwrap();
+        board.push(Move::new_from_string("c1b1").unwrap()).unwrap();
+        board.push(Move::new_from_string("e2c3").unwrap()).unwrap();
+        board.push(Move::new_from_string("b1c1").unwrap()).unwrap();
+        board.push(Move::new_from_string("a2c2").unwrap()).unwrap();
+
+        let current_fen = "1Q6/5pk1/2p3p1/1p2N2p/1b5P/1bn5/2r3P1/2K5 w - - 16 42";
+        assert_eq!(board.fen(), current_fen);
 
         // Pop them all off the stack
         loop {
@@ -1071,6 +1164,31 @@ mod tests {
         }
 
         // Check that the board is back to the default position
-        assert_eq!(board.fen(), starting_fen);
+        let current_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+        assert_eq!(board.fen(), current_fen);
+    }
+
+    #[test]
+    fn test_enpassant_capture() {
+        let mut board = Board::new();
+
+        board.push(Move::new_from_string("d2d4").unwrap()).unwrap();
+        board.push(Move::new_from_string("a7a6").unwrap()).unwrap();
+        board.push(Move::new_from_string("d4d5").unwrap()).unwrap();
+        board.push(Move::new_from_string("c7c5").unwrap()).unwrap();
+        board.push(Move::new_from_string("d5c6").unwrap()).unwrap();
+
+        let current_fen = "rnbqkbnr/1p1ppppp/p1P5/8/8/8/PPP1PPPP/RNBQKBNR b KQkq - 0 3";
+        assert_eq!(board.fen(), current_fen);
+
+        loop {
+            if let Err(_) = board.pop() {
+                break;
+            }
+        }
+
+        // Check that the board is back to the default position
+        let current_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+        assert_eq!(board.fen(), current_fen);
     }
 }

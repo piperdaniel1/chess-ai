@@ -3,7 +3,7 @@ from re import sub
 from colored import fg, bg, attr
 
 from numpy.core.fromnumeric import sort
-from Board_Scorer import Board_Scorer
+from board_scorer import Board_Scorer
 from transposition_table import Transposition_Table, Entry
 import chess
 import numpy as np
@@ -109,7 +109,6 @@ class Minimax:
             except:
                 print("That's an input error, try again!")
 
-
     def get_index_of_piece(self, piece):
         if (piece=='P'):
             return 0
@@ -185,6 +184,7 @@ class Minimax:
             score = score + 10
         
         return score
+    
 
     def sort_moves_ideally(self, moves_to_sort, score_of_moves, maximize, verbose = False):
         score_of_moves_np = np.array(score_of_moves)

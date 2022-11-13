@@ -1,4 +1,6 @@
 millionbase-2.5.pgn
+target/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
