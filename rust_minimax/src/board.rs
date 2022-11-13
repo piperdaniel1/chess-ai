@@ -41,6 +41,7 @@ const WHITE_ROOK: u8 = 3;
 const WHITE_QUEEN: u8 = 2;
 const WHITE_KING: u8 = 1;
 const EMPTY_SQUARE: u8 = 0;
+const OUT_OF_BOUNDS: u8 = 255;
 
 const A8: Square = Square { row: 0, col: 0 };
 const B8: Square = Square { row: 0, col: 1 };
@@ -662,7 +663,21 @@ impl Board {
     }
 
     fn get_square(&self, square: &Square) -> u8 {
+        if square.row > 7 || square.col > 7 {
+            return 255;
+        }
+
         self.cells[square.row as usize][square.col as usize]
+    }
+
+    // This can be useful if you want to check a square
+    // that may not actually exist
+    fn get_square_ind(&self, row: i8, col: i8) -> u8 {
+        if row < 0 || row > 7 || col < 0 || col > 7 {
+            return 255;
+        }
+
+        self.cells[row as usize][col as usize]
     }
 
     fn execute_move(&mut self, mv: &Move) -> Result<PrevMove, Error> {
@@ -972,6 +987,265 @@ impl Board {
             Err(_) => Err(Error),
         }
     }
+
+    fn is_white(&self, piece: u8) -> bool {
+        if piece > 0 && piece < 7 {
+            return true;
+        }
+
+        return false;
+    }
+
+    fn is_black(&self, piece: u8) -> bool {
+        if piece > 6 && piece < 13 {
+            return true;
+        }
+
+        return false;
+    }
+
+    // Adds all the possible promotion variants to the move list for a given
+    // move. Does not check if the move is legal.
+    fn bundle_promotions(&self, moves: &mut Vec<Move>, new_move: Move) {
+        if new_move.to.row == RANK_EIGHT {
+            moves.push(Move {
+                from: new_move.from,
+                to: new_move.to,
+                promotion: Some(WHITE_QUEEN),
+            });
+
+            moves.push(Move {
+                from: new_move.from,
+                to: new_move.to,
+                promotion: Some(WHITE_ROOK),
+            });
+
+            moves.push(Move {
+                from: new_move.from,
+                to: new_move.to,
+                promotion: Some(WHITE_BISHOP),
+            });
+
+            moves.push(Move {
+                from: new_move.from,
+                to: new_move.to,
+                promotion: Some(WHITE_KNIGHT),
+            });
+        } else if new_move.to.row == RANK_ONE {
+            moves.push(Move {
+                from: new_move.from,
+                to: new_move.to,
+                promotion: Some(BLACK_QUEEN),
+            });
+
+            moves.push(Move {
+                from: new_move.from,
+                to: new_move.to,
+                promotion: Some(BLACK_ROOK),
+            });
+
+            moves.push(Move {
+                from: new_move.from,
+                to: new_move.to,
+                promotion: Some(BLACK_BISHOP),
+            });
+
+            moves.push(Move {
+                from: new_move.from,
+                to: new_move.to,
+                promotion: Some(BLACK_KNIGHT),
+            });
+        } else {
+            moves.push(new_move);
+        }
+    }
+
+    // Adds all the pseudo-legal possible moves that the pawn at the indicated square can
+    // make to the move list. TODO it might be good to write this in a way that does
+    // not have as much code duplication.
+    fn add_pawn_moves(&self, moves: &mut Vec<Move>, square: Square) {
+        let target_piece = self.get_square(&square);
+
+        // Get the direction the pawn is moving
+        if target_piece == WHITE_PAWN {
+            let direction: u8 = 1;
+
+            // Check if the pawn can move forward one square
+            if self.get_square(&Square {
+                row: square.row - direction,
+                col: square.col,
+            }) == EMPTY_SQUARE {
+                self.bundle_promotions(moves, Move {
+                    from: square,
+                    to: Square {
+                        row: square.row - direction,
+                        col: square.col,
+                    },
+                    promotion: None,
+                });
+
+                // Check if the pawn can move forward two squares
+                // We nest this check inside the first check to avoid
+                // checking if the space in front of the pawn is empty
+                if square.row == RANK_TWO {
+                    if self.get_square(&Square {
+                        row: square.row - direction * 2,
+                        col: square.col,
+                    }) == EMPTY_SQUARE {
+                        // We know that this won't be a promotion move
+                        moves.push(Move {
+                            from: square,
+                            to: Square {
+                                row: square.row - direction * 2,
+                                col: square.col,
+                            },
+                            promotion: None,
+                        });
+                    }
+                }
+            }
+
+            // Check if the pawn can capture diagonally left
+            let potential_capture = self.get_square_ind(
+                square.row as i8 - direction as i8,
+                square.col as i8 - 1);
+
+            if potential_capture != OUT_OF_BOUNDS {
+                if potential_capture != EMPTY_SQUARE
+                   && self.is_black(potential_capture) {
+                    self.bundle_promotions(moves, Move {
+                        from: square,
+                        to: Square {
+                            row: square.row - direction,
+                            col: square.col - 1,
+                        },
+                        promotion: None,
+                    });
+                }
+            }
+
+            // Check if the pawn can capture diagonally right
+            let potential_capture = self.get_square_ind(
+                square.row as i8 - direction as i8,
+                square.col as i8 + 1);
+
+            if potential_capture != OUT_OF_BOUNDS {
+                if potential_capture != EMPTY_SQUARE
+                   && self.is_black(potential_capture) {
+                    self.bundle_promotions(moves, Move {
+                        from: square,
+                        to: Square {
+                            row: square.row - direction,
+                            col: square.col + 1,
+                        },
+                        promotion: None,
+                    });
+                }
+            }
+        } else if target_piece == BLACK_PAWN {
+            let direction: u8 = 1;
+
+            // Check if the pawn can move forward one square
+            if self.get_square(&Square {
+                row: square.row + direction,
+                col: square.col,
+            }) == EMPTY_SQUARE {
+                self.bundle_promotions(moves, Move {
+                    from: square,
+                    to: Square {
+                        row: square.row + direction,
+                        col: square.col,
+                    },
+                    promotion: None,
+                });
+
+                // Check if the pawn can move forward two squares
+                // We nest this check inside the first check to avoid
+                // checking if the space in front of the pawn is empty
+                if square.row == RANK_SEVEN {
+                    if self.get_square(&Square {
+                        row: square.row + direction * 2,
+                        col: square.col,
+                    }) == EMPTY_SQUARE {
+                        // We know that this won't be a promotion move
+                        moves.push(Move {
+                            from: square,
+                            to: Square {
+                                row: square.row + direction * 2,
+                                col: square.col,
+                            },
+                            promotion: None,
+                        });
+                    }
+                }
+            }
+
+            // Check if the pawn can capture diagonally left
+            let potential_capture = self.get_square(&Square {
+                row: square.row + direction,
+                col: square.col - 1,
+            });
+
+            if potential_capture != OUT_OF_BOUNDS {
+                if potential_capture != EMPTY_SQUARE
+                   && self.is_black(potential_capture) {
+                    self.bundle_promotions(moves, Move {
+                        from: square,
+                        to: Square {
+                            row: square.row + direction,
+                            col: square.col - 1,
+                        },
+                        promotion: None,
+                    });
+                }
+            }
+
+            // Check if the pawn can capture diagonally right
+            let potential_capture = self.get_square(&Square {
+                row: square.row + direction,
+                col: square.col + 1,
+            });
+
+            if potential_capture != OUT_OF_BOUNDS {
+                if potential_capture != EMPTY_SQUARE
+                   && self.is_black(potential_capture) {
+                    self.bundle_promotions(moves, Move {
+                        from: square,
+                        to: Square {
+                            row: square.row + direction,
+                            col: square.col + 1,
+                        },
+                        promotion: None,
+                    });
+                }
+            }
+        } else {
+            panic!("add_pawn_moves called on a non-pawn piece");
+        }
+    }
+
+    // Private function to generate all pseudo-legal moves
+    // for the current position. This function takes all the rules into
+    // account except for any rules involving check on the king.
+    fn gen_psuedo_legal_moves() -> Vec<Move> {
+        // TODO
+        let moves: Vec<Move> = Vec::new();
+
+        moves
+    }
+
+    // Private function that removes all pseudo-legal moves that
+    // would leave the king in check
+    fn trim_illegal_moves(moves: Vec<Move>) -> Vec<Move> {
+        // TODO
+        return moves;
+    }
+
+    // Public function to get a vector of all legal moves
+    pub fn legal_moves() -> Vec<Move> {
+        // TODO
+        Vec::new()
+    }
 }
 
 #[cfg(test)]
@@ -1270,5 +1544,22 @@ mod tests {
         // Check that the board is back to the default position
         let current_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
         assert_eq!(board.fen(), current_fen);
+    }
+
+    #[test]
+    // Extremely simple sanity check test on the pawn move gen.
+    // Does not check edge cases.
+    fn test_pawn_move_gen() {
+        let board = Board::new();
+        let mut moves: Vec<Move> = Vec::new();
+        board.add_pawn_moves(&mut moves, Square {row: RANK_TWO, col: FILE_A});
+        assert_eq!(moves.len(), 2);
+        assert_eq!(moves[0], Move::new_from_string("a2a3").unwrap());
+        assert_eq!(moves[1], Move::new_from_string("a2a4").unwrap());
+
+        board.add_pawn_moves(&mut moves, Square {row: RANK_SEVEN, col: FILE_B});
+        assert_eq!(moves.len(), 4);
+        assert_eq!(moves[2], Move::new_from_string("b7b6").unwrap());
+        assert_eq!(moves[3], Move::new_from_string("b7b5").unwrap());
     }
 }
