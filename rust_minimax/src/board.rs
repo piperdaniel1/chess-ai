@@ -1,9 +1,114 @@
 use std::fmt::Error;
 
+const RANK_ONE: u8 = 7;
+const RANK_TWO: u8 = 6;
+const RANK_THREE: u8 = 5;
+const RANK_FOUR: u8 = 4;
+const RANK_FIVE: u8 = 3;
+const RANK_SIX: u8 = 2;
+const RANK_SEVEN: u8 = 1;
+const RANK_EIGHT: u8 = 0;
+
+const FILE_A: u8 = 0;
+const FILE_B: u8 = 1;
+const FILE_C: u8 = 2;
+const FILE_D: u8 = 3;
+const FILE_E: u8 = 4;
+const FILE_F: u8 = 5;
+const FILE_G: u8 = 6;
+const FILE_H: u8 = 7;
+
+const WHITE_KINGSIDE_CASTLE: usize = 0;
+const WHITE_QUEENSIDE_CASTLE: usize = 1;
+const BLACK_KINGSIDE_CASTLE: usize = 2;
+const BLACK_QUEENSIDE_CASTLE: usize = 3;
+
+const BLACK_PAWN: u8 = 12;
+const BLACK_KNIGHT: u8 = 11;
+const BLACK_BISHOP: u8 = 10;
+const BLACK_ROOK: u8 = 9;
+const BLACK_QUEEN: u8 = 8;
+const BLACK_KING: u8 = 7;
+const WHITE_PAWN: u8 = 6;
+const WHITE_KNIGHT: u8 = 5;
+const WHITE_BISHOP: u8 = 4;
+const WHITE_ROOK: u8 = 3;
+const WHITE_QUEEN: u8 = 2;
+const WHITE_KING: u8 = 1;
+const EMPTY_SQUARE: u8 = 0;
+
+const A8: Square = Square { row: 0, col: 0 };
+const B8: Square = Square { row: 0, col: 1 };
+const C8: Square = Square { row: 0, col: 2 };
+const D8: Square = Square { row: 0, col: 3 };
+const E8: Square = Square { row: 0, col: 4 };
+const F8: Square = Square { row: 0, col: 5 };
+const G8: Square = Square { row: 0, col: 6 };
+const H8: Square = Square { row: 0, col: 7 };
+const A7: Square = Square { row: 1, col: 0 };
+const B7: Square = Square { row: 1, col: 1 };
+const C7: Square = Square { row: 1, col: 2 };
+const D7: Square = Square { row: 1, col: 3 };
+const E7: Square = Square { row: 1, col: 4 };
+const F7: Square = Square { row: 1, col: 5 };
+const G7: Square = Square { row: 1, col: 6 };
+const H7: Square = Square { row: 1, col: 7 };
+const A6: Square = Square { row: 2, col: 0 };
+const B6: Square = Square { row: 2, col: 1 };
+const C6: Square = Square { row: 2, col: 2 };
+const D6: Square = Square { row: 2, col: 3 };
+const E6: Square = Square { row: 2, col: 4 };
+const F6: Square = Square { row: 2, col: 5 };
+const G6: Square = Square { row: 2, col: 6 };
+const H6: Square = Square { row: 2, col: 7 };
+const A5: Square = Square { row: 3, col: 0 };
+const B5: Square = Square { row: 3, col: 1 };
+const C5: Square = Square { row: 3, col: 2 };
+const D5: Square = Square { row: 3, col: 3 };
+const E5: Square = Square { row: 3, col: 4 };
+const F5: Square = Square { row: 3, col: 5 };
+const G5: Square = Square { row: 3, col: 6 };
+const H5: Square = Square { row: 3, col: 7 };
+const A4: Square = Square { row: 4, col: 0 };
+const B4: Square = Square { row: 4, col: 1 };
+const C4: Square = Square { row: 4, col: 2 };
+const D4: Square = Square { row: 4, col: 3 };
+const E4: Square = Square { row: 4, col: 4 };
+const F4: Square = Square { row: 4, col: 5 };
+const G4: Square = Square { row: 4, col: 6 };
+const H4: Square = Square { row: 4, col: 7 };
+const A3: Square = Square { row: 5, col: 0 };
+const B3: Square = Square { row: 5, col: 1 };
+const C3: Square = Square { row: 5, col: 2 };
+const D3: Square = Square { row: 5, col: 3 };
+const E3: Square = Square { row: 5, col: 4 };
+const F3: Square = Square { row: 5, col: 5 };
+const G3: Square = Square { row: 5, col: 6 };
+const H3: Square = Square { row: 5, col: 7 };
+const A2: Square = Square { row: 6, col: 0 };
+const B2: Square = Square { row: 6, col: 1 };
+const C2: Square = Square { row: 6, col: 2 };
+const D2: Square = Square { row: 6, col: 3 };
+const E2: Square = Square { row: 6, col: 4 };
+const F2: Square = Square { row: 6, col: 5 };
+const G2: Square = Square { row: 6, col: 6 };
+const H2: Square = Square { row: 6, col: 7 };
+const A1: Square = Square { row: 7, col: 0 };
+const B1: Square = Square { row: 7, col: 1 };
+const C1: Square = Square { row: 7, col: 2 };
+const D1: Square = Square { row: 7, col: 3 };
+const E1: Square = Square { row: 7, col: 4 };
+const F1: Square = Square { row: 7, col: 5 };
+const G1: Square = Square { row: 7, col: 6 };
+const H1: Square = Square { row: 7, col: 7 };
+
 pub struct Board { 
     // Cells are represented as a 2D array of u8
     // 0,0 is the top left corner (a8)
     cells: [[u8; 8]; 8],
+
+    // The history of moves made
+    history: Vec<PrevMove>,
 
     // The current turn
     // True = white, False = black
@@ -27,19 +132,76 @@ pub struct Board {
     fullmove_number: u8,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
 struct Square { row: u8, col: u8 }
-struct Move { from: Square, to: Square }
+
+pub struct Move { from: Square, to: Square, promotion: Option<u8> }
+
+// These PrevMove objects are used to keep track of the previous move
+// with enough detail to undo it
+struct PrevMove {
+    // Stores the actual move
+    inner_move: Move,
+
+    // Stores the piece that was captured, if any
+    captured_piece: Option<u8>,
+
+    // Stores the en passant square that was present
+    // before the move was made (if any)
+    prev_en_passant: Option<Square>,
+
+    // Stores the castling rights that were present
+    // before the move was made
+    prev_castling: [bool; 4],
+
+    // Stores the halfmove clock that was present
+    // before the move was made
+    prev_halfmove_clock: u8,
+
+    // Turn and full move number are not stored as they can be trivially
+    // derived due to the nature of the game
+}
+
+fn get_piece_from_char(c: char) -> Result<u8, Error> {
+    match c {
+        'p' => Ok(BLACK_PAWN as u8),
+        'n' => Ok(BLACK_KNIGHT as u8),
+        'b' => Ok(BLACK_BISHOP as u8),
+        'r' => Ok(BLACK_ROOK as u8),
+        'q' => Ok(BLACK_QUEEN as u8),
+        'k' => Ok(BLACK_KING as u8),
+        'P' => Ok(WHITE_PAWN as u8),
+        'N' => Ok(WHITE_KNIGHT as u8),
+        'B' => Ok(WHITE_BISHOP as u8),
+        'R' => Ok(WHITE_ROOK as u8),
+        'Q' => Ok(WHITE_QUEEN as u8),
+        'K' => Ok(WHITE_KING as u8),
+        _ => Err(Error),
+    }
+}
 
 impl Move {
-    fn new(from: Square, to: Square) -> Move {
-        Move { from, to }
+    fn new(from: Square, to: Square, promotion: Option<u8>) -> Move {
+        Move { from, to, promotion }
     }
 
-    fn new_from_string(s: &str) -> Move {
+    fn new_from_string(s: &str) -> Result<Move, Error> {
         let from_square = Square::new_from_string(&s[0..2]);
         let to_square = Square::new_from_string(&s[2..4]);
+        let promotion = match s.len() {
+            5 => {
+                // The .unwrap() will never fail because we just checked the length
+                // and made sure it was 5
+                let promotion_piece = get_piece_from_char(s.chars().nth(4).unwrap());
+                match promotion_piece {
+                    Ok(p) => Some(p),
+                    Err(e) => return Err(e),
+                }
+            },
+            _ => None,
+        };
 
-        Move::new(from_square, to_square)
+        Ok(Move::new(from_square, to_square, promotion))
     }
 
     fn get_move_string(&self) -> String {
@@ -92,7 +254,8 @@ impl Board {
 
     pub fn new_empty() -> Board {
         Board {
-            cells: [[0; 8]; 8],
+            cells: [[EMPTY_SQUARE; 8]; 8],
+            history: Vec::new(),
             turn: true,
             en_passant: None,
             castling: [true, true, true, true],
@@ -133,7 +296,7 @@ impl Board {
             }
 
             // If we encounter a letter, we put the piece on the board
-            board.cells[row as usize][col as usize] = match Board::get_piece_from_char(c) {
+            board.cells[row as usize][col as usize] = match get_piece_from_char(c) {
                 Ok(piece) => piece,
                 _ => return Err(Error),
             };
@@ -182,7 +345,8 @@ impl Board {
     
     // Setup the board to the starting position
     pub fn clear(&mut self) {
-        self.cells = [[0; 8]; 8];
+        self.cells = [[EMPTY_SQUARE; 8]; 8];
+        self.history = Vec::new();
         self.turn = true;
         self.en_passant = None;
         self.castling = [true, true, true, true];
@@ -219,12 +383,14 @@ impl Board {
                 continue;
             }
 
+            // If we ever go off the board, return an error because
+            // the fen string must have been invalid
             if row > 7 || col > 7 {
                 return Err(Error);
             }
 
             // If we encounter a letter, we put the piece on the board
-            self.cells[row as usize][col as usize] = match Board::get_piece_from_char(c) {
+            self.cells[row as usize][col as usize] = match get_piece_from_char(c) {
                 Ok(piece) => piece,
                 _ => return Err(Error),
             };
@@ -271,69 +437,51 @@ impl Board {
         Ok(())
     }
 
-    fn get_piece_from_char(c: char) -> Result<u8, Error> {
-        match c {
-            'p' => Ok(12 as u8),
-            'n' => Ok(11 as u8),
-            'b' => Ok(10 as u8),
-            'r' => Ok(9 as u8),
-            'q' => Ok(8 as u8),
-            'k' => Ok(7 as u8),
-            'P' => Ok(6 as u8),
-            'N' => Ok(5 as u8),
-            'B' => Ok(4 as u8),
-            'R' => Ok(3 as u8),
-            'Q' => Ok(2 as u8),
-            'K' => Ok(1 as u8),
-            _ => Err(Error),
-        }
-    }
-
     pub fn setup(&mut self) {
         // Black major pieces
-        self.cells[0][0] = 9;
-        self.cells[0][1] = 11;
-        self.cells[0][2] = 10;
-        self.cells[0][3] = 8;
-        self.cells[0][4] = 7;
-        self.cells[0][5] = 10;
-        self.cells[0][6] = 11;
-        self.cells[0][7] = 9;
+        self.cells[0][0] = BLACK_ROOK;
+        self.cells[0][1] = BLACK_KNIGHT;
+        self.cells[0][2] = BLACK_BISHOP;
+        self.cells[0][3] = BLACK_QUEEN;
+        self.cells[0][4] = BLACK_KING;
+        self.cells[0][5] = BLACK_BISHOP;
+        self.cells[0][6] = BLACK_KNIGHT;
+        self.cells[0][7] = BLACK_ROOK;
 
         // Black pawns
-        self.cells[1][0] = 12;
-        self.cells[1][1] = 12;
-        self.cells[1][2] = 12;
-        self.cells[1][3] = 12;
-        self.cells[1][4] = 12;
-        self.cells[1][5] = 12;
-        self.cells[1][6] = 12;
-        self.cells[1][7] = 12;
+        self.cells[1][0] = BLACK_PAWN;
+        self.cells[1][1] = BLACK_PAWN;
+        self.cells[1][2] = BLACK_PAWN;
+        self.cells[1][3] = BLACK_PAWN;
+        self.cells[1][4] = BLACK_PAWN;
+        self.cells[1][5] = BLACK_PAWN;
+        self.cells[1][6] = BLACK_PAWN;
+        self.cells[1][7] = BLACK_PAWN;
 
         // White major pieces
-        self.cells[7][0] = 3;
-        self.cells[7][1] = 5;
-        self.cells[7][2] = 4;
-        self.cells[7][3] = 2;
-        self.cells[7][4] = 1;
-        self.cells[7][5] = 4;
-        self.cells[7][6] = 5;
-        self.cells[7][7] = 3;
+        self.cells[7][0] = WHITE_ROOK;
+        self.cells[7][1] = WHITE_KNIGHT;
+        self.cells[7][2] = WHITE_BISHOP;
+        self.cells[7][3] = WHITE_QUEEN;
+        self.cells[7][4] = WHITE_KING;
+        self.cells[7][5] = WHITE_BISHOP;
+        self.cells[7][6] = WHITE_KNIGHT;
+        self.cells[7][7] = WHITE_ROOK;
 
         // White pawns
-        self.cells[6][0] = 6;
-        self.cells[6][1] = 6;
-        self.cells[6][2] = 6;
-        self.cells[6][3] = 6;
-        self.cells[6][4] = 6;
-        self.cells[6][5] = 6;
-        self.cells[6][6] = 6;
-        self.cells[6][7] = 6;
+        self.cells[6][0] = WHITE_PAWN;
+        self.cells[6][1] = WHITE_PAWN;
+        self.cells[6][2] = WHITE_PAWN;
+        self.cells[6][3] = WHITE_PAWN;
+        self.cells[6][4] = WHITE_PAWN;
+        self.cells[6][5] = WHITE_PAWN;
+        self.cells[6][6] = WHITE_PAWN;
+        self.cells[6][7] = WHITE_PAWN;
 
         // Empty cells
         for i in 2..6 {
             for j in 0..8 {
-                self.cells[i][j] = 0;
+                self.cells[i][j] = EMPTY_SQUARE;
             }
         }
 
@@ -348,24 +496,24 @@ impl Board {
         for row in self.cells.iter() {
             row_ind += 1;
 
-            print!("{} |", 9-row_ind);
+            print!("{} |", 9 - row_ind);
             for cell in row.iter() {
                 print!(" ");
 
                 match cell {
-                    0 => print!(" "),
-                    1 => print!("♚"),
-                    2 => print!("♛"),
-                    3 => print!("♜"),
-                    4 => print!("♝"),
-                    5 => print!("♞"),
-                    6 => print!("♟"),
-                    7 => print!("♔"),
-                    8 => print!("♕"),
-                    9 => print!("♖"),
-                    10 => print!("♗"),
-                    11 => print!("♘"),
-                    12 => print!("♙"),
+                    &EMPTY_SQUARE => print!(" "),
+                    &WHITE_KING => print!("♚"),
+                    &WHITE_QUEEN => print!("♛"),
+                    &WHITE_ROOK => print!("♜"),
+                    &WHITE_BISHOP => print!("♝"),
+                    &WHITE_KNIGHT => print!("♞"),
+                    &WHITE_PAWN => print!("♟"),
+                    &BLACK_KING => print!("♔"),
+                    &BLACK_QUEEN => print!("♕"),
+                    &BLACK_ROOK => print!("♖"),
+                    &BLACK_BISHOP => print!("♗"),
+                    &BLACK_KNIGHT => print!("♘"),
+                    &BLACK_PAWN => print!("♙"),
                     _ => print!("?"),
                 }
 
@@ -501,6 +649,213 @@ impl Board {
         fen.push_str(&self.fullmove_number.to_string());
 
         fen
+    }
+
+    fn set_square(&mut self, square: &Square, piece: u8) {
+        self.cells[square.row as usize][square.col as usize] = piece;
+    }
+
+    fn get_square(&self, square: &Square) -> u8 {
+        self.cells[square.row as usize][square.col as usize]
+    }
+
+    fn execute_move(&mut self, mv: &Move) -> Result<PrevMove, Error> {
+        // TODO check if move is legal
+
+        let from_piece = match self.get_square(&mv.from) {
+            EMPTY_SQUARE => return Err(Error),
+            piece => piece,
+        };
+
+        let to_piece = match self.get_square(&mv.to) {
+            EMPTY_SQUARE => None,
+            piece => Some(piece),
+        };
+
+        // This struct does not generally mutate except if the move is a promotion
+        // This cannot be efficiently determined before we create the struct, so
+        // we create most of the struct here and then mutate it if necessary
+        // It may also change if we capture with en passant, as that is not
+        // determined until later as well
+        let mut prev_move = PrevMove {
+            inner_move: Move {
+                from: mv.from,
+                to: mv.to,
+                promotion: None,
+            },
+            captured_piece: to_piece,
+            prev_castling: self.castling.clone(),
+            prev_en_passant: self.en_passant.clone(),
+            prev_halfmove_clock: self.halfmove_clock,
+        };
+
+        // Set the square we are leaving to empty
+        self.set_square(&mv.from, EMPTY_SQUARE);
+
+        // Set the square we are moving to to the piece we are moving
+        self.set_square(&mv.to, from_piece);
+
+        //
+        // HERE COME THE EDGE CASES
+        //
+
+        // If this was a castling move, move the rook as well
+        if from_piece == WHITE_KING {
+            // White king side castling
+            if mv.from == E1 && mv.to == G1 {
+                self.set_square(&H1, EMPTY_SQUARE);
+                self.set_square(&F1, WHITE_ROOK);
+            } else if mv.from == E1 && mv.to == C1 {
+                self.set_square(&A1, EMPTY_SQUARE);
+                self.set_square(&D1, WHITE_ROOK);
+            }
+
+            // Once the king has moved, castling is no longer possible
+            self.castling[WHITE_KINGSIDE_CASTLE] = false;
+            self.castling[WHITE_QUEENSIDE_CASTLE] = false;
+        } else if from_piece == BLACK_KING {
+            // Black king side castling
+            if mv.from == E8 && mv.to == G8 {
+                self.set_square(&H8, EMPTY_SQUARE);
+                self.set_square(&F8, BLACK_ROOK);
+            } else if mv.from == E8 && mv.to == C8 {
+                self.set_square(&A8, EMPTY_SQUARE);
+                self.set_square(&D8, BLACK_ROOK);
+            }
+
+            // Once the king has moved, castling is no longer possible
+            self.castling[BLACK_KINGSIDE_CASTLE] = false;
+            self.castling[BLACK_QUEENSIDE_CASTLE] = false;
+        }
+
+        // If this was a rook move, castling is no longer possible on that side
+        if from_piece == WHITE_ROOK {
+            if mv.from == A1 {
+                self.castling[WHITE_QUEENSIDE_CASTLE] = false;
+            } else if mv.from == H1 {
+                self.castling[WHITE_KINGSIDE_CASTLE] = false;
+            }
+        } else if from_piece == BLACK_ROOK {
+            if mv.from == A8 {
+                self.castling[BLACK_QUEENSIDE_CASTLE] = false;
+            } else if mv.from == H8 {
+                self.castling[BLACK_KINGSIDE_CASTLE] = false;
+            }
+        }
+
+        // If this was a pawn move, reset the halfmove clock
+        if from_piece == WHITE_PAWN || from_piece == BLACK_PAWN {
+            self.halfmove_clock = 0;
+        // Otherwise, increment the halfmove clock
+        } else {
+            self.halfmove_clock += 1;
+        }
+
+        // If this was a two square pawn move, set the en passant target square
+        if from_piece == WHITE_PAWN
+            && mv.from.row == RANK_TWO && mv.to.row == RANK_FOUR {
+
+            self.en_passant = Some(Square {
+                row: RANK_THREE,
+                col: mv.to.col,
+            });
+        } else if from_piece == BLACK_PAWN
+            && mv.from.row == RANK_SEVEN && mv.to.row == RANK_FIVE {
+
+            self.en_passant = Some(Square {
+                row: RANK_SIX,
+                col: mv.to.col,
+            });
+        // Otherwise, clear the en passant target square
+        } else {
+            self.en_passant = None;
+        }
+
+        // If this was a promotion, promote the pawn
+        // Also, set the promotion field of the PrevMove struct
+        if let Some(promotion) = mv.promotion {
+            self.set_square(&mv.to, promotion);
+            prev_move.inner_move.promotion = Some(promotion);
+        }
+
+        Ok(prev_move)
+    }
+
+    // Public function to push a move onto the move stack
+    // and execute it on the board
+    pub fn push(&mut self, new_move: Move) -> Result<(), Error> {
+        let prev_move = self.execute_move(&new_move);
+
+        let prev_move = match prev_move {
+            Ok(prev_move) => prev_move,
+            Err(_) => return Err(Error),
+        };
+
+        self.history.push(prev_move);
+
+        Ok(())
+    }
+
+    fn reverse_move(&mut self, prev_move: &PrevMove) -> Result<(), Error> {
+        // TODO check if move is legal
+
+        // Get the piece that was moved
+        let moved_piece = match self.get_square(&prev_move.inner_move.to) {
+            0 => return Err(Error),
+            piece => piece,
+        };
+
+        // Move the piece back
+        self.set_square(&prev_move.inner_move.from, moved_piece);
+
+        // Restore the captured piece
+        if let Some(captured_piece) = prev_move.captured_piece {
+            self.set_square(&prev_move.inner_move.to, captured_piece);
+        // Otherwise, clear the square
+        } else {
+            self.set_square(&prev_move.inner_move.to, 0);
+        }
+
+        //
+        // HERE COME THE EDGE CASES
+        //
+
+        // If this was a castling move, move the rook back as well
+        if moved_piece == WHITE_KING {
+            // White king side castling
+            if prev_move.inner_move.from == E1 && prev_move.inner_move.to == G1 {
+                self.set_square(&H1, WHITE_ROOK);
+                self.set_square(&F1, 0);
+            } else if prev_move.inner_move.from == E1 && prev_move.inner_move.to == C1 {
+                self.set_square(&A1, WHITE_ROOK);
+                self.set_square(&D1, 0);
+            }
+        } else if moved_piece == BLACK_KING {
+            // Black king side castling
+            if prev_move.inner_move.from == E8 && prev_move.inner_move.to == G8 {
+                self.set_square(&H8, BLACK_ROOK);
+                self.set_square(&F8, 0);
+            } else if prev_move.inner_move.from == E8 && prev_move.inner_move.to == C8 {
+                self.set_square(&A8, BLACK_ROOK);
+                self.set_square(&D8, 0);
+            }
+        }
+
+        Ok(())
+    }
+
+    // Public function to pop a move off the move stack
+    // and undo it on the board
+    pub fn pop(&mut self) -> Result<Move, Error> {
+        let prev_move = match self.history.pop() {
+            Some(prev_move) => prev_move,
+            None => return Err(Error),
+        };
+
+        match self.reverse_move(&prev_move) {
+            Ok(_) => Ok(prev_move.inner_move),
+            Err(_) => Err(Error),
+        }
     }
 }
 
