@@ -57,8 +57,8 @@ impl Square {
 
     fn get_square_string(&self) -> String {
         let mut s = String::new();
-        s.push((self.row + 97) as char);
-        s.push((self.col + 49) as char);
+        s.push((self.col + 97) as char);
+        s.push((self.row + 49) as char);
         s
     }
 
@@ -86,6 +86,11 @@ impl Square {
 
 impl Board {
     pub fn new() -> Board {
+        Board::new_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+            .unwrap()
+    }
+
+    pub fn new_empty() -> Board {
         Board {
             cells: [[0; 8]; 8],
             turn: true,
@@ -97,7 +102,7 @@ impl Board {
     }
 
     pub fn new_from_fen(fen: &str) -> Result<Board, Error> {
-        let mut board = Board::new();
+        let mut board = Board::new_empty();
         let mut row = 0;
         let mut col = 0;
 
@@ -496,5 +501,41 @@ impl Board {
         fen.push_str(&self.fullmove_number.to_string());
 
         fen
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_fen() {
+        // Tests creating a board using a FEN string
+        let test_str = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1";
+        let board = Board::new_from_fen(test_str);
+
+        let mut board = match board {
+            Ok(b) => b,
+            Err(_) => panic!("Error, invalid FEN provided."),
+        };
+
+        assert_eq!(board.fen(), test_str);
+
+        // Tests changing an already existing board using a FEN string
+        let test_str2 = "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2";
+        board.import_from_fen(test_str2).unwrap();
+
+        assert_eq!(board.fen(), test_str2);
+
+        // Tests creating a new board with the default position
+        let board = Board::new();
+        assert_eq!(board.fen(), "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    }
+
+    #[test]
+    fn test_clear() {
+        let mut board = Board::new();
+        board.clear();
+        assert_eq!(board.fen(), "8/8/8/8/8/8/8/8 w KQkq - 0 1");
     }
 }
