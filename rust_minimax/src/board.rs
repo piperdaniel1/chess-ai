@@ -1002,6 +1002,16 @@ impl Board {
         return false;
     }
 
+    fn get_color(&self, piece: u8) -> Option<bool> {
+        if self.is_white(piece) {
+            return Some(WHITE_TURN);
+        } else if self.is_black(piece) {
+            return Some(BLACK_TURN);
+        }
+
+        return None;
+    }
+
     // Adds all the possible promotion variants to the move list for a given
     // move. Does not check if the move is legal.
     fn bundle_promotions(&self, moves: &mut Vec<Move>, new_move: Move) {
@@ -1057,6 +1067,36 @@ impl Board {
             moves.push(new_move);
         }
     }
+     
+    // Returns true if
+    //   1. The square contains a piece
+    //   2. The piece is the opposite color as attacking_color
+    //   OR
+    //   3. The square is the en passant square (we do not need to check
+    //   if the en passant piece is the opposite color because it has to be
+    //   due to the rules of chess and en passant)
+    fn is_suitable_pawn_capture(&self, to_row: i8, to_col: i8, attacking_color: bool) -> bool {
+        let target_piece = self.get_square_ind(to_row, to_col);
+
+        // Rules 1 and 2
+        if target_piece != EMPTY_SQUARE && target_piece != OUT_OF_BOUNDS {
+            let color = self.get_color(self.get_square_ind(to_row, to_col)).unwrap();
+            if color != attacking_color {
+                return true;
+            }
+        // Rule 3
+        } else if self.en_passant.is_some() {
+            let en_passant = self.en_passant.unwrap();
+
+            if en_passant.row as i16 == to_row as i16 
+               && en_passant.col as i16 == to_col as i16 {
+                return true;
+            }
+        }
+
+        // If we get here, the square is not suitable
+        return false;
+    }
 
     // Adds all the pseudo-legal possible moves that the pawn at the indicated square can
     // make to the move list. TODO it might be good to write this in a way that does
@@ -1104,41 +1144,31 @@ impl Board {
             }
 
             // Check if the pawn can capture diagonally left
-            let potential_capture = self.get_square_ind(
-                square.row as i8 - direction as i8,
-                square.col as i8 - 1);
-
-            if potential_capture != OUT_OF_BOUNDS {
-                if potential_capture != EMPTY_SQUARE
-                   && self.is_black(potential_capture) {
-                    self.bundle_promotions(moves, Move {
-                        from: square,
-                        to: Square {
-                            row: square.row - direction,
-                            col: square.col - 1,
-                        },
-                        promotion: None,
-                    });
-                }
+            let to_row = square.row as i8 - direction as i8;
+            let to_col = square.col as i8 - 1;
+            if self.is_suitable_pawn_capture(to_row, to_col, WHITE_TURN) {
+                self.bundle_promotions(moves, Move {
+                    from: square,
+                    to: Square {
+                        row: square.row - direction,
+                        col: square.col - 1,
+                    },
+                    promotion: None,
+                });
             }
 
             // Check if the pawn can capture diagonally right
-            let potential_capture = self.get_square_ind(
-                square.row as i8 - direction as i8,
-                square.col as i8 + 1);
-
-            if potential_capture != OUT_OF_BOUNDS {
-                if potential_capture != EMPTY_SQUARE
-                   && self.is_black(potential_capture) {
-                    self.bundle_promotions(moves, Move {
-                        from: square,
-                        to: Square {
-                            row: square.row - direction,
-                            col: square.col + 1,
-                        },
-                        promotion: None,
-                    });
-                }
+            let to_row = square.row as i8 - direction as i8;
+            let to_col = square.col as i8 + 1;
+            if self.is_suitable_pawn_capture(to_row, to_col, WHITE_TURN) {
+                self.bundle_promotions(moves, Move {
+                    from: square,
+                    to: Square {
+                        row: square.row - direction,
+                        col: square.col + 1,
+                    },
+                    promotion: None,
+                });
             }
         } else if target_piece == BLACK_PAWN {
             let direction: u8 = 1;
@@ -1179,43 +1209,31 @@ impl Board {
             }
 
             // Check if the pawn can capture diagonally left
-            let potential_capture = self.get_square(&Square {
-                row: square.row + direction,
-                col: square.col - 1,
-            });
-
-            if potential_capture != OUT_OF_BOUNDS {
-                if potential_capture != EMPTY_SQUARE
-                   && self.is_black(potential_capture) {
-                    self.bundle_promotions(moves, Move {
-                        from: square,
-                        to: Square {
-                            row: square.row + direction,
-                            col: square.col - 1,
-                        },
-                        promotion: None,
-                    });
-                }
+            let to_row = square.row as i8 + direction as i8;
+            let to_col = square.col as i8 - 1;
+            if self.is_suitable_pawn_capture(to_row, to_col, BLACK_TURN) {
+                self.bundle_promotions(moves, Move {
+                    from: square,
+                    to: Square {
+                        row: square.row + direction,
+                        col: square.col - 1,
+                    },
+                    promotion: None,
+                });
             }
 
             // Check if the pawn can capture diagonally right
-            let potential_capture = self.get_square(&Square {
-                row: square.row + direction,
-                col: square.col + 1,
-            });
-
-            if potential_capture != OUT_OF_BOUNDS {
-                if potential_capture != EMPTY_SQUARE
-                   && self.is_black(potential_capture) {
-                    self.bundle_promotions(moves, Move {
-                        from: square,
-                        to: Square {
-                            row: square.row + direction,
-                            col: square.col + 1,
-                        },
-                        promotion: None,
-                    });
-                }
+            let to_row = square.row as i8 + direction as i8;
+            let to_col = square.col as i8 + 1;
+            if self.is_suitable_pawn_capture(to_row, to_col, BLACK_TURN) {
+                self.bundle_promotions(moves, Move {
+                    from: square,
+                    to: Square {
+                        row: square.row + direction,
+                        col: square.col + 1,
+                    },
+                    promotion: None,
+                });
             }
         } else {
             panic!("add_pawn_moves called on a non-pawn piece");

@@ -1,24 +1,6 @@
 mod board;
 
 fn main() {
-    let test_str = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1";
-    let board = board::Board::new_from_fen(test_str);
-    let mut board = match board {
-        Ok(b) => b,
-        Err(_) => panic!("Error, invalid FEN provided."),
-    };
-    board.print();
-
-    board.import_from_fen("rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2").unwrap();
-    board.print();
-
-    board.import_from_fen("rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2").unwrap();
-    board.print();
-
-
-
-
-
     // let first_space_ind = test_str.find(' ').unwrap();
     // println!("first_space_ind: {}", first_space_ind);
     // println!("chars around first space: {}",
