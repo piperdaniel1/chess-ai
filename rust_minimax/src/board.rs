@@ -1191,4 +1191,84 @@ mod tests {
         let current_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
         assert_eq!(board.fen(), current_fen);
     }
+
+    #[test]
+    fn test_pawn_queen_promotion() {
+        let mut board = Board::new();
+
+        board.push(Move::new_from_string("d2d4").unwrap()).unwrap();
+        board.push(Move::new_from_string("a7a6").unwrap()).unwrap();
+        board.push(Move::new_from_string("d4d5").unwrap()).unwrap();
+        board.push(Move::new_from_string("c7c5").unwrap()).unwrap();
+        board.push(Move::new_from_string("d5c6").unwrap()).unwrap();
+        board.push(Move::new_from_string("d7d6").unwrap()).unwrap();
+        board.push(Move::new_from_string("c2c3").unwrap()).unwrap();
+        board.push(Move::new_from_string("c8e6").unwrap()).unwrap();
+        board.push(Move::new_from_string("c6c7").unwrap()).unwrap();
+        board.push(Move::new_from_string("d8d7").unwrap()).unwrap();
+        board.push(Move::new_from_string("c7c8Q").unwrap()).unwrap();
+
+        // Make sure the promotion worked
+        let current_fen = "rnQ1kbnr/1p1qpppp/p2pb3/8/8/2P5/PP2PPPP/RNBQKBNR b KQkq - 0 6";
+        assert_eq!(board.fen(), current_fen);
+
+        board.push(Move::new_from_string("d7d8").unwrap()).unwrap();
+        board.push(Move::new_from_string("c8d8").unwrap()).unwrap();
+        board.push(Move::new_from_string("e8d8").unwrap()).unwrap();
+
+        // Make sure we got to the right final position
+        let current_fen = "rn1k1bnr/1p2pppp/p2pb3/8/8/2P5/PP2PPPP/RNBQKBNR w KQ - 0 8";
+        assert_eq!(board.fen(), current_fen);
+
+        // Reverse all the moves
+        loop {
+            if let Err(_) = board.pop() {
+                break;
+            }
+        }
+
+        // Check that the board is back to the default position
+        let current_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+        assert_eq!(board.fen(), current_fen);
+    }
+
+    #[test]
+    fn test_pawn_knight_promotion() {
+        let mut board = Board::new();
+
+        board.push(Move::new_from_string("d2d4").unwrap()).unwrap();
+        board.push(Move::new_from_string("a7a6").unwrap()).unwrap();
+        board.push(Move::new_from_string("d4d5").unwrap()).unwrap();
+        board.push(Move::new_from_string("c7c5").unwrap()).unwrap();
+        board.push(Move::new_from_string("d5c6").unwrap()).unwrap();
+        board.push(Move::new_from_string("d7d6").unwrap()).unwrap();
+        board.push(Move::new_from_string("c2c3").unwrap()).unwrap();
+        board.push(Move::new_from_string("c8e6").unwrap()).unwrap();
+        board.push(Move::new_from_string("c6c7").unwrap()).unwrap();
+        board.push(Move::new_from_string("d8d7").unwrap()).unwrap();
+        board.push(Move::new_from_string("c7c8N").unwrap()).unwrap();
+
+        // Make sure the promotion worked
+        let current_fen = "rnN1kbnr/1p1qpppp/p2pb3/8/8/2P5/PP2PPPP/RNBQKBNR b KQkq - 0 6";
+        assert_eq!(board.fen(), current_fen);
+
+        board.push(Move::new_from_string("d7d8").unwrap()).unwrap();
+        board.push(Move::new_from_string("c8d6").unwrap()).unwrap();
+        board.push(Move::new_from_string("e7d6").unwrap()).unwrap();
+
+        // Make sure we got to the right final position
+        let current_fen = "rn1qkbnr/1p3ppp/p2pb3/8/8/2P5/PP2PPPP/RNBQKBNR w KQkq - 0 8";
+        assert_eq!(board.fen(), current_fen);
+
+        // Reverse all the moves
+        loop {
+            if let Err(_) = board.pop() {
+                break;
+            }
+        }
+
+        // Check that the board is back to the default position
+        let current_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+        assert_eq!(board.fen(), current_fen);
+    }
 }
