@@ -1,5 +1,3 @@
-#[allow(unused)]
-
 use std::fmt::Error;
 
 const BLACK_TURN: bool = false;
