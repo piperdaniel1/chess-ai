@@ -1,5 +1,8 @@
 use std::fmt::Error;
 
+const BLACK_TURN: bool = false;
+const WHITE_TURN: bool = true;
+
 const RANK_ONE: u8 = 7;
 const RANK_TWO: u8 = 6;
 const RANK_THREE: u8 = 5;
@@ -801,6 +804,25 @@ impl Board {
             prev_move.inner_move.promotion = Some(promotion);
         }
 
+        // If this was a capture, reset the halfmove clock
+        // We check the prev_move struct to account for en passant captures
+        if prev_move.captured_piece.is_some() {
+            self.halfmove_clock = 0;
+        }
+
+        // If this was a pawn move, reset the halfmove clock
+        if from_piece == WHITE_PAWN || from_piece == BLACK_PAWN {
+            self.halfmove_clock = 0;
+        }
+
+        // Advance the fullmove counter if it is black's turn
+        if self.turn == BLACK_TURN {
+            self.fullmove_number += 1;
+        }
+
+        // Switch the turn
+        self.turn = !self.turn;
+
         Ok(prev_move)
     }
 
@@ -973,5 +995,82 @@ mod tests {
         let mut board = Board::new();
         board.clear();
         assert_eq!(board.fen(), "8/8/8/8/8/8/8/8 w KQkq - 0 1");
+    }
+
+    #[test]
+    fn test_simple_push_pop() {
+        let mut board = Board::new();
+
+        let starting_fen = board.fen();
+
+        // Push a move onto the stack
+        board.push(Move::new_from_string("e2e4").unwrap()).unwrap();
+
+        // Pop the move off the stack
+        board.pop().unwrap();
+
+        // Check that the board is back to the default position
+        assert_eq!(board.fen(), starting_fen);
+    }
+
+    #[test]
+    fn test_complex_push_pop() {
+        let mut board = Board::new();
+
+        let starting_fen = board.fen();
+
+        // The first twenty moves from the game between Bobby Fischer
+        // in the 1956 "Match of the Century" in New York City: https://www.chessgames.com/perl/chessgame?gid=1008361
+        // Tests castling and captures
+        board.push(Move::new_from_string("g1f3").unwrap()).unwrap();
+        board.push(Move::new_from_string("g8f6").unwrap()).unwrap();
+        board.push(Move::new_from_string("c2c4").unwrap()).unwrap();
+        board.push(Move::new_from_string("g7g6").unwrap()).unwrap();
+        board.push(Move::new_from_string("b1c3").unwrap()).unwrap();
+        board.push(Move::new_from_string("f8g7").unwrap()).unwrap();
+        board.push(Move::new_from_string("d2d4").unwrap()).unwrap();
+        board.push(Move::new_from_string("e8g8").unwrap()).unwrap();
+        board.push(Move::new_from_string("c1f4").unwrap()).unwrap();
+        board.push(Move::new_from_string("d7d5").unwrap()).unwrap();
+        board.push(Move::new_from_string("d1b3").unwrap()).unwrap();
+        board.push(Move::new_from_string("d5c4").unwrap()).unwrap();
+        board.push(Move::new_from_string("b3c4").unwrap()).unwrap();
+        board.push(Move::new_from_string("c7c6").unwrap()).unwrap();
+        board.push(Move::new_from_string("e2e4").unwrap()).unwrap();
+        board.push(Move::new_from_string("b8d7").unwrap()).unwrap();
+        board.push(Move::new_from_string("a1d1").unwrap()).unwrap();
+        board.push(Move::new_from_string("d7b6").unwrap()).unwrap();
+        board.push(Move::new_from_string("c4c5").unwrap()).unwrap();
+        board.push(Move::new_from_string("c8g4").unwrap()).unwrap();
+        board.push(Move::new_from_string("f4g5").unwrap()).unwrap();
+        board.push(Move::new_from_string("b6a4").unwrap()).unwrap();
+        board.push(Move::new_from_string("c5a3").unwrap()).unwrap();
+        board.push(Move::new_from_string("a4c3").unwrap()).unwrap();
+        board.push(Move::new_from_string("b2c3").unwrap()).unwrap();
+        board.push(Move::new_from_string("f6e4").unwrap()).unwrap();
+        board.push(Move::new_from_string("g5e7").unwrap()).unwrap();
+        board.push(Move::new_from_string("d8b6").unwrap()).unwrap();
+        board.push(Move::new_from_string("f1c4").unwrap()).unwrap();
+        board.push(Move::new_from_string("e4c3").unwrap()).unwrap();
+        board.push(Move::new_from_string("e7c5").unwrap()).unwrap();
+        board.push(Move::new_from_string("f8e8").unwrap()).unwrap();
+        board.push(Move::new_from_string("e1f1").unwrap()).unwrap();
+        board.push(Move::new_from_string("g4e6").unwrap()).unwrap();
+        board.push(Move::new_from_string("c5b6").unwrap()).unwrap();
+        board.push(Move::new_from_string("e6c4").unwrap()).unwrap();
+        board.push(Move::new_from_string("f1g1").unwrap()).unwrap();
+        board.push(Move::new_from_string("c3e2").unwrap()).unwrap();
+        board.push(Move::new_from_string("g1f1").unwrap()).unwrap();
+        board.push(Move::new_from_string("e2d4").unwrap()).unwrap();
+
+        // Pop them all off the stack
+        loop {
+            if let Err(_) = board.pop() {
+                break;
+            }
+        }
+
+        // Check that the board is back to the default position
+        assert_eq!(board.fen(), starting_fen);
     }
 }
