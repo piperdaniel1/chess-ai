@@ -751,6 +751,29 @@ impl Board {
             self.halfmove_clock += 1;
         }
 
+        // If this was an en passant capture, remove the captured pawn
+        // Also, set the captured piece field of the PrevMove struct
+        // We specifically check for this before we check if we should update
+        // the en passant square, as that check will clear the en passant square
+        if self.en_passant.is_some() {
+            // We know that the en passant square is not empty, so we can unwrap
+            if from_piece == WHITE_PAWN && mv.to == self.en_passant.unwrap() {
+                self.set_square(&Square {
+                    row: RANK_FIVE,
+                    col: mv.to.col,
+                }, EMPTY_SQUARE);
+
+                prev_move.captured_piece = Some(BLACK_PAWN);
+            } else if from_piece == BLACK_PAWN && mv.to == self.en_passant.unwrap() {
+                self.set_square(&Square {
+                    row: RANK_FOUR,
+                    col: mv.to.col,
+                }, EMPTY_SQUARE);
+
+                prev_move.captured_piece = Some(WHITE_PAWN);
+            }
+        }
+
         // If this was a two square pawn move, set the en passant target square
         if from_piece == WHITE_PAWN
             && mv.from.row == RANK_TWO && mv.to.row == RANK_FOUR {
@@ -797,8 +820,6 @@ impl Board {
     }
 
     fn reverse_move(&mut self, prev_move: &PrevMove) -> Result<(), Error> {
-        // TODO check if move is legal
-
         // Get the piece that was moved
         let moved_piece = match self.get_square(&prev_move.inner_move.to) {
             0 => return Err(Error),
@@ -807,14 +828,6 @@ impl Board {
 
         // Move the piece back
         self.set_square(&prev_move.inner_move.from, moved_piece);
-
-        // Restore the captured piece
-        if let Some(captured_piece) = prev_move.captured_piece {
-            self.set_square(&prev_move.inner_move.to, captured_piece);
-        // Otherwise, clear the square
-        } else {
-            self.set_square(&prev_move.inner_move.to, 0);
-        }
 
         //
         // HERE COME THE EDGE CASES
@@ -840,6 +853,74 @@ impl Board {
                 self.set_square(&D8, 0);
             }
         }
+
+        // If this was a promotion, demote the piece
+        if let Some(promotion) = prev_move.inner_move.promotion {
+            self.set_square(&prev_move.inner_move.from, match promotion {
+                WHITE_QUEEN => WHITE_PAWN,
+                WHITE_ROOK => WHITE_PAWN,
+                WHITE_BISHOP => WHITE_PAWN,
+                WHITE_KNIGHT => WHITE_PAWN,
+                BLACK_QUEEN => BLACK_PAWN,
+                BLACK_ROOK => BLACK_PAWN,
+                BLACK_BISHOP => BLACK_PAWN,
+                BLACK_KNIGHT => BLACK_PAWN,
+                _ => return Err(Error),
+            });
+        }
+
+        // Restore the captured piece as long as there was not an en passant capture
+        
+        // We know that there was an en passant capture IF
+
+        let mut en_passant_capture = false;
+        // 1. There was an en passant square
+        if let Some(en_passant) = prev_move.prev_en_passant {
+            // 2. The piece moved to the en passant square
+            if prev_move.inner_move.to == en_passant {
+                // 3. The piece moved was a pawn
+                if self.get_square(&prev_move.inner_move.from) == WHITE_PAWN {
+                    self.set_square(&Square {
+                        row: RANK_FIVE,
+                        col: prev_move.inner_move.to.col,
+                    }, BLACK_PAWN);
+                    en_passant_capture = true;
+                } else if self.get_square(&prev_move.inner_move.from) == BLACK_PAWN {
+                    self.set_square(&Square {
+                        row: RANK_FOUR,
+                        col: prev_move.inner_move.to.col,
+                    }, WHITE_PAWN);
+                    en_passant_capture = true;
+                }
+            }
+        }
+
+        // If this was not an en passant capture, restore the captured piece the
+        // normal way
+        if !en_passant_capture {
+            if let Some(captured_piece) = prev_move.captured_piece {
+                self.set_square(&prev_move.inner_move.to, captured_piece);
+            } else {
+                self.set_square(&prev_move.inner_move.to, 0);
+            }
+        }
+
+        // Restore the en passant square
+        self.en_passant = prev_move.prev_en_passant;
+
+        // Restore the half move clock
+        self.halfmove_clock = prev_move.prev_halfmove_clock;
+
+        // Restore the full move number as long as we are reversing a black move
+        if self.turn {
+            self.fullmove_number -= 1;
+        }
+
+        // Switch the turn
+        self.turn = !self.turn;
+
+        // Restore the castling rights
+        self.castling = prev_move.prev_castling;
 
         Ok(())
     }
