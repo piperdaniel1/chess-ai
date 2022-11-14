@@ -1240,6 +1240,148 @@ impl Board {
         }
     }
 
+    fn add_knight_moves(&self, moves: &mut Vec<Move>, square: Square) {
+        let target_color = self.get_color(self.get_square(&square)).unwrap();
+        let x_offsets = [1, 2, 2, 1, -1, -2, -2, -1];
+        let y_offsets = [2, 1, -1, -2, -2, -1, 1, 2];
+
+        for i in 0..x_offsets.len() {
+            let to_row = square.row as i8 + y_offsets[i];
+            let to_col = square.col as i8 + x_offsets[i];
+
+            let target_piece = self.get_square_ind(to_row, to_col);
+            let to_square = Square {
+                row: to_row as u8,
+                col: to_col as u8,
+            };
+
+            if target_piece == EMPTY_SQUARE {
+                moves.push(Move {
+                    from: square,
+                    to: to_square,
+                    promotion: None,
+                });
+            } else {
+                let square_color = self.get_color(target_piece);
+
+                match square_color {
+                    Some(color) => {
+                        if color != target_color {
+                            moves.push(Move {
+                                from: square,
+                                to: to_square,
+                                promotion: None,
+                            });
+                        }
+                    }
+                    None => {}
+                }
+            }
+        }
+    }
+
+    // Range specifies how far we should search diagonally (useful for king moves)
+    fn add_diagonal_moves(&self, moves: &mut Vec<Move>, square: Square, range: u8) {
+        let x_dirs = [1, 1, -1, -1];
+        let y_dirs = [1, -1, 1, -1];
+
+        let target_color = self.get_color(self.get_square(&square)).unwrap();
+
+        for i in 0..x_dirs.len() {
+            let mut to_row = square.row as i8;
+            let mut to_col = square.col as i8;
+
+            for _ in 0..range {
+                to_row += y_dirs[i];
+                to_col += x_dirs[i];
+
+                let target_piece = self.get_square_ind(to_row, to_col);
+                let to_square = Square {
+                    row: to_row as u8,
+                    col: to_col as u8,
+                };
+
+                if target_piece == EMPTY_SQUARE {
+                    moves.push(Move {
+                        from: square,
+                        to: to_square,
+                        promotion: None,
+                    });
+                } else {
+                    let square_color = self.get_color(target_piece);
+
+                    match square_color {
+                        Some(color) => {
+                            if color != target_color {
+                                moves.push(Move {
+                                    from: square,
+                                    to: to_square,
+                                    promotion: None,
+                                });
+                            }
+                        }
+                        // We break because we have gone off the board
+                        None => break,
+                    }
+
+                    break;
+                }
+            }
+        }
+    }
+
+    // completly untested and written by copilot
+    // Edit: I tested it and it works perfectly (scary how well copilot works (copilot just wrote
+    // that))
+    fn add_straight_moves(&self, moves: &mut Vec<Move>, square: Square, range: u8) {
+        let x_dirs = [1, 0, -1, 0];
+        let y_dirs = [0, 1, 0, -1];
+
+        let target_color = self.get_color(self.get_square(&square)).unwrap();
+
+        for i in 0..x_dirs.len() {
+            let mut to_row = square.row as i8;
+            let mut to_col = square.col as i8;
+
+            for _ in 0..range {
+                to_row += y_dirs[i];
+                to_col += x_dirs[i];
+
+                let target_piece = self.get_square_ind(to_row, to_col);
+                let to_square = Square {
+                    row: to_row as u8,
+                    col: to_col as u8,
+                };
+
+                if target_piece == EMPTY_SQUARE {
+                    moves.push(Move {
+                        from: square,
+                        to: to_square,
+                        promotion: None,
+                    });
+                } else {
+                    let square_color = self.get_color(target_piece);
+
+                    match square_color {
+                        Some(color) => {
+                            if color != target_color {
+                                moves.push(Move {
+                                    from: square,
+                                    to: to_square,
+                                    promotion: None,
+                                });
+                            }
+                        }
+                        // We break because we have gone off the board
+                        None => break,
+                    }
+
+                    break;
+                }
+            }
+        }
+    }
+
     // Private function to generate all pseudo-legal moves
     // for the current position. This function takes all the rules into
     // account except for any rules involving check on the king.
@@ -1577,5 +1719,130 @@ mod tests {
         assert_eq!(moves.len(), 4);
         assert_eq!(moves[2], Move::new_from_string("b7b6").unwrap());
         assert_eq!(moves[3], Move::new_from_string("b7b5").unwrap());
+    }
+
+    #[test]
+    // Extremely simple sanity check test on the knight move gen.
+    // Does not check edge cases.
+    fn test_knight_move_gen() {
+        let board = Board::new();
+        let mut moves: Vec<Move> = Vec::new();
+        board.add_knight_moves(&mut moves, Square {row: RANK_ONE, col: FILE_B});
+        board.add_knight_moves(&mut moves, Square {row: RANK_EIGHT, col: FILE_G});
+
+        assert_eq!(moves.len(), 4);
+        assert!(moves.contains(&Move::new_from_string("b1a3").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("b1c3").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("g8f6").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("g8h6").unwrap()));
+    }
+
+    #[test]
+    // Extremely simple sanity check test on the diagonal piece move gen.
+    // Does not check edge cases except for capturing opposite color pieces.
+    fn test_diagonal_move_gen() {
+        let mut board = Board::new();
+        let mut moves: Vec<Move> = Vec::new();
+        board.add_diagonal_moves(&mut moves, Square {row: RANK_ONE, col: FILE_C}, 8);
+        assert_eq!(moves.len(), 0);
+
+        board.push(Move::new_from_string("e2e4").unwrap()).unwrap();
+        board.add_diagonal_moves(&mut moves, Square {row: RANK_ONE, col: FILE_D}, 8);
+        assert_eq!(moves.len(), 4);
+        assert!(moves.contains(&Move::new_from_string("d1e2").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("d1f3").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("d1g4").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("d1h5").unwrap()));
+
+        board.push(Move::new_from_string("e7e5").unwrap()).unwrap();
+        board.push(Move::new_from_string("d2d3").unwrap()).unwrap();
+        board.push(Move::new_from_string("c7c5").unwrap()).unwrap();
+        moves.clear();
+        board.add_diagonal_moves(&mut moves, Square {row: RANK_EIGHT, col: FILE_D}, 8);
+        assert_eq!(moves.len(), 7);
+        assert!(moves.contains(&Move::new_from_string("d8e7").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("d8f6").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("d8g5").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("d8h4").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("d8c7").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("d8b6").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("d8a5").unwrap()));
+
+        board.push(Move::new_from_string("d1g4").unwrap()).unwrap();
+        moves.clear();
+        board.add_diagonal_moves(&mut moves, Square {row: RANK_FOUR, col: FILE_G}, 8);
+        assert_eq!(moves.len(), 8);
+        assert!(moves.contains(&Move::new_from_string("g4f5").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("g4e6").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("g4f3").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("g4e2").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("g4d1").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("g4h5").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("g4h3").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("g4d7").unwrap()));
+
+        moves.clear();
+        board.add_diagonal_moves(&mut moves, Square {row: RANK_FOUR, col: FILE_G}, 1);
+        assert_eq!(moves.len(), 4);
+        assert!(moves.contains(&Move::new_from_string("g4f5").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("g4h5").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("g4h3").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("g4f3").unwrap()));
+    }
+
+    #[test]
+    // Extremely simple sanity check test on the straight piece move gen.
+    // Does not check edge cases except for capturing opposite color.
+    fn test_straight_move_gen() {
+        let mut board = Board::new();
+        let mut moves: Vec<Move> = Vec::new();
+        board.add_straight_moves(&mut moves, Square {row: RANK_ONE, col: FILE_C}, 8);
+        assert_eq!(moves.len(), 0);
+
+        board.push(Move::new_from_string("a2a4").unwrap()).unwrap();
+        board.add_straight_moves(&mut moves, Square {row: RANK_ONE, col: FILE_A}, 8);
+        assert_eq!(moves.len(), 2);
+        assert!(moves.contains(&Move::new_from_string("a1a2").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("a1a3").unwrap()));
+
+        board.push(Move::new_from_string("a7a5").unwrap()).unwrap();
+        board.push(Move::new_from_string("a1a3").unwrap()).unwrap();
+
+        moves.clear();
+        board.add_straight_moves(&mut moves, Square {row: RANK_THREE, col: FILE_A}, 8);
+        assert_eq!(moves.len(), 9);
+        assert!(moves.contains(&Move::new_from_string("a3a2").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("a3a1").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("a3b3").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("a3c3").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("a3d3").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("a3e3").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("a3f3").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("a3g3").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("a3h3").unwrap()));
+
+        board.push(Move::new_from_string("b7b6").unwrap()).unwrap();
+        board.push(Move::new_from_string("a3b3").unwrap()).unwrap();
+
+        moves.clear();
+        board.add_straight_moves(&mut moves, Square {row: RANK_THREE, col: FILE_B}, 8);
+        assert_eq!(moves.len(), 10);
+        assert!(moves.contains(&Move::new_from_string("b3a3").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("b3c3").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("b3d3").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("b3e3").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("b3f3").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("b3g3").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("b3h3").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("b3b4").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("b3b5").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("b3b6").unwrap()));
+
+        moves.clear();
+        board.add_straight_moves(&mut moves, Square {row: RANK_THREE, col: FILE_B}, 1);
+        assert_eq!(moves.len(), 3);
+        assert!(moves.contains(&Move::new_from_string("b3b4").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("b3a3").unwrap()));
+        assert!(moves.contains(&Move::new_from_string("b3c3").unwrap()));
     }
 }
