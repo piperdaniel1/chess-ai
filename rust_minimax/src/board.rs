@@ -134,6 +134,11 @@ pub struct Board {
     // The number of the full move. 
     // It starts at 1, and is incremented after Black's move
     fullmove_number: u8,
+
+    // Piece positions,
+    // Used for fast lookup of pieces
+    // Index using the piece type defined in the constant
+    piece_positions: [Vec<Square>; 13],
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -258,6 +263,8 @@ impl Board {
     }
 
     pub fn new_empty() -> Board {
+        const EMPTY_VEC: Vec<Square> = Vec::new();
+
         Board {
             cells: [[EMPTY_SQUARE; 8]; 8],
             history: Vec::new(),
@@ -266,6 +273,7 @@ impl Board {
             castling: [true, true, true, true],
             halfmove_clock: 0,
             fullmove_number: 1,
+            piece_positions: [EMPTY_VEC; 13],
         }
     }
 
@@ -301,10 +309,15 @@ impl Board {
             }
 
             // If we encounter a letter, we put the piece on the board
-            board.cells[row as usize][col as usize] = match get_piece_from_char(c) {
+            //
+            // By routing through set square, we ensure that the piece
+            // positions are updated
+            board.set_square(&Square::new(row, col), get_piece_from_char(c)?);
+
+            /*board.cells[row as usize][col as usize] = match get_piece_from_char(c) {
                 Ok(piece) => piece,
                 _ => return Err(Error),
-            };
+            };*/
 
             // Move to the next cell
             col += 1;
@@ -357,6 +370,9 @@ impl Board {
         self.castling = [true, true, true, true];
         self.halfmove_clock = 0;
         self.fullmove_number = 1;
+
+        const EMPTY_VEC: Vec<Square> = Vec::new();
+        self.piece_positions = [EMPTY_VEC; 13];
     }
 
     // Import from fen string
@@ -395,10 +411,11 @@ impl Board {
             }
 
             // If we encounter a letter, we put the piece on the board
-            self.cells[row as usize][col as usize] = match get_piece_from_char(c) {
+            self.set_square(&Square::new(row, col), get_piece_from_char(c)?);
+            /*self.cells[row as usize][col as usize] = match get_piece_from_char(c) {
                 Ok(piece) => piece,
                 _ => return Err(Error),
-            };
+            };*/
 
             // Move to the next cell
             col += 1;
@@ -440,58 +457,6 @@ impl Board {
         };
 
         Ok(())
-    }
-
-    pub fn setup(&mut self) {
-        // Black major pieces
-        self.cells[0][0] = BLACK_ROOK;
-        self.cells[0][1] = BLACK_KNIGHT;
-        self.cells[0][2] = BLACK_BISHOP;
-        self.cells[0][3] = BLACK_QUEEN;
-        self.cells[0][4] = BLACK_KING;
-        self.cells[0][5] = BLACK_BISHOP;
-        self.cells[0][6] = BLACK_KNIGHT;
-        self.cells[0][7] = BLACK_ROOK;
-
-        // Black pawns
-        self.cells[1][0] = BLACK_PAWN;
-        self.cells[1][1] = BLACK_PAWN;
-        self.cells[1][2] = BLACK_PAWN;
-        self.cells[1][3] = BLACK_PAWN;
-        self.cells[1][4] = BLACK_PAWN;
-        self.cells[1][5] = BLACK_PAWN;
-        self.cells[1][6] = BLACK_PAWN;
-        self.cells[1][7] = BLACK_PAWN;
-
-        // White major pieces
-        self.cells[7][0] = WHITE_ROOK;
-        self.cells[7][1] = WHITE_KNIGHT;
-        self.cells[7][2] = WHITE_BISHOP;
-        self.cells[7][3] = WHITE_QUEEN;
-        self.cells[7][4] = WHITE_KING;
-        self.cells[7][5] = WHITE_BISHOP;
-        self.cells[7][6] = WHITE_KNIGHT;
-        self.cells[7][7] = WHITE_ROOK;
-
-        // White pawns
-        self.cells[6][0] = WHITE_PAWN;
-        self.cells[6][1] = WHITE_PAWN;
-        self.cells[6][2] = WHITE_PAWN;
-        self.cells[6][3] = WHITE_PAWN;
-        self.cells[6][4] = WHITE_PAWN;
-        self.cells[6][5] = WHITE_PAWN;
-        self.cells[6][6] = WHITE_PAWN;
-        self.cells[6][7] = WHITE_PAWN;
-
-        // Empty cells
-        for i in 2..6 {
-            for j in 0..8 {
-                self.cells[i][j] = EMPTY_SQUARE;
-            }
-        }
-
-        // Assign turn
-        self.turn = true;
     }
 
     pub fn print(&self) {
@@ -657,6 +622,25 @@ impl Board {
     }
 
     fn set_square(&mut self, square: &Square, piece: u8) {
+        // Update the piece list
+        if piece != EMPTY_SQUARE {
+            self.piece_positions[piece as usize].push(*square);
+        } else {
+            // TODO Maybe there is a faster way to do this
+            // Potentially could use a hash map?
+
+            // figure out the index
+            let current_piece = self.get_square(square);
+            let ind = self.piece_positions[current_piece as usize].iter().position(|&x| &x == square);
+            let ind =  match ind {
+                Some(size) => size,
+                None => panic!("Fragmented piece position cache!"),
+            };
+
+            // remove the piece at square
+            self.piece_positions[current_piece as usize].swap_remove(ind);
+        }
+
         self.cells[square.row as usize][square.col as usize] = piece;
     }
 
@@ -1385,17 +1369,93 @@ impl Board {
     // Private function to generate all pseudo-legal moves
     // for the current position. This function takes all the rules into
     // account except for any rules involving check on the king.
-    fn gen_psuedo_legal_moves() -> Vec<Move> {
-        // TODO
-        let moves: Vec<Move> = Vec::new();
+    fn gen_psuedo_legal_moves(&self) -> Vec<Move> {
+        // lmao in theory it works
+        let mut moves: Vec<Move> = Vec::new();
+
+        // This weird system makes sure that we only add
+        // pseudo legal moves for the player that currently has
+        // their turn
+        let mut left_bound = 1;
+        let mut right_bound = 7;
+        if self.turn == BLACK_TURN {
+            left_bound = 7;
+            right_bound = 13;
+        }
+
+        for i in left_bound..right_bound {
+            for j in 0..self.piece_positions[i].len() {
+                let curr_square = self.piece_positions[i][j];
+
+                // Kings
+                if i == 1 || i == 7 {
+                    self.add_diagonal_moves(&mut moves, curr_square, 1);
+                    self.add_straight_moves(&mut moves, curr_square, 1);
+                // Queens
+                } else if i == 2 || i == 8 {
+                    self.add_diagonal_moves(&mut moves, curr_square, 8);
+                    self.add_straight_moves(&mut moves, curr_square, 8);
+                // Rooks
+                } else if i == 3 || i == 9 {
+                    self.add_straight_moves(&mut moves, curr_square, 8);
+                // Bishops
+                } else if i == 4 || i == 10 {
+                    self.add_diagonal_moves(&mut moves, curr_square, 8);
+                // Knights
+                } else if i == 5 || i == 11 {
+                    self.add_knight_moves(&mut moves, curr_square);
+                // Pawns
+                } else if i == 6 || i == 12 {
+                    self.add_pawn_moves(&mut moves, curr_square);
+                }
+            }
+        }
 
         moves
+    }
+
+    // Returns true if
+    //   1. White is in check
+    //   2. It is black's turn
+    // or,
+    //   1. Black is in check
+    //   2. It is white's turn
+    fn has_illegal_check(&self) -> bool {
+        // We should store all the squares that are being attacked
+        // by each color. However, we can also just get the psuedo legal moves
+        // and check if one of them ends on the king.
+        let psuedo_legal = self.gen_psuedo_legal_moves();
+
+        let king_square: Square;
+        if self.turn == WHITE_TURN {
+            // This should always work because there should always be one black king
+            king_square = self.piece_positions[BLACK_KING as usize][0];
+        } else if self.turn == BLACK_TURN {
+            king_square = self.piece_positions[WHITE_KING as usize][0];
+        }
+
+        for elem in psuedo_legal.iter() {
+        }
+
+
+        return true;
     }
 
     // Private function that removes all pseudo-legal moves that
     // would leave the king in check
     fn trim_illegal_moves(moves: Vec<Move>) -> Vec<Move> {
         // TODO
+        // The bad way of doing this is to make each move on the board and
+        // then check if it leaves the current players turn in check.
+        //
+        // The good way would be to store all squares that are being attacked by each
+        // color and then make sure that the king does not move into these
+        //
+        // Also you would have to somehow make sure that pieces that are pinned cannot
+        // move out of the pin
+
+        // We'll start with the bad way because it is easier:
+
         return moves;
     }
 
@@ -1844,5 +1904,27 @@ mod tests {
         assert!(moves.contains(&Move::new_from_string("b3b4").unwrap()));
         assert!(moves.contains(&Move::new_from_string("b3a3").unwrap()));
         assert!(moves.contains(&Move::new_from_string("b3c3").unwrap()));
+    }
+
+    #[test]
+    // Just using this as a main function sort of thing
+    fn dummy_test() {
+        const EMPTY_VEC: Vec<Square> = Vec::new();
+        let mut piece_cache = [EMPTY_VEC; 12];
+
+        piece_cache[0].push(Square {row: RANK_ONE, col: FILE_A});
+
+        assert_eq!(piece_cache[0].len(), 1);
+        assert_eq!(piece_cache[1].len(), 0);
+    }
+
+    #[test]
+    // Tests the psuedo legal move generation
+    // We do not test this much at all, that is saved for the legal move tests
+    fn test_psuedo_legal() {
+        let board = Board::new();
+
+        let moves = board.gen_psuedo_legal_moves();
+        assert_eq!(moves.len(), 20);
     }
 }
