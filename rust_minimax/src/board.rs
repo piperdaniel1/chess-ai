@@ -1427,23 +1427,30 @@ impl Board {
         let psuedo_legal = self.gen_psuedo_legal_moves();
 
         let king_square: Square;
+        // White turn
         if self.turn == WHITE_TURN {
             // This should always work because there should always be one black king
             king_square = self.piece_positions[BLACK_KING as usize][0];
-        } else if self.turn == BLACK_TURN {
+        // Black turn
+        } else {
             king_square = self.piece_positions[WHITE_KING as usize][0];
         }
 
         for elem in psuedo_legal.iter() {
+            // If one of the pieces can take the king this is an illegal check
+            if elem.to == king_square {
+                return true;
+            }
         }
 
-
-        return true;
+        return false;
     }
 
     // Private function that removes all pseudo-legal moves that
     // would leave the king in check
-    fn trim_illegal_moves(moves: Vec<Move>) -> Vec<Move> {
+
+    // I hope that the lifetimes are good idk what I am doing
+    fn trim_illegal_moves<'a>(&'a mut self , moves: &'a mut Vec<Move>) -> &mut Vec<Move> {
         // TODO
         // The bad way of doing this is to make each move on the board and
         // then check if it leaves the current players turn in check.
@@ -1456,13 +1463,34 @@ impl Board {
 
         // We'll start with the bad way because it is easier:
 
+        let mut i = 0;
+        while i < moves.len() {
+            // The move should always push correctly because
+            // it should have been just generated
+            self.push(moves[i]).unwrap();
+
+            if self.has_illegal_check() {
+                moves.remove(i);
+                i -= 1;
+            }
+            
+            // There should always be a move to pop because we just pushed one
+            self.pop().unwrap();
+
+            i += 1;
+        }
+
         return moves;
     }
 
     // Public function to get a vector of all legal moves
-    pub fn legal_moves() -> Vec<Move> {
+    pub fn legal_moves(&mut self) -> Vec<Move> {
         // TODO
-        Vec::new()
+        let mut moves = self.gen_psuedo_legal_moves();
+
+        self.trim_illegal_moves(&mut moves);
+
+        moves
     }
 }
 
@@ -1926,5 +1954,34 @@ mod tests {
 
         let moves = board.gen_psuedo_legal_moves();
         assert_eq!(moves.len(), 20);
+    }
+
+    fn perft(starting_board: &mut Board, depth: u8) -> u64 {
+        if depth == 0 {
+            return 1;
+        }
+
+        let mut total = 0;
+
+        for elem in starting_board.legal_moves() {
+            starting_board.push(elem).unwrap();
+
+            total += perft(starting_board, depth-1);
+
+            starting_board.pop().unwrap();
+        }
+
+        return total;
+    }
+
+    #[test]
+    fn test_legal() {
+        let mut board = Board::new();
+
+        assert_eq!(perft(&mut board, 1), 20);
+        assert_eq!(perft(&mut board, 2), 400);
+         
+        board.print();
+        assert_eq!(perft(&mut board, 3), 8902);
     }
 }
