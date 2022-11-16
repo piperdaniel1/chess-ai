@@ -625,12 +625,19 @@ impl Board {
         // Update the piece list
         if piece != EMPTY_SQUARE {
             self.piece_positions[piece as usize].push(*square);
-        } else {
-            // TODO Maybe there is a faster way to do this
-            // Potentially could use a hash map?
+        }
 
-            // figure out the index
-            let current_piece = self.get_square(square);
+        // TODO Maybe there is a faster way to do this
+        // Potentially could use a hash map?
+
+        // Make sure to remove the piece that used to be in that square
+        // from the piece position cache (if there was one)
+        
+        // figure out the index
+        let current_piece = self.get_square(square);
+
+        // Check if there actually was a piece there
+        if current_piece != EMPTY_SQUARE {
             let ind = self.piece_positions[current_piece as usize].iter().position(|&x| &x == square);
             let ind =  match ind {
                 Some(size) => size,
@@ -1220,6 +1227,10 @@ impl Board {
                 });
             }
         } else {
+            println!("Piece: {}", target_piece);
+            println!("Square: {:?}", square);
+            self.print();
+            println!("Piece Cache: {:#?}", self.piece_positions);
             panic!("add_pawn_moves called on a non-pawn piece");
         }
     }
@@ -1366,6 +1377,96 @@ impl Board {
         }
     }
 
+    // The piece at square should be a king on E1 for white or E8 for black
+    fn add_castling_moves(&self, moves: &mut Vec<Move>, square: Square) {
+        // assert!((square == E1 && self.turn == WHITE_TURN) ||
+        //         (square == E8 && self.turn == BLACK_TURN));
+
+        // We are white
+        if square == E1  {
+            // Kingside
+            if self.castling[0] {
+                let mut empty = true;
+
+                for file in [FILE_F, FILE_G] {
+                    if self.get_square_ind(RANK_ONE as i8, file as i8) != EMPTY_SQUARE {
+                        empty = false;
+                        break;
+                    }
+                }
+
+                if empty {
+                    moves.push(Move {
+                        from: square,
+                        to: G1,
+                        promotion: None,
+                    });
+                }
+            }
+
+            // Queenside
+            if self.castling[1] {
+                let mut empty = true;
+
+                for file in [FILE_B, FILE_C, FILE_D] {
+                    if self.get_square_ind(RANK_ONE as i8, file as i8) != EMPTY_SQUARE {
+                        empty = false;
+                        break;
+                    }
+                }
+
+                if empty {
+                    moves.push(Move {
+                        from: square,
+                        to: C1,
+                        promotion: None,
+                    });
+                }
+            }
+        // We are black
+        } else if square == E8 {
+            // Kingside
+            if self.castling[2] {
+                let mut empty = true;
+
+                for file in [FILE_F, FILE_G] {
+                    if self.get_square_ind(RANK_EIGHT as i8, file as i8) != EMPTY_SQUARE {
+                        empty = false;
+                        break;
+                    }
+                }
+
+                if empty {
+                    moves.push(Move {
+                        from: square,
+                        to: G8,
+                        promotion: None,
+                    });
+                }
+            }
+
+            // Queenside
+            if self.castling[3] {
+                let mut empty = true;
+
+                for file in [FILE_B, FILE_C, FILE_D] {
+                    if self.get_square_ind(RANK_EIGHT as i8, file as i8) != EMPTY_SQUARE {
+                        empty = false;
+                        break;
+                    }
+                }
+
+                if empty {
+                    moves.push(Move {
+                        from: square,
+                        to: C8,
+                        promotion: None,
+                    });
+                }
+            }
+        }
+    }
+
     // Private function to generate all pseudo-legal moves
     // for the current position. This function takes all the rules into
     // account except for any rules involving check on the king.
@@ -1391,6 +1492,7 @@ impl Board {
                 if i == 1 || i == 7 {
                     self.add_diagonal_moves(&mut moves, curr_square, 1);
                     self.add_straight_moves(&mut moves, curr_square, 1);
+                    self.add_castling_moves(&mut moves, curr_square);
                 // Queens
                 } else if i == 2 || i == 8 {
                     self.add_diagonal_moves(&mut moves, curr_square, 8);
@@ -1471,13 +1573,12 @@ impl Board {
 
             if self.has_illegal_check() {
                 moves.remove(i);
-                i -= 1;
+            } else {
+                i += 1;
             }
             
             // There should always be a move to pop because we just pushed one
             self.pop().unwrap();
-
-            i += 1;
         }
 
         return moves;
@@ -1956,32 +2057,76 @@ mod tests {
         assert_eq!(moves.len(), 20);
     }
 
-    fn perft(starting_board: &mut Board, depth: u8) -> u64 {
+    fn perft(starting_board: &mut Board, depth: u8, top_depth: u8) -> u64 {
         if depth == 0 {
             return 1;
         }
 
+        if depth == top_depth {
+            println!("Starting perft with depth {}", depth);
+        }
+
         let mut total = 0;
 
-        for elem in starting_board.legal_moves() {
+        let mut moves = starting_board.legal_moves();
+
+
+        // sort moves by .get_move_string()
+        moves.sort_by(|a, b| a.get_move_string().cmp(&b.get_move_string()));
+
+        let mut last_starting_file = FILE_A;
+
+        let mut subcount = 0;
+
+        for elem in moves {
             starting_board.push(elem).unwrap();
 
-            total += perft(starting_board, depth-1);
+            let count = perft(starting_board, depth - 1, top_depth);
+
+            if depth == top_depth {
+                if elem.from.col != last_starting_file {
+                    println!("Subcount: {}", subcount);
+                    subcount = 0;
+                    println!("");
+                    last_starting_file = elem.from.col;
+                }
+                println!("{}: {}", elem.get_move_string(), count);
+            }
+
+            subcount += 1;
+
+            total += count;
 
             starting_board.pop().unwrap();
         }
 
-        return total;
+        if depth == top_depth {
+            println!("Total: {}", total);
+        }
+
+        total
     }
 
     #[test]
-    fn test_legal() {
+    fn test_legal_moves_pos1() {
         let mut board = Board::new();
 
-        assert_eq!(perft(&mut board, 1), 20);
-        assert_eq!(perft(&mut board, 2), 400);
-         
-        board.print();
-        assert_eq!(perft(&mut board, 3), 8902);
+        assert_eq!(perft(&mut board, 1, 1), 20);
+        assert_eq!(perft(&mut board, 2, 2), 400);
+        assert_eq!(perft(&mut board, 3, 3), 8902);
+        assert_eq!(perft(&mut board, 4, 4), 197281);
+
+        // This takes too long
+        // assert_eq!(perft(&mut board, 5), 4865609);
+    }
+
+    #[test]
+    fn test_legal_moves_pos2() {
+        let mut board = Board::new_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1").unwrap();
+
+        assert_eq!(perft(&mut board, 1, 1), 48); // missing e1c1, e1g1
+        assert_eq!(perft(&mut board, 2, 2), 2039);
+        assert_eq!(perft(&mut board, 3, 3), 97862);
+        assert_eq!(perft(&mut board, 4, 4), 4085603);
     }
 }
