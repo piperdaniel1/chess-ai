@@ -106,6 +106,7 @@ const F1: Square = Square { row: 7, col: 5 };
 const G1: Square = Square { row: 7, col: 6 };
 const H1: Square = Square { row: 7, col: 7 };
 
+#[derive(Clone, Debug, PartialEq)]
 pub struct Board { 
     // Cells are represented as a 2D array of u8
     // 0,0 is the top left corner (a8)
@@ -149,6 +150,7 @@ pub struct Move { from: Square, to: Square, promotion: Option<u8> }
 
 // These PrevMove objects are used to keep track of the previous move
 // with enough detail to undo it
+#[derive(Debug, Clone, Copy, PartialEq)]
 struct PrevMove {
     // Stores the actual move
     inner_move: Move,
@@ -270,7 +272,7 @@ impl Board {
             history: Vec::new(),
             turn: true,
             en_passant: None,
-            castling: [true, true, true, true],
+            castling: [false, false, false, false],
             halfmove_clock: 0,
             fullmove_number: 1,
             piece_positions: [EMPTY_VEC; 13],
@@ -367,7 +369,7 @@ impl Board {
         self.history = Vec::new();
         self.turn = true;
         self.en_passant = None;
-        self.castling = [true, true, true, true];
+        self.castling = [false, false, false, false];
         self.halfmove_clock = 0;
         self.fullmove_number = 1;
 
@@ -1377,8 +1379,44 @@ impl Board {
         }
     }
 
+    // This is another function that could benefit greatly from
+    // storing attacked squares in the board struct
+    fn is_square_attacked_by(&mut self, squares: Vec<Square>, color: bool) -> bool {
+        let mut toggled_turn = false;
+        let mut is_attacked = false;
+
+        if self.turn != color {
+            self.turn = !self.turn;
+            toggled_turn = true;
+        }
+
+        let pre_fen = self.fen();
+        let moves = self.attacking_legal_moves(); // this may be a recursive nightmare (it was)
+        assert_eq!(pre_fen, self.fen());
+
+        for elem in moves {
+            for square in &squares {
+                if elem.to == *square {
+                    is_attacked = true;
+                    break;
+                }
+            }
+
+            if is_attacked {
+                break;
+            }
+        }
+
+        if toggled_turn {
+            self.turn = !self.turn;
+        }
+
+        is_attacked
+    }
+
+
     // The piece at square should be a king on E1 for white or E8 for black
-    fn add_castling_moves(&self, moves: &mut Vec<Move>, square: Square) {
+    fn add_castling_moves(&mut self, moves: &mut Vec<Move>, square: Square) {
         // assert!((square == E1 && self.turn == WHITE_TURN) ||
         //         (square == E8 && self.turn == BLACK_TURN));
 
@@ -1388,10 +1426,22 @@ impl Board {
             if self.castling[0] {
                 let mut empty = true;
 
+                // Check if the squares between the king and rook are empty
                 for file in [FILE_F, FILE_G] {
                     if self.get_square_ind(RANK_ONE as i8, file as i8) != EMPTY_SQUARE {
                         empty = false;
                         break;
+                    }
+                }
+
+                // Check if any of the squares are attacked
+                if empty {
+                    let pre_fen = self.fen();
+                    let is_attacked = self.is_square_attacked_by(vec![F1, G1], BLACK_TURN);
+                    assert_eq!(pre_fen, self.fen());
+
+                    if is_attacked {
+                        empty = false;
                     }
                 }
 
@@ -1416,6 +1466,15 @@ impl Board {
                 }
 
                 if empty {
+                    let pre_fen = self.fen();
+                    let is_attacked = self.is_square_attacked_by(vec![D1, C1], BLACK_TURN);
+                    assert_eq!(pre_fen, self.fen());
+                    if is_attacked {
+                        empty = false;
+                    }
+                }
+
+                if empty {
                     moves.push(Move {
                         from: square,
                         to: C1,
@@ -1433,6 +1492,16 @@ impl Board {
                     if self.get_square_ind(RANK_EIGHT as i8, file as i8) != EMPTY_SQUARE {
                         empty = false;
                         break;
+                    }
+                }
+
+                // Check if any of the squares are attacked
+                if empty {
+                    let pre_fen = self.fen();
+                    let is_attacked = self.is_square_attacked_by(vec![F8, G8], WHITE_TURN);
+                    assert_eq!(pre_fen, self.fen());
+                    if is_attacked {
+                        empty = false;
                     }
                 }
 
@@ -1457,6 +1526,15 @@ impl Board {
                 }
 
                 if empty {
+                    let pre_fen = self.fen();
+                    let is_attacked = self.is_square_attacked_by(vec![D8, C8], WHITE_TURN);
+                    assert_eq!(pre_fen, self.fen());
+                    if is_attacked {
+                        empty = false;
+                    }
+                }
+
+                if empty {
                     moves.push(Move {
                         from: square,
                         to: C8,
@@ -1470,7 +1548,7 @@ impl Board {
     // Private function to generate all pseudo-legal moves
     // for the current position. This function takes all the rules into
     // account except for any rules involving check on the king.
-    fn gen_psuedo_legal_moves(&self) -> Vec<Move> {
+    fn gen_psuedo_legal_moves(&mut self, include_castling: bool) -> Vec<Move> {
         // lmao in theory it works
         let mut moves: Vec<Move> = Vec::new();
 
@@ -1492,7 +1570,10 @@ impl Board {
                 if i == 1 || i == 7 {
                     self.add_diagonal_moves(&mut moves, curr_square, 1);
                     self.add_straight_moves(&mut moves, curr_square, 1);
-                    self.add_castling_moves(&mut moves, curr_square);
+
+                    if include_castling {
+                        self.add_castling_moves(&mut moves, curr_square);
+                    }
                 // Queens
                 } else if i == 2 || i == 8 {
                     self.add_diagonal_moves(&mut moves, curr_square, 8);
@@ -1522,11 +1603,11 @@ impl Board {
     // or,
     //   1. Black is in check
     //   2. It is white's turn
-    fn has_illegal_check(&self) -> bool {
+    fn has_illegal_check(&mut self) -> bool {
         // We should store all the squares that are being attacked
         // by each color. However, we can also just get the psuedo legal moves
         // and check if one of them ends on the king.
-        let psuedo_legal = self.gen_psuedo_legal_moves();
+        let psuedo_legal = self.gen_psuedo_legal_moves(false);
 
         let king_square: Square;
         // White turn
@@ -1569,9 +1650,15 @@ impl Board {
         while i < moves.len() {
             // The move should always push correctly because
             // it should have been just generated
+            let pre_fen = self.fen();
             self.push(moves[i]).unwrap();
+            let nuccer = self.history[self.history.len()-1];
 
-            if self.has_illegal_check() {
+            let pre_fen2 = self.fen();
+            let result = self.has_illegal_check();
+            assert_eq!(pre_fen2, self.fen());
+
+            if result {
                 moves.remove(i);
             } else {
                 i += 1;
@@ -1579,17 +1666,46 @@ impl Board {
             
             // There should always be a move to pop because we just pushed one
             self.pop().unwrap();
+            if pre_fen != self.fen() {
+                println!("History: {:#?}", nuccer);
+                println!("Move was {}", moves[i].get_move_string());
+            }
+            assert_eq!(pre_fen, self.fen());
         }
 
         return moves;
     }
 
+    // Does not include castling
+    pub fn attacking_legal_moves(&mut self) -> Vec<Move> {
+        // TODO
+
+        let pre_fen = self.fen();
+        let mut moves = self.gen_psuedo_legal_moves(false);
+
+        // Make sure we didn't change the position
+        assert_eq!(pre_fen, self.fen());
+
+        self.trim_illegal_moves(&mut moves);
+
+        // Make sure we didn't change the position
+        assert_eq!(pre_fen, self.fen());
+
+        moves
+    }
+
     // Public function to get a vector of all legal moves
     pub fn legal_moves(&mut self) -> Vec<Move> {
         // TODO
-        let mut moves = self.gen_psuedo_legal_moves();
+        let pre_fen = self.fen();
+        let mut moves = self.gen_psuedo_legal_moves(true);
+
+        // Make sure we didn't change the position
+        assert_eq!(pre_fen, self.fen());
 
         self.trim_illegal_moves(&mut moves);
+        // Make sure we didn't change the position
+        assert_eq!(pre_fen, self.fen());
 
         moves
     }
@@ -1627,7 +1743,7 @@ mod tests {
     fn test_clear() {
         let mut board = Board::new();
         board.clear();
-        assert_eq!(board.fen(), "8/8/8/8/8/8/8/8 w KQkq - 0 1");
+        assert_eq!(board.fen(), "8/8/8/8/8/8/8/8 w - - 0 1");
     }
 
     #[test]
@@ -2051,9 +2167,9 @@ mod tests {
     // Tests the psuedo legal move generation
     // We do not test this much at all, that is saved for the legal move tests
     fn test_psuedo_legal() {
-        let board = Board::new();
+        let mut board = Board::new();
 
-        let moves = board.gen_psuedo_legal_moves();
+        let moves = board.gen_psuedo_legal_moves(true);
         assert_eq!(moves.len(), 20);
     }
 
@@ -2068,7 +2184,14 @@ mod tests {
 
         let mut total = 0;
 
+        let spacer = "  ".repeat((top_depth - depth) as usize);
+
+        let cloned_board = starting_board.clone();
         let mut moves = starting_board.legal_moves();
+        println!("{}Checking if boards match after legal move gen", spacer);
+        assert_eq!(starting_board.fen(), cloned_board.fen());
+        // assert_eq!(starting_board, &cloned_board);
+
 
 
         // sort moves by .get_move_string()
@@ -2077,27 +2200,42 @@ mod tests {
         let mut last_starting_file = FILE_A;
 
         let mut subcount = 0;
+        let mut subtotal = 0;
 
         for elem in moves {
+            let cloned_board = starting_board.clone();
             starting_board.push(elem).unwrap();
 
             let count = perft(starting_board, depth - 1, top_depth);
 
-            if depth == top_depth {
-                if elem.from.col != last_starting_file {
-                    println!("Subcount: {}", subcount);
-                    subcount = 0;
-                    println!("");
-                    last_starting_file = elem.from.col;
-                }
-                println!("{}: {}", elem.get_move_string(), count);
+            // if depth == top_depth {
+            if elem.from.col != last_starting_file {
+                println!("{}Subtotal: {} (from {} moves)", spacer, subtotal, subcount);
+                subcount = 0;
+                subtotal = 0;
+                println!("");
+                last_starting_file = elem.from.col;
             }
+            println!("{}{}: {}", spacer, elem.get_move_string(), count);
+            // }
 
             subcount += 1;
+            subtotal += count;
 
             total += count;
 
             starting_board.pop().unwrap();
+            // assert_eq!(starting_board.fen(), cloned_board.fen());
+            
+            // if starting_board != &cloned_board {
+            //     println!("Starting board:");
+            //     println!("{:#?}", starting_board);
+            //     println!("\nCloned board:");
+            //     println!("{:#?}", cloned_board);
+            // }
+            // assert_eq!(starting_board, &cloned_board);
+            println!("{}Checking if boards match after move: {}", spacer, elem.get_move_string());
+            assert_eq!(starting_board.fen(), cloned_board.fen());
         }
 
         if depth == top_depth {
@@ -2108,25 +2246,72 @@ mod tests {
     }
 
     #[test]
-    fn test_legal_moves_pos1() {
+    fn test_legal_moves_pos1_d1() {
         let mut board = Board::new();
 
         assert_eq!(perft(&mut board, 1, 1), 20);
-        assert_eq!(perft(&mut board, 2, 2), 400);
-        assert_eq!(perft(&mut board, 3, 3), 8902);
-        assert_eq!(perft(&mut board, 4, 4), 197281);
-
-        // This takes too long
-        // assert_eq!(perft(&mut board, 5), 4865609);
     }
 
     #[test]
-    fn test_legal_moves_pos2() {
+    fn test_legal_moves_pos1_d2() {
+        let mut board = Board::new();
+
+        assert_eq!(perft(&mut board, 2, 2), 400);
+    }
+
+    #[test]
+    fn test_legal_moves_pos1_d3() {
+        let mut board = Board::new();
+
+        assert_eq!(perft(&mut board, 3, 3), 8902);
+    }
+
+    #[test]
+    fn test_legal_moves_pos1_d4() {
+        let mut board = Board::new();
+
+        assert_eq!(perft(&mut board, 4, 4), 197281);
+    }
+
+    #[test]
+    fn test_legal_moves_pos2_d1() {
         let mut board = Board::new_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1").unwrap();
 
         assert_eq!(perft(&mut board, 1, 1), 48); // missing e1c1, e1g1
+    }
+
+    //#[test]
+    fn test_legal_moves_pos2_d2_sub() {
+                                           //r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K1R1 b Qkq - 1 1
+        let mut board = Board::new_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1").unwrap();
+        board.push(Move::new_from_string("h1g1").unwrap()).unwrap();
+
+        assert_eq!(perft(&mut board, 1, 1), 43);
+    }
+
+    // #[test]
+    // fn dummy_test_delete() {
+    //     let mut board = Board::new_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1").unwrap();
+    //     board.push(Move::new_from_string("h1g1").unwrap()).unwrap();
+
+    //     let mut board2 = Board::new_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K1R1 b Qkq - 1 1").unwrap();
+    //     board2.print();
+
+    //     assert_eq!(board.fen(), board2.fen());
+
+    // }
+    
+    // #[test]
+    // fn simple_break_delete() {
+    //     let mut board2 = Board::new_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K1R1 b Qkq - 1 1").unwrap();
+
+    //     assert_eq!("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K1R1 b Qkq - 1 1", board2.fen());
+    // }
+
+    #[test]
+    fn test_legal_moves_pos2_d2() {
+        let mut board = Board::new_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1").unwrap();
+
         assert_eq!(perft(&mut board, 2, 2), 2039);
-        assert_eq!(perft(&mut board, 3, 3), 97862);
-        assert_eq!(perft(&mut board, 4, 4), 4085603);
     }
 }

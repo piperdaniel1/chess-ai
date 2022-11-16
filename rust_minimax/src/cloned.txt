@@ -1,0 +1,250 @@
+Board {
+    cells: [
+        [
+            9,
+            0,
+            0,
+            0,
+            7,
+            0,
+            0,
+            9,
+        ],
+        [
+            12,
+            0,
+            12,
+            12,
+            8,
+            12,
+            10,
+            0,
+        ],
+        [
+            10,
+            11,
+            0,
+            0,
+            12,
+            11,
+            12,
+            0,
+        ],
+        [
+            0,
+            0,
+            0,
+            6,
+            5,
+            0,
+            0,
+            0,
+        ],
+        [
+            0,
+            12,
+            0,
+            0,
+            6,
+            0,
+            0,
+            0,
+        ],
+        [
+            0,
+            0,
+            5,
+            0,
+            0,
+            2,
+            0,
+            12,
+        ],
+        [
+            6,
+            6,
+            6,
+            4,
+            4,
+            6,
+            6,
+            6,
+        ],
+        [
+            3,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            3,
+        ],
+    ],
+    history: [],
+    turn: true,
+    en_passant: None,
+    castling: [
+        true,
+        true,
+        true,
+        true,
+    ],
+    halfmove_clock: 0,
+    fullmove_number: 1,
+    piece_positions: [
+        [],
+        [
+            Square {
+                row: 7,
+                col: 4,
+            },
+        ],
+        [
+            Square {
+                row: 5,
+                col: 5,
+            },
+        ],
+        [
+            Square {
+                row: 7,
+                col: 0,
+            },
+            Square {
+                row: 7,
+                col: 7,
+            },
+        ],
+        [
+            Square {
+                row: 6,
+                col: 3,
+            },
+            Square {
+                row: 6,
+                col: 4,
+            },
+        ],
+        [
+            Square {
+                row: 3,
+                col: 4,
+            },
+            Square {
+                row: 5,
+                col: 2,
+            },
+        ],
+        [
+            Square {
+                row: 3,
+                col: 3,
+            },
+            Square {
+                row: 4,
+                col: 4,
+            },
+            Square {
+                row: 6,
+                col: 0,
+            },
+            Square {
+                row: 6,
+                col: 1,
+            },
+            Square {
+                row: 6,
+                col: 2,
+            },
+            Square {
+                row: 6,
+                col: 5,
+            },
+            Square {
+                row: 6,
+                col: 6,
+            },
+            Square {
+                row: 6,
+                col: 7,
+            },
+        ],
+        [
+            Square {
+                row: 0,
+                col: 4,
+            },
+        ],
+        [
+            Square {
+                row: 1,
+                col: 4,
+            },
+        ],
+        [
+            Square {
+                row: 0,
+                col: 0,
+            },
+            Square {
+                row: 0,
+                col: 7,
+            },
+        ],
+        [
+            Square {
+                row: 1,
+                col: 6,
+            },
+            Square {
+                row: 2,
+                col: 0,
+            },
+        ],
+        [
+            Square {
+                row: 2,
+                col: 1,
+            },
+            Square {
+                row: 2,
+                col: 5,
+            },
+        ],
+        [
+            Square {
+                row: 1,
+                col: 0,
+            },
+            Square {
+                row: 1,
+                col: 2,
+            },
+            Square {
+                row: 1,
+                col: 3,
+            },
+            Square {
+                row: 1,
+                col: 5,
+            },
+            Square {
+                row: 2,
+                col: 4,
+            },
+            Square {
+                row: 2,
+                col: 6,
+            },
+            Square {
+                row: 4,
+                col: 1,
+            },
+            Square {
+                row: 5,
+                col: 7,
+            },
+        ],
+    ],
+}
