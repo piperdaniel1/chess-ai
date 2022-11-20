@@ -6,8 +6,8 @@ use std::fmt::Error;
 
 const SAFE_MODE : bool = true;
 
-const BLACK_TURN: bool = false;
-const WHITE_TURN: bool = true;
+const BLACK: bool = false;
+const WHITE: bool = true;
 
 const RANK_ONE: u8 = 7;
 const RANK_TWO: u8 = 6;
@@ -837,7 +837,7 @@ impl Board {
         }
 
         // Advance the fullmove counter if it is black's turn
-        if self.turn == BLACK_TURN {
+        if self.turn == BLACK {
             self.fullmove_number += 1;
         }
 
@@ -1009,9 +1009,9 @@ impl Board {
 
     fn get_color(&self, piece: u8) -> Option<bool> {
         if self.is_white(piece) {
-            return Some(WHITE_TURN);
+            return Some(WHITE);
         } else if self.is_black(piece) {
-            return Some(BLACK_TURN);
+            return Some(BLACK);
         }
 
         return None;
@@ -1151,7 +1151,7 @@ impl Board {
             // Check if the pawn can capture diagonally left
             let to_row = square.row as i8 - direction as i8;
             let to_col = square.col as i8 - 1;
-            if self.is_suitable_pawn_capture(to_row, to_col, WHITE_TURN) {
+            if self.is_suitable_pawn_capture(to_row, to_col, WHITE) {
                 self.bundle_promotions(moves, Move {
                     from: square,
                     to: Square {
@@ -1165,7 +1165,7 @@ impl Board {
             // Check if the pawn can capture diagonally right
             let to_row = square.row as i8 - direction as i8;
             let to_col = square.col as i8 + 1;
-            if self.is_suitable_pawn_capture(to_row, to_col, WHITE_TURN) {
+            if self.is_suitable_pawn_capture(to_row, to_col, WHITE) {
                 self.bundle_promotions(moves, Move {
                     from: square,
                     to: Square {
@@ -1216,7 +1216,7 @@ impl Board {
             // Check if the pawn can capture diagonally left
             let to_row = square.row as i8 + direction as i8;
             let to_col = square.col as i8 - 1;
-            if self.is_suitable_pawn_capture(to_row, to_col, BLACK_TURN) {
+            if self.is_suitable_pawn_capture(to_row, to_col, BLACK) {
                 self.bundle_promotions(moves, Move {
                     from: square,
                     to: Square {
@@ -1230,7 +1230,7 @@ impl Board {
             // Check if the pawn can capture diagonally right
             let to_row = square.row as i8 + direction as i8;
             let to_col = square.col as i8 + 1;
-            if self.is_suitable_pawn_capture(to_row, to_col, BLACK_TURN) {
+            if self.is_suitable_pawn_capture(to_row, to_col, BLACK) {
                 self.bundle_promotions(moves, Move {
                     from: square,
                     to: Square {
@@ -1403,7 +1403,7 @@ impl Board {
         // their turn
         let mut left_bound = 1;
         let mut right_bound = 7;
-        if self.turn == BLACK_TURN {
+        if self.turn == BLACK {
             left_bound = 7;
             right_bound = 13;
         }
@@ -1451,7 +1451,7 @@ impl Board {
         let x_offsets = [1, 2, 2, 1, -1, -2, -2, -1];
         let y_offsets = [2, 1, -1, -2, -2, -1, 1, 2];
 
-        let target_piece = if color == WHITE_TURN { WHITE_KNIGHT } else { BLACK_KNIGHT };
+        let target_piece = if color == WHITE { WHITE_KNIGHT } else { BLACK_KNIGHT };
 
         for i in 0..x_offsets.len() {
             let to_row = target_square.row as i8 + y_offsets[i];
@@ -1471,13 +1471,13 @@ impl Board {
         let x_dirs = [1, 1, -1, -1];
         let y_dirs = [1, -1, 1, -1];
 
-        let target_pieces = if color == WHITE_TURN {
+        let target_pieces = if color == WHITE {
             [WHITE_QUEEN, WHITE_BISHOP]
         } else {
             [BLACK_QUEEN, BLACK_BISHOP]
         };
 
-        let short_target_piece = if color == WHITE_TURN { WHITE_PAWN } else { BLACK_PAWN };
+        let short_target_piece = if color == WHITE { WHITE_PAWN } else { BLACK_PAWN };
 
         for i in 0..x_dirs.len() {
             let mut to_row = target_square.row as i8;
@@ -1520,7 +1520,7 @@ impl Board {
         let x_dirs = [1, -1, 0, 0];
         let y_dirs = [0, 0, 1, -1];
 
-        let target_pieces = if color == WHITE_TURN {
+        let target_pieces = if color == WHITE {
             [WHITE_QUEEN, WHITE_ROOK]
         } else {
             [BLACK_QUEEN, BLACK_ROOK]
@@ -1549,16 +1549,29 @@ impl Board {
         false
     }
 
+    /*
+     * Board.has_check() returns true if the player whose turn it is is in check
+     * Relies on three helper functions to check knight moves, diagonal moves, and straight moves.
+     * 100% sure to not change the state of the board.
+     * Relies on the fact that the king is stored in the piece positions array.
+     * Also relies on the fact that the turn is stored in the board struct.
+     */
     fn has_check(&self) -> bool {
-        if self.turn == WHITE_TURN {
-            let king_square = self.piece_positions[WHITE_KING as usize][0];
+        let king_square = self.piece_positions[WHITE_KING as usize][0];
 
-            // Check for knights
-            if self.is_knight_attacking(king_square, BLACK_TURN) {
-                return true;
-            }
+        // Check for knights
+        if self.is_knight_attacking(king_square, !self.turn) {
+            return true;
+        }
 
-            // Check for diagonals
+        // Check for diagonals
+        if self.is_diagonal_attacking(king_square, !self.turn) {
+            return true;
+        }
+
+        // Check for straights
+        if self.is_straight_attacking(king_square, !self.turn) {
+            return true;
         }
 
         false
@@ -2034,48 +2047,66 @@ mod tests {
         board.set_square(&Square {row: RANK_THREE, col: FILE_B}, WHITE_KNIGHT);
 
         let test_square = Square {row: RANK_FIVE, col: FILE_C}; // true
-        assert!(board.is_knight_attacking(test_square, WHITE_TURN));
+        assert!(board.is_knight_attacking(test_square, WHITE));
 
         let test_square = Square {row: RANK_FOUR, col: FILE_C}; // false
-        assert!(!board.is_knight_attacking(test_square, WHITE_TURN));
+        assert!(!board.is_knight_attacking(test_square, WHITE));
     }
 
     #[test]
     fn test_diagonal_attacking() {
         let mut board = Board::new_from_fen("8/5p2/6K1/7q/1k6/8/8/1b6 w - - 0 1").unwrap();
         let test_square = Square {row: RANK_SIX, col: FILE_G};
-        assert!(board.is_diagonal_attacking(test_square, BLACK_TURN));
+        assert!(board.is_diagonal_attacking(test_square, BLACK));
 
         board.import_from_fen("8/5p2/6K1/8/1k6/8/8/1b6 w - - 0 1").unwrap();
         let test_square = Square {row: RANK_SIX, col: FILE_G};
-        assert!(board.is_diagonal_attacking(test_square, BLACK_TURN));
+        assert!(board.is_diagonal_attacking(test_square, BLACK));
 
         board.import_from_fen("8/5p2/6K1/8/1k6/8/8/8 w - - 0 1").unwrap();
         let test_square = Square {row: RANK_SIX, col: FILE_G};
-        assert!(board.is_diagonal_attacking(test_square, BLACK_TURN));
+        assert!(board.is_diagonal_attacking(test_square, BLACK));
 
         board.import_from_fen("8/8/6K1/8/1k6/8/8/8 w - - 0 1").unwrap();
         let test_square = Square {row: RANK_SIX, col: FILE_G};
-        assert!(!board.is_diagonal_attacking(test_square, BLACK_TURN));
+        assert!(!board.is_diagonal_attacking(test_square, BLACK));
     }
 
     #[test]
     fn test_straight_attacking() {
         let mut board = Board::new_from_fen("7r/8/3K3q/5P2/8/b5k1/3r4/8 w - - 0 1").unwrap();
         let test_square = Square {row: RANK_SIX, col: FILE_D};
-        assert!(board.is_straight_attacking(test_square, BLACK_TURN));
+        assert!(board.is_straight_attacking(test_square, BLACK));
 
         board.import_from_fen("7r/8/3K1P1q/8/8/b5k1/3r4/8 w - - 0 1").unwrap();
         let test_square = Square {row: RANK_SIX, col: FILE_D};
-        assert!(board.is_straight_attacking(test_square, BLACK_TURN));
+        assert!(board.is_straight_attacking(test_square, BLACK));
 
         board.import_from_fen("7r/8/3K1P1q/8/8/b5k1/4r3/8 w - - 0 1").unwrap();
         let test_square = Square {row: RANK_SIX, col: FILE_D};
-        assert!(!board.is_straight_attacking(test_square, BLACK_TURN));
+        assert!(!board.is_straight_attacking(test_square, BLACK));
 
         board.import_from_fen("1q5r/8/3K1P1q/8/8/b5k1/4r3/8 w - - 0 1").unwrap();
         let test_square = Square {row: RANK_SIX, col: FILE_D};
-        assert!(!board.is_straight_attacking(test_square, BLACK_TURN));
+        assert!(!board.is_straight_attacking(test_square, BLACK));
+    }
+
+    #[test]
+    fn test_has_check() {
+        let mut board = Board::new_from_fen("1q6/8/3K1P1q/8/8/b2r2k1/4r3/8 w - - 0 1").unwrap();
+        assert!(board.has_check());
+
+        board.import_from_fen("1q6/8/3K1P1q/8/3B4/b2r2k1/4r3/8 w - - 0 1").unwrap();
+        assert!(board.has_check());
+
+        board.import_from_fen("1q6/8/3K1P1q/2Q5/3B4/b2r2k1/4r3/8 w - - 0 1").unwrap();
+        assert!(board.has_check());
+
+        board.import_from_fen("1q6/2P5/3K1P1q/2Q5/3B4/b2r2k1/4r3/8 w - - 0 1").unwrap();
+        assert!(!board.has_check());
+
+        board.import_from_fen("1q6/2P5/3K1P1q/2Q5/2nB4/b2r2k1/4r3/8 w - - 0 1").unwrap();
+        assert!(board.has_check());
     }
 }
 
