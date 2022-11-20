@@ -1,5 +1,11 @@
 use std::fmt::Error;
 
+// TODO
+// - Update the attacking maps every time psuedo legal moves
+//   are made. These maps are already in the board struct.
+
+const SAFE_MODE : bool = true;
+
 const BLACK_TURN: bool = false;
 const WHITE_TURN: bool = true;
 
@@ -140,6 +146,12 @@ pub struct Board {
     // Used for fast lookup of pieces
     // Index using the piece type defined in the constant
     piece_positions: [Vec<Square>; 13],
+
+    // White's attacks
+    white_attacks: AttackMap,
+
+    // Black's attacks
+    black_attacks: AttackMap,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -172,6 +184,24 @@ struct PrevMove {
 
     // Turn and full move number are not stored as they can be trivially
     // derived due to the nature of the game
+}
+
+#[derive(Debug, Clone, PartialEq)]
+struct AttackMap {
+    map: [[AttackCache; 8]; 8],
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+struct PieceLocation {
+    piece: u8,
+    location: Square,
+}
+
+// Stores a vector of pieceLocations that represent the pieces
+// that are currently attacking this square
+#[derive(Debug, Clone, PartialEq)]
+struct AttackCache {
+    cache: Vec<PieceLocation>,
 }
 
 fn get_piece_from_char(c: char) -> Result<u8, Error> {
@@ -258,6 +288,64 @@ impl Square {
     }
 }
 
+impl AttackCache {
+    fn new() -> AttackCache {
+        AttackCache { cache: Vec::new() }
+    }
+
+    fn clear(&mut self) {
+        self.cache.clear();
+    }
+
+    fn add_piece(&mut self, piece: u8, location: Square) {
+        self.cache.push(PieceLocation { piece, location });
+    }
+}
+
+impl AttackMap {
+    fn new() -> AttackMap {
+        AttackMap {
+            map: [[AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new()],
+                  [AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new()],
+                  [AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new()],
+                  [AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new()],
+                  [AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new()],
+                  [AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new()],
+                  [AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new()],
+                  [AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new()]]
+        }
+    }
+
+    fn clear(&mut self) {
+        for row in self.map.iter_mut() {
+            for cache in row.iter_mut() {
+                cache.clear();
+            }
+        }
+    }
+
+    fn add_piece(&mut self, attacking_from: Square, piece: u8, attacking: Square) {
+        self.map[attacking.row as usize][attacking.col as usize].add_piece(piece, attacking_from);
+    }
+
+    // Returns true if the square is attacked by the given color
+    fn is_square_attacked(&self, square: Square, color: bool) -> bool {
+        for piece_loc in self.map[square.row as usize][square.col as usize].cache.iter() {
+            if color == WHITE_TURN {
+                if piece_loc.piece >= WHITE_KING && piece_loc.piece <= WHITE_PAWN {
+                    return true;
+                }
+            } else {
+                if piece_loc.piece >= BLACK_KING && piece_loc.piece <= BLACK_PAWN {
+                    return true;
+                }
+            }
+        }
+
+        false
+    }
+}
+
 impl Board {
     pub fn new() -> Board {
         Board::new_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
@@ -265,8 +353,6 @@ impl Board {
     }
 
     pub fn new_empty() -> Board {
-        const EMPTY_VEC: Vec<Square> = Vec::new();
-
         Board {
             cells: [[EMPTY_SQUARE; 8]; 8],
             history: Vec::new(),
@@ -275,7 +361,10 @@ impl Board {
             castling: [false, false, false, false],
             halfmove_clock: 0,
             fullmove_number: 1,
-            piece_positions: [EMPTY_VEC; 13],
+            piece_positions: [vec![], vec![], vec![], vec![], vec![], vec![], vec![],
+                              vec![], vec![], vec![], vec![], vec![], vec![]],
+            white_attacks: AttackMap::new(),
+            black_attacks: AttackMap::new(),
         }
     }
 
@@ -464,6 +553,7 @@ impl Board {
     pub fn print(&self) {
         println!("    A   B   C   D   E   F   G   H");
         println!("  +---+---+---+---+---+---+---+---+");
+
         let mut row_ind = 0;
         for row in self.cells.iter() {
             row_ind += 1;
@@ -1379,176 +1469,10 @@ impl Board {
         }
     }
 
-    // This is another function that could benefit greatly from
-    // storing attacked squares in the board struct
-    fn is_square_attacked_by(&mut self, squares: Vec<Square>, color: bool) -> bool {
-        let mut toggled_turn = false;
-        let mut is_attacked = false;
-
-        if self.turn != color {
-            self.turn = !self.turn;
-            toggled_turn = true;
-        }
-
-        let pre_fen = self.fen();
-        let moves = self.attacking_legal_moves(); // this may be a recursive nightmare (it was)
-        assert_eq!(pre_fen, self.fen());
-
-        for elem in moves {
-            for square in &squares {
-                if elem.to == *square {
-                    is_attacked = true;
-                    break;
-                }
-            }
-
-            if is_attacked {
-                break;
-            }
-        }
-
-        if toggled_turn {
-            self.turn = !self.turn;
-        }
-
-        is_attacked
-    }
-
-
-    // The piece at square should be a king on E1 for white or E8 for black
-    fn add_castling_moves(&mut self, moves: &mut Vec<Move>, square: Square) {
-        // assert!((square == E1 && self.turn == WHITE_TURN) ||
-        //         (square == E8 && self.turn == BLACK_TURN));
-
-        // We are white
-        if square == E1  {
-            // Kingside
-            if self.castling[0] {
-                let mut empty = true;
-
-                // Check if the squares between the king and rook are empty
-                for file in [FILE_F, FILE_G] {
-                    if self.get_square_ind(RANK_ONE as i8, file as i8) != EMPTY_SQUARE {
-                        empty = false;
-                        break;
-                    }
-                }
-
-                // Check if any of the squares are attacked
-                if empty {
-                    let pre_fen = self.fen();
-                    let is_attacked = self.is_square_attacked_by(vec![F1, G1], BLACK_TURN);
-                    assert_eq!(pre_fen, self.fen());
-
-                    if is_attacked {
-                        empty = false;
-                    }
-                }
-
-                if empty {
-                    moves.push(Move {
-                        from: square,
-                        to: G1,
-                        promotion: None,
-                    });
-                }
-            }
-
-            // Queenside
-            if self.castling[1] {
-                let mut empty = true;
-
-                for file in [FILE_B, FILE_C, FILE_D] {
-                    if self.get_square_ind(RANK_ONE as i8, file as i8) != EMPTY_SQUARE {
-                        empty = false;
-                        break;
-                    }
-                }
-
-                if empty {
-                    let pre_fen = self.fen();
-                    let is_attacked = self.is_square_attacked_by(vec![D1, C1], BLACK_TURN);
-                    assert_eq!(pre_fen, self.fen());
-                    if is_attacked {
-                        empty = false;
-                    }
-                }
-
-                if empty {
-                    moves.push(Move {
-                        from: square,
-                        to: C1,
-                        promotion: None,
-                    });
-                }
-            }
-        // We are black
-        } else if square == E8 {
-            // Kingside
-            if self.castling[2] {
-                let mut empty = true;
-
-                for file in [FILE_F, FILE_G] {
-                    if self.get_square_ind(RANK_EIGHT as i8, file as i8) != EMPTY_SQUARE {
-                        empty = false;
-                        break;
-                    }
-                }
-
-                // Check if any of the squares are attacked
-                if empty {
-                    let pre_fen = self.fen();
-                    let is_attacked = self.is_square_attacked_by(vec![F8, G8], WHITE_TURN);
-                    assert_eq!(pre_fen, self.fen());
-                    if is_attacked {
-                        empty = false;
-                    }
-                }
-
-                if empty {
-                    moves.push(Move {
-                        from: square,
-                        to: G8,
-                        promotion: None,
-                    });
-                }
-            }
-
-            // Queenside
-            if self.castling[3] {
-                let mut empty = true;
-
-                for file in [FILE_B, FILE_C, FILE_D] {
-                    if self.get_square_ind(RANK_EIGHT as i8, file as i8) != EMPTY_SQUARE {
-                        empty = false;
-                        break;
-                    }
-                }
-
-                if empty {
-                    let pre_fen = self.fen();
-                    let is_attacked = self.is_square_attacked_by(vec![D8, C8], WHITE_TURN);
-                    assert_eq!(pre_fen, self.fen());
-                    if is_attacked {
-                        empty = false;
-                    }
-                }
-
-                if empty {
-                    moves.push(Move {
-                        from: square,
-                        to: C8,
-                        promotion: None,
-                    });
-                }
-            }
-        }
-    }
-
     // Private function to generate all pseudo-legal moves
     // for the current position. This function takes all the rules into
     // account except for any rules involving check on the king.
-    fn gen_psuedo_legal_moves(&mut self, include_castling: bool) -> Vec<Move> {
+    fn gen_psuedo_legal_moves(&mut self) -> Vec<Move> {
         // lmao in theory it works
         let mut moves: Vec<Move> = Vec::new();
 
@@ -1570,10 +1494,6 @@ impl Board {
                 if i == 1 || i == 7 {
                     self.add_diagonal_moves(&mut moves, curr_square, 1);
                     self.add_straight_moves(&mut moves, curr_square, 1);
-
-                    if include_castling {
-                        self.add_castling_moves(&mut moves, curr_square);
-                    }
                 // Queens
                 } else if i == 2 || i == 8 {
                     self.add_diagonal_moves(&mut moves, curr_square, 8);
@@ -1594,120 +1514,41 @@ impl Board {
             }
         }
 
-        moves
-    }
-
-    // Returns true if
-    //   1. White is in check
-    //   2. It is black's turn
-    // or,
-    //   1. Black is in check
-    //   2. It is white's turn
-    fn has_illegal_check(&mut self) -> bool {
-        // We should store all the squares that are being attacked
-        // by each color. However, we can also just get the psuedo legal moves
-        // and check if one of them ends on the king.
-        let psuedo_legal = self.gen_psuedo_legal_moves(false);
-
-        let king_square: Square;
-        // White turn
+        // Update white move attacker cache
         if self.turn == WHITE_TURN {
-            // This should always work because there should always be one black king
-            king_square = self.piece_positions[BLACK_KING as usize][0];
-        // Black turn
-        } else {
-            king_square = self.piece_positions[WHITE_KING as usize][0];
-        }
+            // For now, we will just clear the cache and readd the moves each time
+            self.white_attacks.clear();
 
-        for elem in psuedo_legal.iter() {
-            // If one of the pieces can take the king this is an illegal check
-            if elem.to == king_square {
-                return true;
+            for i in 0..moves.len() {
+                let from_piece = self.get_square(&moves[i].from);
+
+                // We don't want to add the king to the cache
+                if from_piece != WHITE_KING {
+                    self.white_attacks.add_piece(moves[i].from, from_piece, moves[i].to);
+                }
+            }
+        } else if self.turn == BLACK_TURN {
+            // For now, we will just clear the cache and readd the moves each time
+            self.black_attacks.clear();
+
+            for i in 0..moves.len() {
+                let from_piece = self.get_square(&moves[i].from);
+
+                // We don't want to add the king to the cache
+                if from_piece != WHITE_KING {
+                    self.black_attacks.add_piece(moves[i].from, from_piece, moves[i].to);
+                }
             }
         }
-
-        return false;
-    }
-
-    // Private function that removes all pseudo-legal moves that
-    // would leave the king in check
-
-    // I hope that the lifetimes are good idk what I am doing
-    fn trim_illegal_moves<'a>(&'a mut self , moves: &'a mut Vec<Move>) -> &mut Vec<Move> {
-        // TODO
-        // The bad way of doing this is to make each move on the board and
-        // then check if it leaves the current players turn in check.
-        //
-        // The good way would be to store all squares that are being attacked by each
-        // color and then make sure that the king does not move into these
-        //
-        // Also you would have to somehow make sure that pieces that are pinned cannot
-        // move out of the pin
-
-        // We'll start with the bad way because it is easier:
-
-        let mut i = 0;
-        while i < moves.len() {
-            // The move should always push correctly because
-            // it should have been just generated
-            let pre_fen = self.fen();
-            self.push(moves[i]).unwrap();
-            let nuccer = self.history[self.history.len()-1];
-
-            let pre_fen2 = self.fen();
-            let result = self.has_illegal_check();
-            assert_eq!(pre_fen2, self.fen());
-
-            if result {
-                moves.remove(i);
-            } else {
-                i += 1;
-            }
-            
-            // There should always be a move to pop because we just pushed one
-            self.pop().unwrap();
-            if pre_fen != self.fen() {
-                println!("History: {:#?}", nuccer);
-                println!("Move was {}", moves[i].get_move_string());
-            }
-            assert_eq!(pre_fen, self.fen());
-        }
-
-        return moves;
-    }
-
-    // Does not include castling
-    pub fn attacking_legal_moves(&mut self) -> Vec<Move> {
-        // TODO
-
-        let pre_fen = self.fen();
-        let mut moves = self.gen_psuedo_legal_moves(false);
-
-        // Make sure we didn't change the position
-        assert_eq!(pre_fen, self.fen());
-
-        self.trim_illegal_moves(&mut moves);
-
-        // Make sure we didn't change the position
-        assert_eq!(pre_fen, self.fen());
 
         moves
     }
 
-    // Public function to get a vector of all legal moves
-    pub fn legal_moves(&mut self) -> Vec<Move> {
-        // TODO
-        let pre_fen = self.fen();
-        let mut moves = self.gen_psuedo_legal_moves(true);
+    fn gen_legal_moves(&mut self) -> Vec<Move> {
+        let mut moves = self.gen_psuedo_legal_moves();
+        let mut legal_moves = Vec::new();
 
-        // Make sure we didn't change the position
-        assert_eq!(pre_fen, self.fen());
-
-        self.trim_illegal_moves(&mut moves);
-        // Make sure we didn't change the position
-        assert_eq!(pre_fen, self.fen());
-
-        moves
+        legal_moves
     }
 }
 
@@ -2169,10 +2010,23 @@ mod tests {
     fn test_psuedo_legal() {
         let mut board = Board::new();
 
-        let moves = board.gen_psuedo_legal_moves(true);
+        let moves = board.gen_psuedo_legal_moves();
         assert_eq!(moves.len(), 20);
     }
 
+    #[test]
+    // Makes sure we are adding attacks
+    fn test_attack_map() {
+        let mut board = Board::new();
+
+        board.gen_psuedo_legal_moves();
+
+        assert_eq!(board.white_attacks.map[5][2].cache.len(), 2);
+    }
+}
+
+
+    /*
     fn perft(starting_board: &mut Board, depth: u8, top_depth: u8) -> u64 {
         if depth == 0 {
             return 1;
@@ -2313,5 +2167,4 @@ mod tests {
         let mut board = Board::new_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1").unwrap();
 
         assert_eq!(perft(&mut board, 2, 2), 2039);
-    }
-}
+    }*/
