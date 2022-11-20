@@ -1440,14 +1440,20 @@ impl Board {
     }
 
     fn gen_legal_moves(& self) -> Vec<Move> {
-        let mut moves = self.gen_psuedo_legal_moves();
+        let moves = self.gen_psuedo_legal_moves();
         let mut legal_moves = Vec::new();
 
         // If we are in check, we need to filter out all moves that don't
         // protect the king
         let check_square = self.has_check();
+        
+        let check_piece = match check_square {
+            Some(square) => Some(self.get_square(&square)),
+            None => None,
+        };
 
         let king = if self.turn == WHITE { WHITE_KING } else { BLACK_KING };
+        let blockable_pieces = [WHITE_QUEEN, BLACK_QUEEN, WHITE_ROOK, BLACK_ROOK, WHITE_BISHOP, BLACK_BISHOP];
 
         for m in moves {
             // We are moving the king
@@ -1455,14 +1461,35 @@ impl Board {
                 if self.square_has_check(m.to).is_some() {
                     continue;
                 }
+
+                legal_moves.push(m);
             // We are moving a piece other than the king
             // but we are in check
             } else if check_square.is_some() {
+                // We are taking the piece that is checking us without
+                // creating a new discovered check
+                if m.to == check_square.unwrap() && !self.creates_discovered_attack(m) {
+                    legal_moves.push(m);
+                    continue;
+                }
 
+                // It is possible to block the check
+                if blockable_pieces.contains(&check_piece.unwrap()) {
+                    let king_square = self.piece_positions[king as usize][0];
+                    // We are moving to a square that will block the check
+                    // Strict triple aligned ensures that p2 is between p1 and p3 (and therefore blocks the check)
+                    if self.is_strict_triple_aligned(king_square, m.to, check_square.unwrap()) {
+                        legal_moves.push(m);
+                    }
+                }
             // We are moving a piece other than the king
             // and we are not in check
             } else {
-
+                // In this case we just have to make sure that we are not
+                // creating a discovered attack on our king
+                if !self.creates_discovered_attack(m) {
+                    legal_moves.push(m);
+                }
             }
         }
 
@@ -1495,6 +1522,32 @@ impl Board {
            && self.is_straight(p2, p3)
            && self.is_straight(p1, p3) {
             return true
+        }
+
+        false
+    }
+
+    fn is_strict_triple_aligned(&self, p1: Square, p2: Square, p3: Square) -> bool {
+        if self.is_diagonal(p1, p2)
+           && self.is_diagonal(p2, p3)
+           && self.is_diagonal(p1, p3) {
+            // check if p2 is between p1 and p3
+            if (p1.row < p2.row && p2.row < p3.row) || (p1.row > p2.row && p2.row > p3.row) {
+                if (p1.col < p2.col && p2.col < p3.col) || (p1.col > p2.col && p2.col > p3.col) {
+                    return true
+                }
+            }
+        }
+
+        if self.is_straight(p1, p2) 
+           && self.is_straight(p2, p3)
+           && self.is_straight(p1, p3) {
+            // check if p2 is between p1 and p3
+            if (p1.row < p2.row && p2.row < p3.row) || (p1.row > p2.row && p2.row > p3.row) {
+                if (p1.col < p2.col && p2.col < p3.col) || (p1.col > p2.col && p2.col > p3.col) {
+                    return true
+                }
+            }
         }
 
         false
@@ -2333,6 +2386,17 @@ mod tests {
         board.import_from_fen("8/8/2K5/8/8/8/8/1k1r1Q2 b - - 0 1").unwrap();
         let test_move = Move::new_from_string("d1e1").unwrap();
         assert!(!board.creates_discovered_attack(test_move));
+    }
+
+    #[test]
+    fn test_new_legal_moves() {
+        let board = Board::new_from_fen("8/8/2K5/8/8/8/8/1k1n1Q2 b - - 0 1").unwrap();
+        let legal_moves = board.gen_legal_moves();
+        assert_eq!(legal_moves.len(), 5);
+
+        let board = Board::new_from_fen("8/8/2K5/1R6/8/8/8/1k1n1Q2 b - - 0 1").unwrap();
+        let legal_moves = board.gen_legal_moves();
+        assert_eq!(legal_moves.len(), 4);
     }
 }
 
