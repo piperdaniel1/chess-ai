@@ -1443,11 +1443,193 @@ impl Board {
         let mut moves = self.gen_psuedo_legal_moves();
         let mut legal_moves = Vec::new();
 
+        // If we are in check, we need to filter out all moves that don't
+        // protect the king
+        let check_square = self.has_check();
+
+        let king = if self.turn == WHITE { WHITE_KING } else { BLACK_KING };
+
+        for m in moves {
+            // We are moving the king
+            if self.get_square(&m.from) == king {
+                if self.square_has_check(m.to).is_some() {
+                    continue;
+                }
+            // We are moving a piece other than the king
+            // but we are in check
+            } else if check_square.is_some() {
+
+            // We are moving a piece other than the king
+            // and we are not in check
+            } else {
+
+            }
+        }
+
         legal_moves
     }
 
+    fn is_diagonal(&self, from: Square, to: Square) -> bool {
+        let row_diff = (from.row as i8 - to.row as i8).abs();
+        let col_diff = (from.col as i8 - to.col as i8).abs();
+
+        row_diff == col_diff
+    }
+
+    fn is_straight(&self, from: Square, to: Square) -> bool {
+        let row_diff = (from.row as i8 - to.row as i8).abs();
+        let col_diff = (from.col as i8 - to.col as i8).abs();
+
+        row_diff == 0 || col_diff == 0
+    }
+    
+    // TODO optimize this
+    fn is_triple_aligned(&self, p1: Square, p2: Square, p3: Square) -> bool {
+        if self.is_diagonal(p1, p2)
+           && self.is_diagonal(p2, p3)
+           && self.is_diagonal(p1, p3) {
+            return true
+        }
+
+        if self.is_straight(p1, p2) 
+           && self.is_straight(p2, p3)
+           && self.is_straight(p1, p3) {
+            return true
+        }
+
+        false
+    }
+
+    // Get the current turn's king
+    fn get_king_pos(&self) -> Square {
+        return if self.turn == WHITE {
+            self.piece_positions[WHITE_KING as usize][0]
+        } else {
+            self.piece_positions[BLACK_KING as usize][0]
+        };
+    }
+
+    fn is_move_on_line(&self, squareOne: Square, squareTwo: Square, m: Move) -> bool {
+        return self.is_triple_aligned(squareOne, squareTwo, m.to);
+    }
+
+    // Returns the direction to go from squareOne to squareTwo
+    fn get_dir(&self, squareOne: Square, squareTwo: Square) -> (i8, i8) {
+        let row_diff = squareOne.row as i8 - squareTwo.row as i8;
+        let col_diff = squareOne.col as i8 - squareTwo.col as i8;
+
+        let row_dir = if row_diff > 0 { -1 } else if row_diff < 0 { 1 } else { 0 };
+        let col_dir = if col_diff > 0 { -1 } else if col_diff < 0 { 1 } else { 0 };
+
+        (row_dir, col_dir)
+    }
+
+    fn creates_discovered_attack(&self, m: Move) -> bool {
+        // Check if the piece we are moving is pinned
+        // If it is, we need to make sure that we are moving
+        // it along the line of the pin
+
+        // If the piece is not pinned, we can move it anywhere
+
+        // The algorithm to do this:
+        //  1. Are we on a diagonal/straight line to our king?
+        //  (if we are on the line and the move moves along the line we can skip all this nonsense)
+        //  2. If we are, scan along this line to see if there is an enemy piece
+        //     that could attack our king if we were not there (stop if you find a friendly piece / OB)
+        // 3. If we found a piece, scan back towards our king to see if there is another piece blocking the attack
+        //    (stop if we find a piece / get to the king)
+        // 4. If we found no blocking piece, then we are pinned. We can only move along the line of the pin.
+
+        let king_pos = self.get_king_pos();
+        let king_val = self.get_square(&king_pos);
+
+        let is_diag = self.is_diagonal(m.from, king_pos);
+        let is_straight = self.is_straight(m.from, king_pos);
+
+        // We could be diagonally pinned
+        if is_diag || is_straight {
+            // If we are moving along the line of the pin, we are good no matter what
+            if self.is_triple_aligned(king_pos, m.from, m.to) {
+                return false;
+            }
+
+            // Kind of weird but it keeps target_pieces in the right scope
+            let target_pieces: [u8; 2];
+
+            if is_diag {
+                target_pieces = if king_val == WHITE_KING {
+                    [BLACK_QUEEN, BLACK_BISHOP]
+                } else {
+                    [WHITE_QUEEN, WHITE_BISHOP]
+                };
+            } else {
+                target_pieces = if king_val == WHITE_KING {
+                    [BLACK_QUEEN, BLACK_ROOK]
+                } else {
+                    [WHITE_QUEEN, WHITE_ROOK]
+                };
+            }
+
+            // Scan along the line away from the king to see if there is an enemy piece that could attack our king
+            let (row_dir, col_dir) = self.get_dir(king_pos, m.from); // this gives the direction away from the king
+
+            let mut curr_row = m.from.row as i8;
+            let mut curr_col = m.from.col as i8;
+
+            curr_row += row_dir;
+            curr_col += col_dir;
+
+            for _ in 0..8 {
+                let val_at_target = self.get_square_ind(curr_row as i8, curr_col as i8);
+
+                if val_at_target == OUT_OF_BOUNDS {
+                    return false;
+                } else if target_pieces.contains(&val_at_target) {
+                    // There is an enemy piece that could attack
+                    break;
+                } else if val_at_target != EMPTY_SQUARE {
+                    // We found a piece that cannot attack the king, break
+                    return false;
+                }
+
+                curr_row += row_dir;
+                curr_col += col_dir;
+            }
+
+            // If we did not return false yet we must have found an enemy piece
+            // Now we need to scan back towards the king to see if there is another piece besides us blocking the attack
+
+            curr_row = m.from.row as i8;
+            curr_col = m.from.col as i8;
+
+            curr_row -= row_dir;
+            curr_col -= col_dir;
+
+            for _ in 0..8 {
+                let val_at_target = self.get_square_ind(curr_row as i8, curr_col as i8);
+
+                if val_at_target == OUT_OF_BOUNDS {
+                    panic!("This should never happen");
+                } else if val_at_target == king_val {
+                    // We found the king first therefore we are pinned
+                    // We already know the move is not along this line so we must be creating
+                    // a discovered attack by moving this piece
+                    return true;
+                } else if val_at_target != EMPTY_SQUARE {
+                    // We found a piece that will block the attack
+                    return false;
+                }
+
+                curr_row -= row_dir;
+                curr_col -= col_dir;
+            }
+        }
+
+        false
+    }
+
     // Returns true if a knight of 'color' is attacking 'target_square'
-    fn is_knight_attacking(&self, target_square: Square, color: bool) -> bool {
+    fn is_knight_attacking(&self, target_square: Square, color: bool) -> Option<Square> {
         let x_offsets = [1, 2, 2, 1, -1, -2, -2, -1];
         let y_offsets = [2, 1, -1, -2, -2, -1, 1, 2];
 
@@ -1460,14 +1642,18 @@ impl Board {
             let piece_at_square = self.get_square_ind(to_row, to_col);
 
             if piece_at_square == target_piece {
-                return true;
+                return Some(Square {
+                    row: to_row as u8,
+                    col: to_col as u8,
+                });
             }
         }
-        false
+
+        return None
     }
 
     // Returns true if a diagonal sliding piece of 'color' is attacking 'target_square'
-    fn is_diagonal_attacking(&self, target_square: Square, color: bool) -> bool {
+    fn is_diagonal_attacking(&self, target_square: Square, color: bool) -> Option<Square> {
         let x_dirs = [1, 1, -1, -1];
         let y_dirs = [1, -1, 1, -1];
 
@@ -1495,28 +1681,37 @@ impl Board {
                     // Make sure that the pawn is attacking from the correct direction
                     if short_target_piece == WHITE_PAWN {
                         if to_row == target_square.row as i8 + 1 {
-                            return true;
+                            return Some(Square {
+                                row: to_row as u8,
+                                col: to_col as u8,
+                            });
                         }
                     } else {
                         if to_row == target_square.row as i8 - 1 {
-                            return true;
+                            return Some(Square {
+                                row: to_row as u8,
+                                col: to_col as u8,
+                            });
                         }
                     }
                 } else if target_pieces.contains(&piece_at_square) {
-                    return true;
+                    return Some(Square {
+                        row: to_row as u8,
+                        col: to_col as u8,
+                    });
                 } else {
                     break;
                 }
             }
         }
 
-        false
+        return None
     }
 
     // Returns true if a straight sliding piece of 'color' is attacking 'target_square'
     // This one is a bit simpler than the diagonal one because we don't have to worry
     // about the pawns
-    fn is_straight_attacking(&self, target_square: Square, color: bool) -> bool {
+    fn is_straight_attacking(&self, target_square: Square, color: bool) -> Option<Square> {
         let x_dirs = [1, -1, 0, 0];
         let y_dirs = [0, 0, 1, -1];
 
@@ -1539,14 +1734,17 @@ impl Board {
                 if piece_at_square == EMPTY_SQUARE {
                     continue;
                 } else if target_pieces.contains(&piece_at_square) {
-                    return true;
+                    return Some(Square {
+                        row: to_row as u8,
+                        col: to_col as u8,
+                    });
                 } else {
                     break;
                 }
             }
         }
 
-        false
+        return None
     }
 
     /*
@@ -1556,25 +1754,34 @@ impl Board {
      * Relies on the fact that the king is stored in the piece positions array.
      * Also relies on the fact that the turn is stored in the board struct.
      */
-    fn has_check(&self) -> bool {
+    fn has_check(&self) -> Option<Square> {
         let king_square = self.piece_positions[WHITE_KING as usize][0];
 
+        self.square_has_check(king_square)
+    }
+
+    fn square_has_check(&self, king_square: Square) -> Option<Square> {
         // Check for knights
-        if self.is_knight_attacking(king_square, !self.turn) {
-            return true;
+        let knight_attacks = self.is_knight_attacking(king_square, !self.turn);
+
+        match knight_attacks {
+            Some(square) => return Some(square),
+            None => (),
         }
 
-        // Check for diagonals
-        if self.is_diagonal_attacking(king_square, !self.turn) {
-            return true;
+        let diagonal_attacks = self.is_diagonal_attacking(king_square, !self.turn);
+        match diagonal_attacks {
+            Some(square) => return Some(square),
+            None => (),
         }
 
-        // Check for straights
-        if self.is_straight_attacking(king_square, !self.turn) {
-            return true;
+        let straight_attacks = self.is_straight_attacking(king_square, !self.turn);
+        match straight_attacks {
+            Some(square) => return Some(square),
+            None => (),
         }
 
-        false
+        return None
     }
 }
 
@@ -2047,66 +2254,85 @@ mod tests {
         board.set_square(&Square {row: RANK_THREE, col: FILE_B}, WHITE_KNIGHT);
 
         let test_square = Square {row: RANK_FIVE, col: FILE_C}; // true
-        assert!(board.is_knight_attacking(test_square, WHITE));
+        assert!(board.is_knight_attacking(test_square, WHITE).is_some());
 
         let test_square = Square {row: RANK_FOUR, col: FILE_C}; // false
-        assert!(!board.is_knight_attacking(test_square, WHITE));
+        assert!(!board.is_knight_attacking(test_square, WHITE).is_some());
     }
 
     #[test]
     fn test_diagonal_attacking() {
         let mut board = Board::new_from_fen("8/5p2/6K1/7q/1k6/8/8/1b6 w - - 0 1").unwrap();
         let test_square = Square {row: RANK_SIX, col: FILE_G};
-        assert!(board.is_diagonal_attacking(test_square, BLACK));
+        assert!(board.is_diagonal_attacking(test_square, BLACK).is_some());
 
         board.import_from_fen("8/5p2/6K1/8/1k6/8/8/1b6 w - - 0 1").unwrap();
         let test_square = Square {row: RANK_SIX, col: FILE_G};
-        assert!(board.is_diagonal_attacking(test_square, BLACK));
+        assert!(board.is_diagonal_attacking(test_square, BLACK).is_some());
 
         board.import_from_fen("8/5p2/6K1/8/1k6/8/8/8 w - - 0 1").unwrap();
         let test_square = Square {row: RANK_SIX, col: FILE_G};
-        assert!(board.is_diagonal_attacking(test_square, BLACK));
+        assert!(board.is_diagonal_attacking(test_square, BLACK).is_some());
 
         board.import_from_fen("8/8/6K1/8/1k6/8/8/8 w - - 0 1").unwrap();
         let test_square = Square {row: RANK_SIX, col: FILE_G};
-        assert!(!board.is_diagonal_attacking(test_square, BLACK));
+        assert!(!board.is_diagonal_attacking(test_square, BLACK).is_some());
     }
 
     #[test]
     fn test_straight_attacking() {
         let mut board = Board::new_from_fen("7r/8/3K3q/5P2/8/b5k1/3r4/8 w - - 0 1").unwrap();
         let test_square = Square {row: RANK_SIX, col: FILE_D};
-        assert!(board.is_straight_attacking(test_square, BLACK));
+        assert!(board.is_straight_attacking(test_square, BLACK).is_some());
 
         board.import_from_fen("7r/8/3K1P1q/8/8/b5k1/3r4/8 w - - 0 1").unwrap();
         let test_square = Square {row: RANK_SIX, col: FILE_D};
-        assert!(board.is_straight_attacking(test_square, BLACK));
+        assert!(board.is_straight_attacking(test_square, BLACK).is_some());
 
         board.import_from_fen("7r/8/3K1P1q/8/8/b5k1/4r3/8 w - - 0 1").unwrap();
         let test_square = Square {row: RANK_SIX, col: FILE_D};
-        assert!(!board.is_straight_attacking(test_square, BLACK));
+        assert!(!board.is_straight_attacking(test_square, BLACK).is_some());
 
         board.import_from_fen("1q5r/8/3K1P1q/8/8/b5k1/4r3/8 w - - 0 1").unwrap();
         let test_square = Square {row: RANK_SIX, col: FILE_D};
-        assert!(!board.is_straight_attacking(test_square, BLACK));
+        assert!(!board.is_straight_attacking(test_square, BLACK).is_some());
     }
 
     #[test]
     fn test_has_check() {
         let mut board = Board::new_from_fen("1q6/8/3K1P1q/8/8/b2r2k1/4r3/8 w - - 0 1").unwrap();
-        assert!(board.has_check());
+        assert!(board.has_check().is_some());
 
         board.import_from_fen("1q6/8/3K1P1q/8/3B4/b2r2k1/4r3/8 w - - 0 1").unwrap();
-        assert!(board.has_check());
+        assert!(board.has_check().is_some());
 
         board.import_from_fen("1q6/8/3K1P1q/2Q5/3B4/b2r2k1/4r3/8 w - - 0 1").unwrap();
-        assert!(board.has_check());
+        assert!(board.has_check().is_some());
 
         board.import_from_fen("1q6/2P5/3K1P1q/2Q5/3B4/b2r2k1/4r3/8 w - - 0 1").unwrap();
-        assert!(!board.has_check());
+        assert!(!board.has_check().is_some());
 
         board.import_from_fen("1q6/2P5/3K1P1q/2Q5/2nB4/b2r2k1/4r3/8 w - - 0 1").unwrap();
-        assert!(board.has_check());
+        assert!(board.has_check().is_some());
+    }
+
+    #[test]
+    fn test_creates_discovered_attack() {
+        let mut board = Board::new_from_fen("8/7b/8/5Q2/8/3K4/8/1k6 w - - 0 1").unwrap();
+        let test_move = Move::new_from_string("f5e5").unwrap();
+        assert!(board.creates_discovered_attack(test_move));
+
+        board.import_from_fen("8/7b/8/5Q2/4N3/3K4/8/1k6 w - - 0 1").unwrap();
+        let test_move = Move::new_from_string("f5e5").unwrap();
+        assert!(!board.creates_discovered_attack(test_move));
+
+        board.import_from_fen("8/8/2K5/8/8/8/8/1k1r1Q2 b - - 0 1").unwrap();
+        let test_move = Move::new_from_string("d1d2").unwrap();
+        assert!(board.creates_discovered_attack(test_move));
+
+        board.import_from_fen("8/8/2K5/8/8/8/8/1k1r1Q2 b - - 0 1").unwrap();
+        let test_move = Move::new_from_string("d1e1").unwrap();
+        assert!(!board.creates_discovered_attack(test_move));
     }
 }
 
