@@ -1391,6 +1391,64 @@ impl Board {
         }
     }
 
+    fn add_castling_moves(&self, moves: &mut Vec<Move>) {
+        // White castling
+        if self.turn {
+            // Kingside
+            if self.castling[0] {
+                if self.square_has_check(F1).is_none() && self.get_square(&F1) == EMPTY_SQUARE {
+                    if self.square_has_check(G1).is_none() && self.get_square(&G1) == EMPTY_SQUARE {
+                        moves.push(Move {
+                            from: E1,
+                            to: G1,
+                            promotion: None,
+                        });
+                    }
+                }
+
+            }
+            // Queenside
+            if self.castling[1] {
+                if self.square_has_check(D1).is_none() && self.get_square(&D1) == EMPTY_SQUARE {
+                    if self.square_has_check(C1).is_none() && self.get_square(&C1) == EMPTY_SQUARE {
+                        moves.push(Move {
+                            from: E1,
+                            to: C1,
+                            promotion: None,
+                        });
+                    }
+                }
+            }
+        // Black castling
+        } else {
+            // Kingside
+            if self.castling[2] {
+                if self.square_has_check(F8).is_none() && self.get_square(&F8) == EMPTY_SQUARE {
+                    if self.square_has_check(G8).is_none() && self.get_square(&G8) == EMPTY_SQUARE {
+                        moves.push(Move {
+                            from: E8,
+                            to: G8,
+                            promotion: None,
+                        });
+                    }
+                }
+
+            }
+            // Queenside
+            if self.castling[3] {
+                if self.square_has_check(D8).is_none() && self.get_square(&D8) == EMPTY_SQUARE {
+                    if self.square_has_check(C8).is_none() && self.get_square(&C8) == EMPTY_SQUARE {
+                        moves.push(Move {
+                            from: E8,
+                            to: C8,
+                            promotion: None,
+                        });
+                    }
+                }
+            }
+        }
+    }
+
     // Private function to generate all pseudo-legal moves
     // for the current position. This function takes all the rules into
     // account except for any rules involving check on the king.
@@ -1416,6 +1474,7 @@ impl Board {
                 if i == 1 || i == 7 {
                     self.add_diagonal_moves(&mut moves, curr_square, 1);
                     self.add_straight_moves(&mut moves, curr_square, 1);
+                    self.add_castling_moves(&mut moves);
                 // Queens
                 } else if i == 2 || i == 8 {
                     self.add_diagonal_moves(&mut moves, curr_square, 8);
@@ -2429,7 +2488,7 @@ mod tests {
         let mut subtotal = 0;
 
         for elem in moves {
-            let cloned_board = starting_board.clone();
+            //let cloned_board = starting_board.clone();
             starting_board.push(elem).unwrap();
 
             let count = perft(starting_board, depth - 1, top_depth, verbosity);
@@ -2454,7 +2513,7 @@ mod tests {
             total += count;
 
             starting_board.pop().unwrap();
-            assert_eq!(starting_board.fen(), cloned_board.fen());
+            //assert_eq!(starting_board.fen(), cloned_board.fen());
         }
 
         if depth == top_depth && verbosity > 0 {
@@ -2490,5 +2549,19 @@ mod tests {
         let mut board = Board::new();
         let count = perft(&mut board, 4, 4, 1);
         assert_eq!(count, 197_281);
+    }
+
+    #[test]
+    fn perft_pos2_d1() {
+        let mut board = Board::new_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1").unwrap();
+        let count = perft(&mut board, 1, 1, 1);
+        assert_eq!(count, 48);
+    }
+
+    #[test]
+    fn perft_pos2_d2() {
+        let mut board = Board::new_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1").unwrap();
+        let count = perft(&mut board, 2, 2, 1);
+        assert_eq!(count, 2039);
     }
 }
