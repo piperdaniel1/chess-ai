@@ -146,12 +146,6 @@ pub struct Board {
     // Used for fast lookup of pieces
     // Index using the piece type defined in the constant
     piece_positions: [Vec<Square>; 13],
-
-    // White's attacks
-    white_attacks: AttackMap,
-
-    // Black's attacks
-    black_attacks: AttackMap,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -184,24 +178,6 @@ struct PrevMove {
 
     // Turn and full move number are not stored as they can be trivially
     // derived due to the nature of the game
-}
-
-#[derive(Debug, Clone, PartialEq)]
-struct AttackMap {
-    map: [[AttackCache; 8]; 8],
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-struct PieceLocation {
-    piece: u8,
-    location: Square,
-}
-
-// Stores a vector of pieceLocations that represent the pieces
-// that are currently attacking this square
-#[derive(Debug, Clone, PartialEq)]
-struct AttackCache {
-    cache: Vec<PieceLocation>,
 }
 
 fn get_piece_from_char(c: char) -> Result<u8, Error> {
@@ -288,64 +264,6 @@ impl Square {
     }
 }
 
-impl AttackCache {
-    fn new() -> AttackCache {
-        AttackCache { cache: Vec::new() }
-    }
-
-    fn clear(&mut self) {
-        self.cache.clear();
-    }
-
-    fn add_piece(&mut self, piece: u8, location: Square) {
-        self.cache.push(PieceLocation { piece, location });
-    }
-}
-
-impl AttackMap {
-    fn new() -> AttackMap {
-        AttackMap {
-            map: [[AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new()],
-                  [AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new()],
-                  [AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new()],
-                  [AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new()],
-                  [AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new()],
-                  [AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new()],
-                  [AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new()],
-                  [AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new(), AttackCache::new()]]
-        }
-    }
-
-    fn clear(&mut self) {
-        for row in self.map.iter_mut() {
-            for cache in row.iter_mut() {
-                cache.clear();
-            }
-        }
-    }
-
-    fn add_piece(&mut self, attacking_from: Square, piece: u8, attacking: Square) {
-        self.map[attacking.row as usize][attacking.col as usize].add_piece(piece, attacking_from);
-    }
-
-    // Returns true if the square is attacked by the given color
-    fn is_square_attacked(&self, square: Square, color: bool) -> bool {
-        for piece_loc in self.map[square.row as usize][square.col as usize].cache.iter() {
-            if color == WHITE_TURN {
-                if piece_loc.piece >= WHITE_KING && piece_loc.piece <= WHITE_PAWN {
-                    return true;
-                }
-            } else {
-                if piece_loc.piece >= BLACK_KING && piece_loc.piece <= BLACK_PAWN {
-                    return true;
-                }
-            }
-        }
-
-        false
-    }
-}
-
 impl Board {
     pub fn new() -> Board {
         Board::new_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
@@ -363,8 +281,6 @@ impl Board {
             fullmove_number: 1,
             piece_positions: [vec![], vec![], vec![], vec![], vec![], vec![], vec![],
                               vec![], vec![], vec![], vec![], vec![], vec![]],
-            white_attacks: AttackMap::new(),
-            black_attacks: AttackMap::new(),
         }
     }
 
@@ -428,6 +344,7 @@ impl Board {
                 'Q' => board.castling[1] = true,
                 'k' => board.castling[2] = true,
                 'q' => board.castling[3] = true,
+                '-' => break,
                 _ => return Err(Error),
             }
         }
@@ -526,6 +443,7 @@ impl Board {
                 'Q' => self.castling[1] = true,
                 'k' => self.castling[2] = true,
                 'q' => self.castling[3] = true,
+                '-' => break,
                 _ => return Err(Error),
             }
         }
@@ -711,6 +629,10 @@ impl Board {
         fen.push_str(&self.fullmove_number.to_string());
 
         fen
+    }
+
+    fn set_square_ind(&mut self, row: u8, col: u8, piece: u8) {
+        self.set_square(&Square {row, col}, piece);
     }
 
     fn set_square(&mut self, square: &Square, piece: u8) {
@@ -1472,7 +1394,7 @@ impl Board {
     // Private function to generate all pseudo-legal moves
     // for the current position. This function takes all the rules into
     // account except for any rules involving check on the king.
-    fn gen_psuedo_legal_moves(&mut self) -> Vec<Move> {
+    fn gen_psuedo_legal_moves(&self) -> Vec<Move> {
         // lmao in theory it works
         let mut moves: Vec<Move> = Vec::new();
 
@@ -1514,41 +1436,132 @@ impl Board {
             }
         }
 
-        // Update white move attacker cache
-        if self.turn == WHITE_TURN {
-            // For now, we will just clear the cache and readd the moves each time
-            self.white_attacks.clear();
-
-            for i in 0..moves.len() {
-                let from_piece = self.get_square(&moves[i].from);
-
-                // We don't want to add the king to the cache
-                if from_piece != WHITE_KING {
-                    self.white_attacks.add_piece(moves[i].from, from_piece, moves[i].to);
-                }
-            }
-        } else if self.turn == BLACK_TURN {
-            // For now, we will just clear the cache and readd the moves each time
-            self.black_attacks.clear();
-
-            for i in 0..moves.len() {
-                let from_piece = self.get_square(&moves[i].from);
-
-                // We don't want to add the king to the cache
-                if from_piece != WHITE_KING {
-                    self.black_attacks.add_piece(moves[i].from, from_piece, moves[i].to);
-                }
-            }
-        }
-
         moves
     }
 
-    fn gen_legal_moves(&mut self) -> Vec<Move> {
+    fn gen_legal_moves(& self) -> Vec<Move> {
         let mut moves = self.gen_psuedo_legal_moves();
         let mut legal_moves = Vec::new();
 
         legal_moves
+    }
+
+    // Returns true if a knight of 'color' is attacking 'target_square'
+    fn is_knight_attacking(&self, target_square: Square, color: bool) -> bool {
+        let x_offsets = [1, 2, 2, 1, -1, -2, -2, -1];
+        let y_offsets = [2, 1, -1, -2, -2, -1, 1, 2];
+
+        let target_piece = if color == WHITE_TURN { WHITE_KNIGHT } else { BLACK_KNIGHT };
+
+        for i in 0..x_offsets.len() {
+            let to_row = target_square.row as i8 + y_offsets[i];
+            let to_col = target_square.col as i8 + x_offsets[i];
+
+            let piece_at_square = self.get_square_ind(to_row, to_col);
+
+            if piece_at_square == target_piece {
+                return true;
+            }
+        }
+        false
+    }
+
+    // Returns true if a diagonal sliding piece of 'color' is attacking 'target_square'
+    fn is_diagonal_attacking(&self, target_square: Square, color: bool) -> bool {
+        let x_dirs = [1, 1, -1, -1];
+        let y_dirs = [1, -1, 1, -1];
+
+        let target_pieces = if color == WHITE_TURN {
+            [WHITE_QUEEN, WHITE_BISHOP]
+        } else {
+            [BLACK_QUEEN, BLACK_BISHOP]
+        };
+
+        let short_target_piece = if color == WHITE_TURN { WHITE_PAWN } else { BLACK_PAWN };
+
+        for i in 0..x_dirs.len() {
+            let mut to_row = target_square.row as i8;
+            let mut to_col = target_square.col as i8;
+
+            for j in 1..8 {
+                to_row += y_dirs[i];
+                to_col += x_dirs[i];
+
+                let piece_at_square = self.get_square_ind(to_row, to_col);
+
+                if piece_at_square == EMPTY_SQUARE {
+                    continue;
+                } else if j == 1 && piece_at_square == short_target_piece {
+                    // Make sure that the pawn is attacking from the correct direction
+                    if short_target_piece == WHITE_PAWN {
+                        if to_row == target_square.row as i8 + 1 {
+                            return true;
+                        }
+                    } else {
+                        if to_row == target_square.row as i8 - 1 {
+                            return true;
+                        }
+                    }
+                } else if target_pieces.contains(&piece_at_square) {
+                    return true;
+                } else {
+                    break;
+                }
+            }
+        }
+
+        false
+    }
+
+    // Returns true if a straight sliding piece of 'color' is attacking 'target_square'
+    // This one is a bit simpler than the diagonal one because we don't have to worry
+    // about the pawns
+    fn is_straight_attacking(&self, target_square: Square, color: bool) -> bool {
+        let x_dirs = [1, -1, 0, 0];
+        let y_dirs = [0, 0, 1, -1];
+
+        let target_pieces = if color == WHITE_TURN {
+            [WHITE_QUEEN, WHITE_ROOK]
+        } else {
+            [BLACK_QUEEN, BLACK_ROOK]
+        };
+
+        for i in 0..x_dirs.len() {
+            let mut to_row = target_square.row as i8;
+            let mut to_col = target_square.col as i8;
+
+            for _ in 1..8 {
+                to_row += y_dirs[i];
+                to_col += x_dirs[i];
+
+                let piece_at_square = self.get_square_ind(to_row, to_col);
+
+                if piece_at_square == EMPTY_SQUARE {
+                    continue;
+                } else if target_pieces.contains(&piece_at_square) {
+                    return true;
+                } else {
+                    break;
+                }
+            }
+        }
+
+        false
+    }
+
+    fn has_check(&self) -> bool {
+        if self.turn == WHITE_TURN {
+            let king_square = self.piece_positions[WHITE_KING as usize][0];
+
+            // Check for knights
+            if self.is_knight_attacking(king_square, BLACK_TURN) {
+                return true;
+            }
+
+            // Check for diagonals
+        }
+
+        false
     }
 }
 
@@ -2015,13 +2028,54 @@ mod tests {
     }
 
     #[test]
-    // Makes sure we are adding attacks
-    fn test_attack_map() {
-        let mut board = Board::new();
+    fn test_knight_attacking() {
+        let mut board = Board::new_empty();
 
-        board.gen_psuedo_legal_moves();
+        board.set_square(&Square {row: RANK_THREE, col: FILE_B}, WHITE_KNIGHT);
 
-        assert_eq!(board.white_attacks.map[5][2].cache.len(), 2);
+        let test_square = Square {row: RANK_FIVE, col: FILE_C}; // true
+        assert!(board.is_knight_attacking(test_square, WHITE_TURN));
+
+        let test_square = Square {row: RANK_FOUR, col: FILE_C}; // false
+        assert!(!board.is_knight_attacking(test_square, WHITE_TURN));
+    }
+
+    #[test]
+    fn test_diagonal_attacking() {
+        let mut board = Board::new_from_fen("8/5p2/6K1/7q/1k6/8/8/1b6 w - - 0 1").unwrap();
+        let test_square = Square {row: RANK_SIX, col: FILE_G};
+        assert!(board.is_diagonal_attacking(test_square, BLACK_TURN));
+
+        board.import_from_fen("8/5p2/6K1/8/1k6/8/8/1b6 w - - 0 1").unwrap();
+        let test_square = Square {row: RANK_SIX, col: FILE_G};
+        assert!(board.is_diagonal_attacking(test_square, BLACK_TURN));
+
+        board.import_from_fen("8/5p2/6K1/8/1k6/8/8/8 w - - 0 1").unwrap();
+        let test_square = Square {row: RANK_SIX, col: FILE_G};
+        assert!(board.is_diagonal_attacking(test_square, BLACK_TURN));
+
+        board.import_from_fen("8/8/6K1/8/1k6/8/8/8 w - - 0 1").unwrap();
+        let test_square = Square {row: RANK_SIX, col: FILE_G};
+        assert!(!board.is_diagonal_attacking(test_square, BLACK_TURN));
+    }
+
+    #[test]
+    fn test_straight_attacking() {
+        let mut board = Board::new_from_fen("7r/8/3K3q/5P2/8/b5k1/3r4/8 w - - 0 1").unwrap();
+        let test_square = Square {row: RANK_SIX, col: FILE_D};
+        assert!(board.is_straight_attacking(test_square, BLACK_TURN));
+
+        board.import_from_fen("7r/8/3K1P1q/8/8/b5k1/3r4/8 w - - 0 1").unwrap();
+        let test_square = Square {row: RANK_SIX, col: FILE_D};
+        assert!(board.is_straight_attacking(test_square, BLACK_TURN));
+
+        board.import_from_fen("7r/8/3K1P1q/8/8/b5k1/4r3/8 w - - 0 1").unwrap();
+        let test_square = Square {row: RANK_SIX, col: FILE_D};
+        assert!(!board.is_straight_attacking(test_square, BLACK_TURN));
+
+        board.import_from_fen("1q5r/8/3K1P1q/8/8/b5k1/4r3/8 w - - 0 1").unwrap();
+        let test_square = Square {row: RANK_SIX, col: FILE_D};
+        assert!(!board.is_straight_attacking(test_square, BLACK_TURN));
     }
 }
 
