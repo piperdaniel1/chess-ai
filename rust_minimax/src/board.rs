@@ -1439,7 +1439,7 @@ impl Board {
         moves
     }
 
-    fn gen_legal_moves(& self) -> Vec<Move> {
+    pub fn gen_legal_moves(& self) -> Vec<Move> {
         let moves = self.gen_psuedo_legal_moves();
         let mut legal_moves = Vec::new();
 
@@ -1808,7 +1808,8 @@ impl Board {
      * Also relies on the fact that the turn is stored in the board struct.
      */
     fn has_check(&self) -> Option<Square> {
-        let king_square = self.piece_positions[WHITE_KING as usize][0];
+        let king_square = if self.turn { self.piece_positions[WHITE_KING as usize][0] } 
+                                  else { self.piece_positions[BLACK_KING as usize][0] };
 
         self.square_has_check(king_square)
     }
@@ -2398,16 +2399,19 @@ mod tests {
         let legal_moves = board.gen_legal_moves();
         assert_eq!(legal_moves.len(), 4);
     }
-}
 
+    fn perft(starting_board: &mut Board, depth: u8, top_depth: u8, verbosity: u32) -> u64 {
+        // Verbosity 0 = no output
+        // Verbosity 1 = output perft results for top depth without subtotals
+        // Verbosity 2 = output perft results for top depth with subtotals
+        // Verbosity 3 = output perft results for all depths without subtotals
+        // Verbosity 4 = output perft results for all depths with subtotals
 
-    /*
-    fn perft(starting_board: &mut Board, depth: u8, top_depth: u8) -> u64 {
         if depth == 0 {
             return 1;
         }
 
-        if depth == top_depth {
+        if depth == top_depth && verbosity > 0 {
             println!("Starting perft with depth {}", depth);
         }
 
@@ -2415,15 +2419,8 @@ mod tests {
 
         let spacer = "  ".repeat((top_depth - depth) as usize);
 
-        let cloned_board = starting_board.clone();
-        let mut moves = starting_board.legal_moves();
-        println!("{}Checking if boards match after legal move gen", spacer);
-        assert_eq!(starting_board.fen(), cloned_board.fen());
-        // assert_eq!(starting_board, &cloned_board);
+        let mut moves = starting_board.gen_legal_moves();
 
-
-
-        // sort moves by .get_move_string()
         moves.sort_by(|a, b| a.get_move_string().cmp(&b.get_move_string()));
 
         let mut last_starting_file = FILE_A;
@@ -2435,18 +2432,21 @@ mod tests {
             let cloned_board = starting_board.clone();
             starting_board.push(elem).unwrap();
 
-            let count = perft(starting_board, depth - 1, top_depth);
+            let count = perft(starting_board, depth - 1, top_depth, verbosity);
 
-            // if depth == top_depth {
             if elem.from.col != last_starting_file {
-                println!("{}Subtotal: {} (from {} moves)", spacer, subtotal, subcount);
+                if (depth == top_depth && verbosity > 1) || verbosity > 3 {
+                    println!("{}Subtotal: {} (from {} moves)", spacer, subtotal, subcount);
+                    println!("");
+                }
                 subcount = 0;
                 subtotal = 0;
-                println!("");
                 last_starting_file = elem.from.col;
             }
-            println!("{}{}: {}", spacer, elem.get_move_string(), count);
-            // }
+
+            if (depth == top_depth && verbosity > 0) || verbosity > 2 {
+                println!("{}{}: {}", spacer, elem.get_move_string(), count);
+            }
 
             subcount += 1;
             subtotal += count;
@@ -2454,20 +2454,10 @@ mod tests {
             total += count;
 
             starting_board.pop().unwrap();
-            // assert_eq!(starting_board.fen(), cloned_board.fen());
-            
-            // if starting_board != &cloned_board {
-            //     println!("Starting board:");
-            //     println!("{:#?}", starting_board);
-            //     println!("\nCloned board:");
-            //     println!("{:#?}", cloned_board);
-            // }
-            // assert_eq!(starting_board, &cloned_board);
-            println!("{}Checking if boards match after move: {}", spacer, elem.get_move_string());
             assert_eq!(starting_board.fen(), cloned_board.fen());
         }
 
-        if depth == top_depth {
+        if depth == top_depth && verbosity > 0 {
             println!("Total: {}", total);
         }
 
@@ -2475,71 +2465,30 @@ mod tests {
     }
 
     #[test]
-    fn test_legal_moves_pos1_d1() {
+    fn perft_pos1_d1() {
         let mut board = Board::new();
-
-        assert_eq!(perft(&mut board, 1, 1), 20);
+        let count = perft(&mut board, 1, 1, 1);
+        assert_eq!(count, 20);
     }
 
     #[test]
-    fn test_legal_moves_pos1_d2() {
+    fn perft_pos1_d2() {
         let mut board = Board::new();
-
-        assert_eq!(perft(&mut board, 2, 2), 400);
+        let count = perft(&mut board, 2, 2, 1);
+        assert_eq!(count, 400);
     }
 
     #[test]
-    fn test_legal_moves_pos1_d3() {
+    fn perft_pos1_d3() {
         let mut board = Board::new();
-
-        assert_eq!(perft(&mut board, 3, 3), 8902);
+        let count = perft(&mut board, 3, 3, 1);
+        assert_eq!(count, 8_902);
     }
 
     #[test]
-    fn test_legal_moves_pos1_d4() {
+    fn perft_pos1_d4() {
         let mut board = Board::new();
-
-        assert_eq!(perft(&mut board, 4, 4), 197281);
+        let count = perft(&mut board, 4, 4, 1);
+        assert_eq!(count, 197_281);
     }
-
-    #[test]
-    fn test_legal_moves_pos2_d1() {
-        let mut board = Board::new_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1").unwrap();
-
-        assert_eq!(perft(&mut board, 1, 1), 48); // missing e1c1, e1g1
-    }
-
-    //#[test]
-    fn test_legal_moves_pos2_d2_sub() {
-                                           //r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K1R1 b Qkq - 1 1
-        let mut board = Board::new_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1").unwrap();
-        board.push(Move::new_from_string("h1g1").unwrap()).unwrap();
-
-        assert_eq!(perft(&mut board, 1, 1), 43);
-    }
-
-    // #[test]
-    // fn dummy_test_delete() {
-    //     let mut board = Board::new_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1").unwrap();
-    //     board.push(Move::new_from_string("h1g1").unwrap()).unwrap();
-
-    //     let mut board2 = Board::new_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K1R1 b Qkq - 1 1").unwrap();
-    //     board2.print();
-
-    //     assert_eq!(board.fen(), board2.fen());
-
-    // }
-    
-    // #[test]
-    // fn simple_break_delete() {
-    //     let mut board2 = Board::new_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K1R1 b Qkq - 1 1").unwrap();
-
-    //     assert_eq!("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K1R1 b Qkq - 1 1", board2.fen());
-    // }
-
-    #[test]
-    fn test_legal_moves_pos2_d2() {
-        let mut board = Board::new_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1").unwrap();
-
-        assert_eq!(perft(&mut board, 2, 2), 2039);
-    }*/
+}
