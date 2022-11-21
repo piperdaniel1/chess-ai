@@ -284,6 +284,18 @@ impl Board {
         }
     }
 
+    fn is_other_cache_equivalent(&self, other: &Board) -> bool {
+        for i in 0..13 {
+            for j in 0..self.piece_positions[i].len() {
+                if !self.piece_positions[i].contains(&other.piece_positions[i][j]) {
+                    return false;
+                }
+            }
+        }
+
+        true
+    }
+
     pub fn new_from_fen(fen: &str) -> Result<Board, Error> {
         let mut board = Board::new_empty();
         let mut row = 0;
@@ -722,6 +734,23 @@ impl Board {
         //
         // HERE COME THE EDGE CASES
         //
+
+        // If we captured a rook, we cannot castle with that side anymore
+        if to_piece.is_some() {
+            if to_piece.unwrap() == WHITE_ROOK  {
+                if mv.to == H1 {
+                    self.castling[0] = false;
+                } else if mv.to == A1 {
+                    self.castling[1] = false;
+                }
+            } else if to_piece.unwrap() == BLACK_ROOK {
+                if mv.to == H8 {
+                    self.castling[2] = false;
+                } else if mv.to == A8 {
+                    self.castling[3] = false;
+                }
+            }
+        }
 
         // If this was a castling move, move the rook as well
         if from_piece == WHITE_KING {
@@ -2520,7 +2549,15 @@ mod tests {
             total += count;
 
             starting_board.pop().unwrap();
+            /*if starting_board.fen() != cloned_board.fen() {
+                println!("Original FEN: {}", cloned_board.fen());
+                println!(" New FEN STR: {}", starting_board.fen());
+                println!("Move: {}", elem.get_move_string());
+                println!("Full move details: {:#?}", elem);
+                panic!("Board state mismatch after pop");
+            }*/
             //assert_eq!(starting_board.fen(), cloned_board.fen());
+            //assert!(starting_board.is_other_cache_equivalent(&cloned_board));
         }
 
         if depth == top_depth && verbosity > 0 {
@@ -2586,14 +2623,11 @@ mod tests {
         assert_eq!(count, 4085603);
     }
 
-    /* 
     #[test]
     fn perft_pos2_d4_i1() {
         let mut board = Board::new_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1").unwrap();
-        board.push(Move::new_from_string("a1b1").unwrap()).unwrap();
-        board.push(Move::new_from_string("d7d6").unwrap()).unwrap();
-        let count = perft(&mut board, 2, 2, 2);
-        assert_eq!(count, 1919);
+        board.push(Move::new_from_string("e5g4").unwrap()).unwrap();
+        let count = perft(&mut board, 3, 3, 2);
+        assert_eq!(count, 79912);
     }
-    */
 }
