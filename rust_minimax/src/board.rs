@@ -1574,7 +1574,9 @@ impl Board {
                     // We are moving to a square that will block the check
                     // Strict triple aligned ensures that p2 is between p1 and p3 (and therefore blocks the check)
                     if self.is_strict_triple_aligned(king_square, m.to, check_square.unwrap()) {
-                        legal_moves.push(m);
+                        if !self.creates_discovered_attack(m) {
+                            legal_moves.push(m);
+                        }
                     }
                 }
             // We are moving a piece other than the king
@@ -1672,6 +1674,33 @@ impl Board {
         (row_dir, col_dir)
     }
 
+    fn is_en_passant_move(&self, m: Move) -> Option<Square> {
+        let piece = self.get_square(&m.from);
+        
+        // The move cannot be an en passant move if the piece moving is not a pawn
+        if piece != WHITE_PAWN && piece != BLACK_PAWN {
+            return None;
+        }
+
+        // The move cannot be an en passant move if the pawn is not moving diagonally
+        if m.to.col == m.from.col {
+            return None;
+        }
+
+        // The move cannot be an en passant move if it is actively capturing a piece
+        // on the to square
+        if self.get_square(&m.to) != EMPTY_SQUARE {
+            return None;
+        }
+
+        // Return the square that the pawn is capturing en passant
+        if piece == WHITE_PAWN {
+            Some(Square { row: m.to.row + 1, col: m.to.col })
+        } else {
+            Some(Square { row: m.to.row - 1, col: m.to.col })
+        }
+    }
+
     fn creates_discovered_attack(&self, m: Move) -> bool {
         // Check if the piece we are moving is pinned
         // If it is, we need to make sure that we are moving
@@ -1684,8 +1713,10 @@ impl Board {
         //  (if we are on the line and the move moves along the line we can skip all this nonsense)
         //  2. If we are, scan along this line to see if there is an enemy piece
         //     that could attack our king if we were not there (stop if you find a friendly piece / OB)
+        //     (if this is an en passant move treat the en passant square as an empty square)
         // 3. If we found a piece, scan back towards our king to see if there is another piece blocking the attack
         //    (stop if we find a piece / get to the king)
+        //    (if this is an en passant move treat the en passant square as an empty square)
         // 4. If we found no blocking piece, then we are pinned. We can only move along the line of the pin.
 
         let king_pos = self.get_king_pos();
@@ -1693,6 +1724,8 @@ impl Board {
 
         let is_diag = self.is_diagonal(m.from, king_pos);
         let is_straight = self.is_straight(m.from, king_pos);
+
+        let en_passant_square = self.is_en_passant_move(m);
 
         // We could be diagonally pinned
         if is_diag || is_straight {
@@ -1730,11 +1763,26 @@ impl Board {
             for _ in 0..8 {
                 let val_at_target = self.get_square_ind(curr_row as i8, curr_col as i8);
 
+                // If we hit an empty square, stop the search, there is no piece that could attack our king
                 if val_at_target == OUT_OF_BOUNDS {
                     return false;
+                // If we found an enemy piece break from the search
                 } else if target_pieces.contains(&val_at_target) {
                     // There is an enemy piece that could attack
                     break;
+                // If we are on the en passant square treat it as an empty square
+                } else if let Some(square) = en_passant_square {
+                    if square.row as i8 == curr_row && square.col as i8 == curr_col {
+                        curr_row += row_dir;
+                        curr_col += col_dir;
+
+                        continue;
+                    // If it wasn't the en passant square and it wasn't empty stop the search,
+                    // this piece will block an attack if there is one
+                    } else if val_at_target != EMPTY_SQUARE {
+                        return false;
+                    }
+                // There is a piece that will block the attack
                 } else if val_at_target != EMPTY_SQUARE {
                     // We found a piece that cannot attack the king, break
                     return false;
@@ -1763,6 +1811,17 @@ impl Board {
                     // We already know the move is not along this line so we must be creating
                     // a discovered attack by moving this piece
                     return true;
+                } else if let Some(square) = en_passant_square {
+                    if square.row as i8 == curr_row && square.col as i8 == curr_col {
+                        curr_row -= row_dir;
+                        curr_col -= col_dir;
+
+                        continue;
+                    // If it wasn't the en passant square and it wasn't empty stop the search,
+                    // this piece will block an attack if there is one
+                    } else if val_at_target != EMPTY_SQUARE {
+                        return false;
+                    }
                 } else if val_at_target != EMPTY_SQUARE {
                     // We found a piece that will block the attack
                     return false;
@@ -1771,6 +1830,36 @@ impl Board {
                 curr_row -= row_dir;
                 curr_col -= col_dir;
             }
+        }
+
+        match en_passant_square {
+            Some(square) => return self.removing_creates_check(square),
+            None => return false,
+        }
+    }
+
+    fn removing_creates_check(&self, square: Square) -> bool {
+        let king_square = if self.turn { self.piece_positions[WHITE_KING as usize][0] } 
+                                  else { self.piece_positions[BLACK_KING as usize][0] };
+
+        // Check for knights
+        let knight_attacks = self.is_knight_attacking(king_square, !self.turn);
+
+        match knight_attacks {
+            Some(_) => return true,
+            None => (),
+        }
+
+        let diagonal_attacks = self.is_diagonal_attacking(king_square, !self.turn, Some(square));
+        match diagonal_attacks {
+            Some(_) => return true,
+            None => (),
+        }
+
+        let straight_attacks = self.is_straight_attacking(king_square, !self.turn, Some(square));
+        match straight_attacks {
+            Some(_) => return true,
+            None => (),
         }
 
         false
@@ -1801,7 +1890,7 @@ impl Board {
     }
 
     // Returns true if a diagonal sliding piece of 'color' is attacking 'target_square'
-    fn is_diagonal_attacking(&self, target_square: Square, color: bool) -> Option<Square> {
+    fn is_diagonal_attacking(&self, target_square: Square, color: bool, ignore_square: Option<Square>) -> Option<Square> {
         let x_dirs = [1, 1, -1, -1];
         let y_dirs = [1, -1, 1, -1];
 
@@ -1829,6 +1918,10 @@ impl Board {
 
                 if piece_at_square == EMPTY_SQUARE {
                     continue;
+                } else if ignore_square.is_some() && 
+                    ignore_square.unwrap().row as i8 == to_row &&
+                    ignore_square.unwrap().col as i8 == to_col {
+                    continue;
                 } else if j == 1 && piece_at_square == short_target_piece {
                     // Make sure that the pawn is attacking from the correct direction
                     if short_target_piece == WHITE_PAWN {
@@ -1837,6 +1930,10 @@ impl Board {
                                 row: to_row as u8,
                                 col: to_col as u8,
                             });
+                        // The pawn is not able to attack us, however it will block
+                        // the attack from this direction
+                        } else {
+                            break;
                         }
                     } else {
                         if to_row == target_square.row as i8 - 1 {
@@ -1844,6 +1941,10 @@ impl Board {
                                 row: to_row as u8,
                                 col: to_col as u8,
                             });
+                        // The pawn is not able to attack us, however it will block
+                        // the attack from this direction
+                        } else {
+                            break;
                         }
                     }
                 } else if target_pieces.contains(&piece_at_square) {
@@ -1864,7 +1965,7 @@ impl Board {
     // Returns true if a straight sliding piece of 'color' is attacking 'target_square'
     // This one is a bit simpler than the diagonal one because we don't have to worry
     // about the pawns
-    fn is_straight_attacking(&self, target_square: Square, color: bool) -> Option<Square> {
+    fn is_straight_attacking(&self, target_square: Square, color: bool, ignore_square: Option<Square>) -> Option<Square> {
         let x_dirs = [1, -1, 0, 0];
         let y_dirs = [0, 0, 1, -1];
 
@@ -1889,6 +1990,10 @@ impl Board {
                 let piece_at_square = self.get_square_ind(to_row, to_col);
 
                 if piece_at_square == EMPTY_SQUARE {
+                    continue;
+                } else if ignore_square.is_some() && 
+                    ignore_square.unwrap().row as i8 == to_row &&
+                    ignore_square.unwrap().col as i8 == to_col {
                     continue;
                 } else if target_pieces.contains(&piece_at_square) {
                     return Some(Square {
@@ -1927,13 +2032,13 @@ impl Board {
             None => (),
         }
 
-        let diagonal_attacks = self.is_diagonal_attacking(king_square, !self.turn);
+        let diagonal_attacks = self.is_diagonal_attacking(king_square, !self.turn, None);
         match diagonal_attacks {
             Some(square) => return Some(square),
             None => (),
         }
 
-        let straight_attacks = self.is_straight_attacking(king_square, !self.turn);
+        let straight_attacks = self.is_straight_attacking(king_square, !self.turn, None);
         match straight_attacks {
             Some(square) => return Some(square),
             None => (),
@@ -2422,38 +2527,38 @@ mod tests {
     fn test_diagonal_attacking() {
         let mut board = Board::new_from_fen("8/5p2/6K1/7q/1k6/8/8/1b6 w - - 0 1").unwrap();
         let test_square = Square {row: RANK_SIX, col: FILE_G};
-        assert!(board.is_diagonal_attacking(test_square, BLACK).is_some());
+        assert!(board.is_diagonal_attacking(test_square, BLACK, None).is_some());
 
         board.import_from_fen("8/5p2/6K1/8/1k6/8/8/1b6 w - - 0 1").unwrap();
         let test_square = Square {row: RANK_SIX, col: FILE_G};
-        assert!(board.is_diagonal_attacking(test_square, BLACK).is_some());
+        assert!(board.is_diagonal_attacking(test_square, BLACK, None).is_some());
 
         board.import_from_fen("8/5p2/6K1/8/1k6/8/8/8 w - - 0 1").unwrap();
         let test_square = Square {row: RANK_SIX, col: FILE_G};
-        assert!(board.is_diagonal_attacking(test_square, BLACK).is_some());
+        assert!(board.is_diagonal_attacking(test_square, BLACK, None).is_some());
 
         board.import_from_fen("8/8/6K1/8/1k6/8/8/8 w - - 0 1").unwrap();
         let test_square = Square {row: RANK_SIX, col: FILE_G};
-        assert!(!board.is_diagonal_attacking(test_square, BLACK).is_some());
+        assert!(!board.is_diagonal_attacking(test_square, BLACK, None).is_some());
     }
 
     #[test]
     fn test_straight_attacking() {
         let mut board = Board::new_from_fen("7r/8/3K3q/5P2/8/b5k1/3r4/8 w - - 0 1").unwrap();
         let test_square = Square {row: RANK_SIX, col: FILE_D};
-        assert!(board.is_straight_attacking(test_square, BLACK).is_some());
+        assert!(board.is_straight_attacking(test_square, BLACK, None).is_some());
 
         board.import_from_fen("7r/8/3K1P1q/8/8/b5k1/3r4/8 w - - 0 1").unwrap();
         let test_square = Square {row: RANK_SIX, col: FILE_D};
-        assert!(board.is_straight_attacking(test_square, BLACK).is_some());
+        assert!(board.is_straight_attacking(test_square, BLACK, None).is_some());
 
         board.import_from_fen("7r/8/3K1P1q/8/8/b5k1/4r3/8 w - - 0 1").unwrap();
         let test_square = Square {row: RANK_SIX, col: FILE_D};
-        assert!(!board.is_straight_attacking(test_square, BLACK).is_some());
+        assert!(!board.is_straight_attacking(test_square, BLACK, None).is_some());
 
         board.import_from_fen("1q5r/8/3K1P1q/8/8/b5k1/4r3/8 w - - 0 1").unwrap();
         let test_square = Square {row: RANK_SIX, col: FILE_D};
-        assert!(!board.is_straight_attacking(test_square, BLACK).is_some());
+        assert!(!board.is_straight_attacking(test_square, BLACK, None).is_some());
     }
 
     #[test]
@@ -2644,13 +2749,5 @@ mod tests {
         let mut board = Board::new_from_fen("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1").unwrap();
         let count = perft(&mut board, 2, 2, 2);
         assert_eq!(count, 191);
-    }
-
-    #[test]
-    fn perft_pos3_d2_i1() {
-        let mut board = Board::new_from_fen("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1").unwrap();
-        board.push(Move::new_from_string("e2e4").unwrap()).unwrap();
-        let count = perft(&mut board, 1, 1, 2);
-        assert_eq!(count, 16);
     }
 }
