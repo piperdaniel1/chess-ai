@@ -1411,11 +1411,13 @@ impl Board {
             if self.castling[1] {
                 if self.square_has_check(D1).is_none() && self.get_square(&D1) == EMPTY_SQUARE {
                     if self.square_has_check(C1).is_none() && self.get_square(&C1) == EMPTY_SQUARE {
-                        moves.push(Move {
-                            from: E1,
-                            to: C1,
-                            promotion: None,
-                        });
+                        if self.get_square(&B1) == EMPTY_SQUARE {
+                            moves.push(Move {
+                                from: E1,
+                                to: C1,
+                                promotion: None,
+                            });
+                        }
                     }
                 }
             }
@@ -1438,11 +1440,13 @@ impl Board {
             if self.castling[3] {
                 if self.square_has_check(D8).is_none() && self.get_square(&D8) == EMPTY_SQUARE {
                     if self.square_has_check(C8).is_none() && self.get_square(&C8) == EMPTY_SQUARE {
-                        moves.push(Move {
-                            from: E8,
-                            to: C8,
-                            promotion: None,
-                        });
+                        if self.get_square(&B8) == EMPTY_SQUARE {
+                            moves.push(Move {
+                                from: E8,
+                                to: C8,
+                                promotion: None,
+                            });
+                        }
                     }
                 }
             }
@@ -1474,7 +1478,10 @@ impl Board {
                 if i == 1 || i == 7 {
                     self.add_diagonal_moves(&mut moves, curr_square, 1);
                     self.add_straight_moves(&mut moves, curr_square, 1);
-                    self.add_castling_moves(&mut moves);
+
+                    if self.has_check().is_none() {
+                        self.add_castling_moves(&mut moves);
+                    }
                 // Queens
                 } else if i == 2 || i == 8 {
                     self.add_diagonal_moves(&mut moves, curr_square, 8);
@@ -2568,7 +2575,25 @@ mod tests {
     #[test]
     fn perft_pos2_d3() {
         let mut board = Board::new_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1").unwrap();
-        let count = perft(&mut board, 3, 3, 2);
+        let count = perft(&mut board, 3, 3, 1);
         assert_eq!(count, 97862);
     }
+
+    #[test]
+    fn perft_pos2_d4() {
+        let mut board = Board::new_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1").unwrap();
+        let count = perft(&mut board, 4, 4, 2);
+        assert_eq!(count, 4085603);
+    }
+
+    /* 
+    #[test]
+    fn perft_pos2_d4_i1() {
+        let mut board = Board::new_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1").unwrap();
+        board.push(Move::new_from_string("a1b1").unwrap()).unwrap();
+        board.push(Move::new_from_string("d7d6").unwrap()).unwrap();
+        let count = perft(&mut board, 2, 2, 2);
+        assert_eq!(count, 1919);
+    }
+    */
 }
