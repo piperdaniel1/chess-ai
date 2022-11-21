@@ -287,6 +287,40 @@ impl Board {
         self.turn
     }
 
+    /* These functions are useful for scoring the board */
+    pub fn get_pawn_differential(&self) -> i32 {
+        return self.piece_positions[WHITE_PAWN as usize].len() as i32 -
+            self.piece_positions[BLACK_PAWN as usize].len() as i32;
+    }
+
+    pub fn get_knight_differential(&self) -> i32 {
+        return self.piece_positions[WHITE_KNIGHT as usize].len() as i32 -
+            self.piece_positions[BLACK_KNIGHT as usize].len() as i32;
+    }
+
+    pub fn get_bishop_differential(&self) -> i32 {
+        return self.piece_positions[WHITE_BISHOP as usize].len() as i32 -
+            self.piece_positions[BLACK_BISHOP as usize].len() as i32;
+    }
+
+    pub fn get_rook_differential(&self) -> i32 {
+        return self.piece_positions[WHITE_ROOK as usize].len() as i32 -
+            self.piece_positions[BLACK_ROOK as usize].len() as i32;
+    }
+
+    pub fn get_queen_differential(&self) -> i32 {
+        return self.piece_positions[WHITE_QUEEN as usize].len() as i32 -
+            self.piece_positions[BLACK_QUEEN as usize].len() as i32;
+    }
+
+    pub fn checkmate(&self) -> bool {
+        self.has_check().is_some() && self.gen_legal_moves().len() == 0
+    }
+
+    pub fn stalemate(&self) -> bool {
+        self.has_check().is_none() && self.gen_legal_moves().len() == 0
+    }
+
     fn is_other_cache_equivalent(&self, other: &Board) -> bool {
         for i in 0..13 {
             for j in 0..self.piece_positions[i].len() {

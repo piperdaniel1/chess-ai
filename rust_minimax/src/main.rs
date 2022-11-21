@@ -1,3 +1,5 @@
+use minimax::score_board;
+
 mod board;
 mod minimax;
 
@@ -24,25 +26,15 @@ mod minimax;
 // are under attack by which pieces.
 
 fn main() {
-    let board = board::Board::new();
-    board.print();
-    // let first_space_ind = test_str.find(' ').unwrap();
-    // println!("first_space_ind: {}", first_space_ind);
-    // println!("chars around first space: {}",
-    //          &test_str[first_space_ind - 1..first_space_ind + 2]);
-    // println!("Char right before first space: {}",
-    //          test_str.chars().nth(first_space_ind - 1).unwrap());
+    //let board = board::Board::new_from_fen("k7/2Q5/8/1K6/8/8/8/8 b - - 0 1").unwrap();
 
-    // let second_space_ind = &test_str[first_space_ind..&test_str].find(' ').unwrap();
-    // println!("second_space_ind: {}", second_space_ind);
+    //println!("{}", score_board(&board, 0));
+
+    let mut ai = minimax::ChessAI::new();
+    //ai.import_position("k7/8/2q5/8/8/5Q2/4K3/8 w - - 0 1").unwrap();
+    //ai.import_position("k7/2Q5/1K6/8/8/8/8/8 w - - 0 1").unwrap();
+    ai.import_position("1k6/3Q4/2K5/8/8/8/8/8 w - - 0 1").unwrap();
+    let res = ai.best_move(2);
     
-    // let matches = test_str.match_indices(' ').collect::<Vec<_>>();
-    // println!("matches: {:?}", matches);
-    // let collection: Vec<&str> = test_str.split(' ').collect();
-    // println!("collection: {:?}", collection);
-    /*
-    let mut board = board::Board::new();
-    board.setup();
-    board.print();
-    println!("Fen: {}", board.fen());*/
+    println!("{} with score {}", res.best_move.unwrap().get_move_string(), res.score);
 }
