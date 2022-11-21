@@ -1,4 +1,5 @@
 mod board;
+mod minimax;
 
 // Goal: Make board.legal_moves() a function that takes
 // an immutable self reference while also not having it

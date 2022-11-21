@@ -6,111 +6,110 @@ use std::fmt::Error;
 
 const SAFE_MODE : bool = true;
 
-const BLACK: bool = false;
-const WHITE: bool = true;
+pub const BLACK: bool = false;
+pub const WHITE: bool = true;
 
-const RANK_ONE: u8 = 7;
-const RANK_TWO: u8 = 6;
-const RANK_THREE: u8 = 5;
-const RANK_FOUR: u8 = 4;
-const RANK_FIVE: u8 = 3;
-const RANK_SIX: u8 = 2;
-const RANK_SEVEN: u8 = 1;
-const RANK_EIGHT: u8 = 0;
+pub const RANK_ONE: u8 = 7;
+pub const RANK_TWO: u8 = 6;
+pub const RANK_THREE: u8 = 5;
+pub const RANK_FOUR: u8 = 4;
+pub const RANK_FIVE: u8 = 3;
+pub const RANK_SIX: u8 = 2;
+pub const RANK_SEVEN: u8 = 1;
+pub const RANK_EIGHT: u8 = 0;
 
-const FILE_A: u8 = 0;
-const FILE_B: u8 = 1;
-const FILE_C: u8 = 2;
-const FILE_D: u8 = 3;
-const FILE_E: u8 = 4;
-const FILE_F: u8 = 5;
-const FILE_G: u8 = 6;
-const FILE_H: u8 = 7;
+pub const FILE_A: u8 = 0;
+pub const FILE_B: u8 = 1;
+pub const FILE_C: u8 = 2;
+pub const FILE_D: u8 = 3;
+pub const FILE_E: u8 = 4;
+pub const FILE_F: u8 = 5;
+pub const FILE_G: u8 = 6;
+pub const FILE_H: u8 = 7;
 
-const WHITE_KINGSIDE_CASTLE: usize = 0;
-const WHITE_QUEENSIDE_CASTLE: usize = 1;
-const BLACK_KINGSIDE_CASTLE: usize = 2;
-const BLACK_QUEENSIDE_CASTLE: usize = 3;
+pub const WHITE_KINGSIDE_CASTLE: usize = 0;
+pub const WHITE_QUEENSIDE_CASTLE: usize = 1;
+pub const BLACK_KINGSIDE_CASTLE: usize = 2;
+pub const BLACK_QUEENSIDE_CASTLE: usize = 3;
+pub const BLACK_PAWN: u8 = 12;
+pub const BLACK_KNIGHT: u8 = 11;
+pub const BLACK_BISHOP: u8 = 10;
+pub const BLACK_ROOK: u8 = 9;
+pub const BLACK_QUEEN: u8 = 8;
+pub const BLACK_KING: u8 = 7;
+pub const WHITE_PAWN: u8 = 6;
+pub const WHITE_KNIGHT: u8 = 5;
+pub const WHITE_BISHOP: u8 = 4;
+pub const WHITE_ROOK: u8 = 3;
+pub const WHITE_QUEEN: u8 = 2;
+pub const WHITE_KING: u8 = 1;
+pub const EMPTY_SQUARE: u8 = 0;
+pub const OUT_OF_BOUNDS: u8 = 255;
 
-const BLACK_PAWN: u8 = 12;
-const BLACK_KNIGHT: u8 = 11;
-const BLACK_BISHOP: u8 = 10;
-const BLACK_ROOK: u8 = 9;
-const BLACK_QUEEN: u8 = 8;
-const BLACK_KING: u8 = 7;
-const WHITE_PAWN: u8 = 6;
-const WHITE_KNIGHT: u8 = 5;
-const WHITE_BISHOP: u8 = 4;
-const WHITE_ROOK: u8 = 3;
-const WHITE_QUEEN: u8 = 2;
-const WHITE_KING: u8 = 1;
-const EMPTY_SQUARE: u8 = 0;
-const OUT_OF_BOUNDS: u8 = 255;
-
-const A8: Square = Square { row: 0, col: 0 };
-const B8: Square = Square { row: 0, col: 1 };
-const C8: Square = Square { row: 0, col: 2 };
-const D8: Square = Square { row: 0, col: 3 };
-const E8: Square = Square { row: 0, col: 4 };
-const F8: Square = Square { row: 0, col: 5 };
-const G8: Square = Square { row: 0, col: 6 };
-const H8: Square = Square { row: 0, col: 7 };
-const A7: Square = Square { row: 1, col: 0 };
-const B7: Square = Square { row: 1, col: 1 };
-const C7: Square = Square { row: 1, col: 2 };
-const D7: Square = Square { row: 1, col: 3 };
-const E7: Square = Square { row: 1, col: 4 };
-const F7: Square = Square { row: 1, col: 5 };
-const G7: Square = Square { row: 1, col: 6 };
-const H7: Square = Square { row: 1, col: 7 };
-const A6: Square = Square { row: 2, col: 0 };
-const B6: Square = Square { row: 2, col: 1 };
-const C6: Square = Square { row: 2, col: 2 };
-const D6: Square = Square { row: 2, col: 3 };
-const E6: Square = Square { row: 2, col: 4 };
-const F6: Square = Square { row: 2, col: 5 };
-const G6: Square = Square { row: 2, col: 6 };
-const H6: Square = Square { row: 2, col: 7 };
-const A5: Square = Square { row: 3, col: 0 };
-const B5: Square = Square { row: 3, col: 1 };
-const C5: Square = Square { row: 3, col: 2 };
-const D5: Square = Square { row: 3, col: 3 };
-const E5: Square = Square { row: 3, col: 4 };
-const F5: Square = Square { row: 3, col: 5 };
-const G5: Square = Square { row: 3, col: 6 };
-const H5: Square = Square { row: 3, col: 7 };
-const A4: Square = Square { row: 4, col: 0 };
-const B4: Square = Square { row: 4, col: 1 };
-const C4: Square = Square { row: 4, col: 2 };
-const D4: Square = Square { row: 4, col: 3 };
-const E4: Square = Square { row: 4, col: 4 };
-const F4: Square = Square { row: 4, col: 5 };
-const G4: Square = Square { row: 4, col: 6 };
-const H4: Square = Square { row: 4, col: 7 };
-const A3: Square = Square { row: 5, col: 0 };
-const B3: Square = Square { row: 5, col: 1 };
-const C3: Square = Square { row: 5, col: 2 };
-const D3: Square = Square { row: 5, col: 3 };
-const E3: Square = Square { row: 5, col: 4 };
-const F3: Square = Square { row: 5, col: 5 };
-const G3: Square = Square { row: 5, col: 6 };
-const H3: Square = Square { row: 5, col: 7 };
-const A2: Square = Square { row: 6, col: 0 };
-const B2: Square = Square { row: 6, col: 1 };
-const C2: Square = Square { row: 6, col: 2 };
-const D2: Square = Square { row: 6, col: 3 };
-const E2: Square = Square { row: 6, col: 4 };
-const F2: Square = Square { row: 6, col: 5 };
-const G2: Square = Square { row: 6, col: 6 };
-const H2: Square = Square { row: 6, col: 7 };
-const A1: Square = Square { row: 7, col: 0 };
-const B1: Square = Square { row: 7, col: 1 };
-const C1: Square = Square { row: 7, col: 2 };
-const D1: Square = Square { row: 7, col: 3 };
-const E1: Square = Square { row: 7, col: 4 };
-const F1: Square = Square { row: 7, col: 5 };
-const G1: Square = Square { row: 7, col: 6 };
-const H1: Square = Square { row: 7, col: 7 };
+pub const A8: Square = Square { row: 0, col: 0 };
+pub const B8: Square = Square { row: 0, col: 1 };
+pub const C8: Square = Square { row: 0, col: 2 };
+pub const D8: Square = Square { row: 0, col: 3 };
+pub const E8: Square = Square { row: 0, col: 4 };
+pub const F8: Square = Square { row: 0, col: 5 };
+pub const G8: Square = Square { row: 0, col: 6 };
+pub const H8: Square = Square { row: 0, col: 7 };
+pub const A7: Square = Square { row: 1, col: 0 };
+pub const B7: Square = Square { row: 1, col: 1 };
+pub const C7: Square = Square { row: 1, col: 2 };
+pub const D7: Square = Square { row: 1, col: 3 };
+pub const E7: Square = Square { row: 1, col: 4 };
+pub const F7: Square = Square { row: 1, col: 5 };
+pub const G7: Square = Square { row: 1, col: 6 };
+pub const H7: Square = Square { row: 1, col: 7 };
+pub const A6: Square = Square { row: 2, col: 0 };
+pub const B6: Square = Square { row: 2, col: 1 };
+pub const C6: Square = Square { row: 2, col: 2 };
+pub const D6: Square = Square { row: 2, col: 3 };
+pub const E6: Square = Square { row: 2, col: 4 };
+pub const F6: Square = Square { row: 2, col: 5 };
+pub const G6: Square = Square { row: 2, col: 6 };
+pub const H6: Square = Square { row: 2, col: 7 };
+pub const A5: Square = Square { row: 3, col: 0 };
+pub const B5: Square = Square { row: 3, col: 1 };
+pub const C5: Square = Square { row: 3, col: 2 };
+pub const D5: Square = Square { row: 3, col: 3 };
+pub const E5: Square = Square { row: 3, col: 4 };
+pub const F5: Square = Square { row: 3, col: 5 };
+pub const G5: Square = Square { row: 3, col: 6 };
+pub const H5: Square = Square { row: 3, col: 7 };
+pub const A4: Square = Square { row: 4, col: 0 };
+pub const B4: Square = Square { row: 4, col: 1 };
+pub const C4: Square = Square { row: 4, col: 2 };
+pub const D4: Square = Square { row: 4, col: 3 };
+pub const E4: Square = Square { row: 4, col: 4 };
+pub const F4: Square = Square { row: 4, col: 5 };
+pub const G4: Square = Square { row: 4, col: 6 };
+pub const H4: Square = Square { row: 4, col: 7 };
+pub const A3: Square = Square { row: 5, col: 0 };
+pub const B3: Square = Square { row: 5, col: 1 };
+pub const C3: Square = Square { row: 5, col: 2 };
+pub const D3: Square = Square { row: 5, col: 3 };
+pub const E3: Square = Square { row: 5, col: 4 };
+pub const F3: Square = Square { row: 5, col: 5 };
+pub const G3: Square = Square { row: 5, col: 6 };
+pub const H3: Square = Square { row: 5, col: 7 };
+pub const A2: Square = Square { row: 6, col: 0 };
+pub const B2: Square = Square { row: 6, col: 1 };
+pub const C2: Square = Square { row: 6, col: 2 };
+pub const D2: Square = Square { row: 6, col: 3 };
+pub const E2: Square = Square { row: 6, col: 4 };
+pub const F2: Square = Square { row: 6, col: 5 };
+pub const G2: Square = Square { row: 6, col: 6 };
+pub const H2: Square = Square { row: 6, col: 7 };
+pub const A1: Square = Square { row: 7, col: 0 };
+pub const B1: Square = Square { row: 7, col: 1 };
+pub const C1: Square = Square { row: 7, col: 2 };
+pub const D1: Square = Square { row: 7, col: 3 };
+pub const E1: Square = Square { row: 7, col: 4 };
+pub const F1: Square = Square { row: 7, col: 5 };
+pub const G1: Square = Square { row: 7, col: 6 };
+pub const H1: Square = Square { row: 7, col: 7 };
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Board { 
@@ -149,7 +148,7 @@ pub struct Board {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-struct Square { row: u8, col: u8 }
+pub struct Square { row: u8, col: u8 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Move { from: Square, to: Square, promotion: Option<u8> }
@@ -199,11 +198,11 @@ fn get_piece_from_char(c: char) -> Result<u8, Error> {
 }
 
 impl Move {
-    fn new(from: Square, to: Square, promotion: Option<u8>) -> Move {
+    pub fn new(from: Square, to: Square, promotion: Option<u8>) -> Move {
         Move { from, to, promotion }
     }
 
-    fn new_from_string(s: &str) -> Result<Move, Error> {
+    pub fn new_from_string(s: &str) -> Result<Move, Error> {
         let from_square = Square::new_from_string(&s[0..2]);
         let to_square = Square::new_from_string(&s[2..4]);
         let promotion = match s.len() {
@@ -222,7 +221,7 @@ impl Move {
         Ok(Move::new(from_square, to_square, promotion))
     }
 
-    fn get_move_string(&self) -> String {
+    pub fn get_move_string(&self) -> String {
         let mut s = String::new();
         s.push_str(&self.from.get_square_string());
         s.push_str(&self.to.get_square_string());
@@ -235,7 +234,7 @@ impl Square {
         Square { row, col }
     }
 
-    fn get_square_string(&self) -> String {
+    pub fn get_square_string(&self) -> String {
         let mut s = String::new();
         s.push((self.col + 97) as char);
         s.push(((7-self.row) + 49) as char);
@@ -282,6 +281,10 @@ impl Board {
             piece_positions: [vec![], vec![], vec![], vec![], vec![], vec![], vec![],
                               vec![], vec![], vec![], vec![], vec![], vec![]],
         }
+    }
+
+    pub fn turn(&self) -> bool {
+        self.turn
     }
 
     fn is_other_cache_equivalent(&self, other: &Board) -> bool {
