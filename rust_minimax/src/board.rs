@@ -1638,8 +1638,8 @@ impl Board {
            && self.is_straight(p2, p3)
            && self.is_straight(p1, p3) {
             // check if p2 is between p1 and p3
-            if (p1.row < p2.row && p2.row < p3.row) || (p1.row > p2.row && p2.row > p3.row) {
-                if (p1.col < p2.col && p2.col < p3.col) || (p1.col > p2.col && p2.col > p3.col) {
+            if (p1.row <= p2.row && p2.row <= p3.row) || (p1.row >= p2.row && p2.row >= p3.row) {
+                if (p1.col <= p2.col && p2.col <= p3.col) || (p1.col >= p2.col && p2.col >= p3.col) {
                     return true
                 }
             }
@@ -1813,6 +1813,10 @@ impl Board {
 
         let short_target_piece = if color == WHITE { WHITE_PAWN } else { BLACK_PAWN };
 
+        // The friendly king is the opposite color from the attacking piece
+        // The friendly king cannot block enemy attacks
+        let friendly_king = if color == BLACK { WHITE_KING } else { BLACK_KING };
+
         for i in 0..x_dirs.len() {
             let mut to_row = target_square.row as i8;
             let mut to_col = target_square.col as i8;
@@ -1847,7 +1851,8 @@ impl Board {
                         row: to_row as u8,
                         col: to_col as u8,
                     });
-                } else {
+                // We found a piece that will block the attack
+                } else if piece_at_square != friendly_king {
                     break;
                 }
             }
@@ -1869,6 +1874,10 @@ impl Board {
             [BLACK_QUEEN, BLACK_ROOK]
         };
 
+        // The friendly king is the opposite color from the attacking piece
+        // The friendly king cannot block enemy attacks
+        let friendly_king = if color == BLACK { WHITE_KING } else { BLACK_KING };
+
         for i in 0..x_dirs.len() {
             let mut to_row = target_square.row as i8;
             let mut to_col = target_square.col as i8;
@@ -1886,7 +1895,7 @@ impl Board {
                         row: to_row as u8,
                         col: to_col as u8,
                     });
-                } else {
+                } else if piece_at_square != friendly_king {
                     break;
                 }
             }
@@ -2619,15 +2628,29 @@ mod tests {
     #[test]
     fn perft_pos2_d4() {
         let mut board = Board::new_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1").unwrap();
-        let count = perft(&mut board, 4, 4, 2);
+        let count = perft(&mut board, 4, 4, 1);
         assert_eq!(count, 4085603);
     }
 
     #[test]
-    fn perft_pos2_d4_i1() {
-        let mut board = Board::new_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1").unwrap();
-        board.push(Move::new_from_string("e5g4").unwrap()).unwrap();
-        let count = perft(&mut board, 3, 3, 2);
-        assert_eq!(count, 79912);
+    fn perft_pos3_d1() {
+        let mut board = Board::new_from_fen("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1").unwrap();
+        let count = perft(&mut board, 1, 1, 2);
+        assert_eq!(count, 14);
+    }
+
+    #[test]
+    fn perft_pos3_d2() {
+        let mut board = Board::new_from_fen("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1").unwrap();
+        let count = perft(&mut board, 2, 2, 2);
+        assert_eq!(count, 191);
+    }
+
+    #[test]
+    fn perft_pos3_d2_i1() {
+        let mut board = Board::new_from_fen("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1").unwrap();
+        board.push(Move::new_from_string("e2e4").unwrap()).unwrap();
+        let count = perft(&mut board, 1, 1, 2);
+        assert_eq!(count, 16);
     }
 }
