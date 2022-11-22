@@ -25,6 +25,35 @@ mod minimax;
 // It seems like 2 and 3 could be solved by storing which squares
 // are under attack by which pieces.
 
+fn get_move_from_player() -> board::Move {
+    let mut input = String::new();
+    std::io::stdin().read_line(&mut input).unwrap();
+    board::Move::new_from_string(&input).unwrap()
+}
+
+fn play_against_AI(player_color: bool) {
+    let mut ai = minimax::ChessAI::new_with_color(player_color);
+
+    let mut board = board::Board::new();
+
+    while !board.checkmate() && !board.stalemate() {
+    }
+
+    println!("Game over!");
+    if board.checkmate() {
+        if board.turn() == player_color {
+            println!("You lost to checkmate!");
+        } else {
+            println!("You won with checkmate!");
+        }
+    } else {
+        println!("Stalemate!");
+    }
+
+    println!("Final board: {:#?}", board);
+
+}
+
 fn main() {
     //let board = board::Board::new_from_fen("k7/2Q5/8/1K6/8/8/8/8 b - - 0 1").unwrap();
 

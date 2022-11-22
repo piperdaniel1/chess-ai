@@ -49,6 +49,14 @@ impl ChessAI {
         }
     }
 
+    pub fn new_with_color(color: bool) -> ChessAI {
+        ChessAI {
+            board: board::Board::new(),
+            my_color: color,
+            debug_mode: false,
+        }
+    }
+
     pub fn enable_debug(&mut self) {
         self.debug_mode = true;
     }
