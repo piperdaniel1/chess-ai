@@ -1,16 +1,9 @@
 # this will abstract away everything related to pygame
-from copy import copy, deepcopy
-from re import T
 import pygame
 import chess
 import time
-import pygame
 from threading import Thread, Event
-import cProfile
-
 from rust_minimax import RustMinimax
-from board_scorer import Board_Scorer
-from Opening_Book import Opening_Book, Opening_Entry
 
 # The ChessTimer class is used to keep track of the time left for one player
 # Abstracts away the details of keeping track of minutes and seconds

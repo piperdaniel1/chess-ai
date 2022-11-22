@@ -83,7 +83,7 @@ impl ChessAI {
         self.board.print();
     }
 
-    pub fn best_move(&mut self, depth: u8) -> Result<TreeDecision, Error> {
+    pub fn best_move(&mut self, depth: u8, time_limit_secs: u64) -> Result<TreeDecision, Error> {
         if self.board.turn() != self.my_color {
             return Err(Error);
         }

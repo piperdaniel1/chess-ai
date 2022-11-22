@@ -64,7 +64,7 @@ fn play_against_ai(player_color: bool) {
             new_move = get_move_from_player(board.gen_legal_moves());
         } else {
             println!("AI's turn!");
-            new_move = ai.best_move(4).unwrap().best_move.unwrap();
+            new_move = ai.best_move(4, 5).unwrap().best_move.unwrap();
             println!("AI chose: {}", new_move.get_move_string());
         }
 
@@ -105,10 +105,23 @@ fn start_tcp_server() {
                 // compare the request string to 'ping'
                 let req_string = req_string.trim_end_matches(char::from(0));
 
-                if req_string.eq("query") {
+                if req_string.starts_with("query") {
+                    let time_limit = req_string.split_whitespace().nth(1);
+
+                    // We default to a time limit of 5 seconds if the client doesn't specify
+                    // or if the client specifies a time limit that fails to parse
+                    let time_limit = match time_limit {
+                        Some(t) => t.parse::<u64>(),
+                        None => Ok(5)
+                    };
+                    let time_limit = match time_limit {
+                        Ok(t) => t,
+                        Err(_) => 5
+                    };
+
                     match ai {
                         Some(ref mut ai) => {
-                            let best_move = ai.best_move(4);
+                            let best_move = ai.best_move(4, time_limit);
                             let best_move = match best_move {
                                 Ok(d) => d,
                                 Err(_) => {
