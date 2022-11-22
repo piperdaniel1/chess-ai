@@ -72,6 +72,17 @@ impl ChessAI {
         }
     }
 
+    pub fn push_move(&mut self, m: board::Move) -> Result<(), Error> {
+        match self.board.push(m) {
+            Ok(_) => Ok(()),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn print_internal_board(&self) {
+        self.board.print();
+    }
+
     pub fn best_move(&mut self, depth: u8) -> TreeDecision {
         if self.board.turn() != self.my_color {
             panic!("It is not my turn!");
@@ -124,6 +135,7 @@ impl ChessAI {
 
                 if decision.score < best_decision.score {
                     best_decision = decision;
+                    best_decision.best_move = Some(m);
                 }
                 if best_decision.score < beta {
                     beta = best_decision.score;

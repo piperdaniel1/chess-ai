@@ -25,18 +25,51 @@ mod minimax;
 // It seems like 2 and 3 could be solved by storing which squares
 // are under attack by which pieces.
 
-fn get_move_from_player() -> board::Move {
+fn get_move_from_player(possible_moves: Vec<board::Move>) -> board::Move {
     let mut input = String::new();
     std::io::stdin().read_line(&mut input).unwrap();
-    board::Move::new_from_string(&input).unwrap()
+    input.pop();
+
+    let new_move = board::Move::new_from_string(&input);
+
+    match new_move {
+        Ok(m) => {
+            if possible_moves.contains(&m) {
+                m
+            } else {
+                println!("Invalid move!");
+                get_move_from_player(possible_moves)
+            }
+        },
+        Err(_) => {
+            println!("Error, that's not valid input.");
+            get_move_from_player(possible_moves)
+        }
+    }
 }
 
-fn play_against_AI(player_color: bool) {
-    let mut ai = minimax::ChessAI::new_with_color(player_color);
+fn play_against_ai(player_color: bool) {
+    let mut ai = minimax::ChessAI::new_with_color(!player_color);
 
     let mut board = board::Board::new();
 
     while !board.checkmate() && !board.stalemate() {
+        println!("DISPLAY BOARD =====================");
+        board.print();
+
+        let new_move;
+        if board.turn() == player_color {
+            println!("Your turn!");
+            new_move = get_move_from_player(board.gen_legal_moves());
+        } else {
+            println!("AI's turn!");
+            new_move = ai.best_move(4).best_move.unwrap();
+            println!("AI chose: {}", new_move.get_move_string());
+        }
+
+        // We have to push the move to both the display board and the AI's internal board
+        board.push(new_move).unwrap();
+        ai.push_move(new_move).unwrap();
     }
 
     println!("Game over!");
@@ -55,16 +88,5 @@ fn play_against_AI(player_color: bool) {
 }
 
 fn main() {
-    //let board = board::Board::new_from_fen("k7/2Q5/8/1K6/8/8/8/8 b - - 0 1").unwrap();
-
-    //println!("{}", score_board(&board, 0));
-
-    let mut ai = minimax::ChessAI::new();
-    ai.enable_debug();
-    //ai.import_position("k7/8/2q5/8/8/5Q2/4K3/8 w - - 0 1").unwrap();
-    //ai.import_position("k7/2Q5/1K6/8/8/8/8/8 w - - 0 1").unwrap();
-    ai.import_position("1k6/3Q4/2K5/8/8/8/8/8 w - - 0 1").unwrap();
-    let res = ai.best_move(1);
-    
-    println!("{} with score {}", res.best_move.unwrap().get_move_string(), res.score);
+    play_against_ai(board::WHITE);
 }
