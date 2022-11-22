@@ -20,10 +20,12 @@ def send_message(message):
 
     return data
 
-while True:
-    message = input()
-    if message == 'exit':
-        break
-    response = send_message(message)
+# interactive mode
+if __name__ == "__main__":
+    while True:
+        message = input()
+        if message == 'exit':
+            break
+        response = send_message(message)
 
-    print(" >", response)
+        print(" >", response)
