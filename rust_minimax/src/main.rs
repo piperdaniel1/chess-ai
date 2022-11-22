@@ -31,10 +31,11 @@ fn main() {
     //println!("{}", score_board(&board, 0));
 
     let mut ai = minimax::ChessAI::new();
+    ai.enable_debug();
     //ai.import_position("k7/8/2q5/8/8/5Q2/4K3/8 w - - 0 1").unwrap();
     //ai.import_position("k7/2Q5/1K6/8/8/8/8/8 w - - 0 1").unwrap();
     ai.import_position("1k6/3Q4/2K5/8/8/8/8/8 w - - 0 1").unwrap();
-    let res = ai.best_move(2);
+    let res = ai.best_move(1);
     
     println!("{} with score {}", res.best_move.unwrap().get_move_string(), res.score);
 }

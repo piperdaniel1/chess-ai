@@ -4,6 +4,7 @@ use std::fmt::Error;
 pub struct ChessAI {
     board: board::Board,
     my_color: bool,
+    debug_mode: bool,
 }
 
 /* 
@@ -44,7 +45,16 @@ impl ChessAI {
         ChessAI {
             board: board::Board::new(),
             my_color: board::WHITE,
+            debug_mode: false,
         }
+    }
+
+    pub fn enable_debug(&mut self) {
+        self.debug_mode = true;
+    }
+
+    pub fn disable_debug(&mut self) {
+        self.debug_mode = false;
     }
 
     pub fn import_position(&mut self, fen: &str) -> Result<(), Error> {

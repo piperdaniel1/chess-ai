@@ -1948,6 +1948,7 @@ impl Board {
         };
 
         let short_target_piece = if color == WHITE { WHITE_PAWN } else { BLACK_PAWN };
+        let king_target_piece = if color == WHITE { WHITE_KING } else { BLACK_KING };
 
         // The friendly king is the opposite color from the attacking piece
         // The friendly king cannot block enemy attacks
@@ -1994,7 +1995,7 @@ impl Board {
                             break;
                         }
                     }
-                } else if target_pieces.contains(&piece_at_square) {
+                } else if target_pieces.contains(&piece_at_square) ||  (j == 1 && piece_at_square == king_target_piece) {
                     return Some(Square {
                         row: to_row as u8,
                         col: to_col as u8,
@@ -2030,11 +2031,13 @@ impl Board {
             let mut to_row = target_square.row as i8;
             let mut to_col = target_square.col as i8;
 
-            for _ in 1..8 {
+            for j in 1..8 {
                 to_row += y_dirs[i];
                 to_col += x_dirs[i];
 
                 let piece_at_square = self.get_square_ind(to_row, to_col);
+
+                let king_target_piece = if color == WHITE { WHITE_KING } else { BLACK_KING };
 
                 if piece_at_square == EMPTY_SQUARE {
                     continue;
@@ -2042,7 +2045,7 @@ impl Board {
                     ignore_square.unwrap().row as i8 == to_row &&
                     ignore_square.unwrap().col as i8 == to_col {
                     continue;
-                } else if target_pieces.contains(&piece_at_square) {
+                } else if target_pieces.contains(&piece_at_square) || (j == 1 && piece_at_square == king_target_piece) {
                     return Some(Square {
                         row: to_row as u8,
                         col: to_col as u8,
