@@ -1,4 +1,5 @@
-use minimax::score_board;
+use std::net::TcpListener;
+use std::io::{Read, Write};
 
 mod board;
 mod minimax;
@@ -63,7 +64,7 @@ fn play_against_ai(player_color: bool) {
             new_move = get_move_from_player(board.gen_legal_moves());
         } else {
             println!("AI's turn!");
-            new_move = ai.best_move(4).best_move.unwrap();
+            new_move = ai.best_move(4).unwrap().best_move.unwrap();
             println!("AI chose: {}", new_move.get_move_string());
         }
 
@@ -87,6 +88,92 @@ fn play_against_ai(player_color: bool) {
 
 }
 
+fn start_tcp_server() {
+    let listener = TcpListener::bind("127.0.0.1:4321").unwrap();
+    let mut ai: Option<minimax::ChessAI> = None;
+
+    for stream in listener.incoming() {
+        match stream {
+            Ok(mut stream) => {
+                println!("New connection: {}", stream.peer_addr().unwrap());
+
+                let mut buffer = [0; 512];
+                stream.read(&mut buffer).unwrap();
+
+                let req_string = String::from_utf8_lossy(&buffer[..]);
+
+                // compare the request string to 'ping'
+                let req_string = req_string.trim_end_matches(char::from(0));
+
+                if req_string.eq("query") {
+                    match ai {
+                        Some(ref mut ai) => {
+                            let best_move = ai.best_move(4);
+                            let best_move = match best_move {
+                                Ok(d) => d,
+                                Err(_) => {
+                                    stream.write("403 error-in-eval".as_bytes()).unwrap();
+                                    continue;
+                                }
+                            };
+
+                            let best_move = match best_move.best_move {
+                                Some(m) => m,
+                                None => {
+                                    stream.write("403 error-in-internal-parse".as_bytes()).unwrap();
+                                    continue;
+                                }
+                            };
+
+                            let response = format!("bestmove {}", best_move.get_move_string());
+                            stream.write(response.as_bytes()).unwrap();
+                        },
+                        None => {
+                            stream.write("403 err-not-init".as_bytes()).unwrap();
+                        }
+                    }
+                } else if req_string.eq("init w") {
+                    ai = Some(minimax::ChessAI::new_with_color(board::WHITE));
+
+                    stream.write("200 ok".as_bytes()).unwrap();
+                } else if req_string.eq("init b") {
+                    ai = Some(minimax::ChessAI::new_with_color(board::BLACK));
+
+                    stream.write("200 ok".as_bytes()).unwrap();
+                } else if req_string.starts_with("push") {
+                    match ai {
+                        Some(ref mut ai) => {
+                            let new_move = board::Move::new_from_string(&req_string[5..]);
+
+                            let new_move = match new_move {
+                                Ok(m) => m,
+                                Err(_) => {
+                                    stream.write("400 err-invalid-move".as_bytes()).unwrap();
+                                    continue;
+                                }
+                            };
+
+                            ai.push_move(new_move).unwrap();
+                            stream.write("200 ok".as_bytes()).unwrap();
+                        },
+                        None => {
+                            stream.write("403 err-not-init".as_bytes()).unwrap();
+                        }
+                    }
+                } else if req_string.eq("ping") {
+                    stream.write("pong".as_bytes()).unwrap();
+                } else {
+                    stream.write("400 err-invalid-request".as_bytes()).unwrap();
+                }
+            },
+            Err(e) => {
+                println!("Error: {}", e);
+            }
+        }
+    }
+
+    drop(listener);
+}
 fn main() {
-    play_against_ai(board::WHITE);
+    start_tcp_server()
 }

@@ -83,12 +83,12 @@ impl ChessAI {
         self.board.print();
     }
 
-    pub fn best_move(&mut self, depth: u8) -> TreeDecision {
+    pub fn best_move(&mut self, depth: u8) -> Result<TreeDecision, Error> {
         if self.board.turn() != self.my_color {
-            panic!("It is not my turn!");
+            return Err(Error);
         }
 
-        self.minimax(depth, depth, self.my_color, -1000000, 1000000)
+        Ok(self.minimax(depth, depth, self.my_color, -1000000, 1000000))
     }
 
     fn minimax(&mut self, depth: u8, top_depth: u8, maximizing_player: bool, mut alpha: i32, mut beta: i32) -> TreeDecision {
