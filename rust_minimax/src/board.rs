@@ -2849,4 +2849,16 @@ mod tests {
         let count = perft(&mut board, 4, 4, 2);
         assert_eq!(count, 3_894_594);
     }
+
+    #[test]
+    fn test_checkmate() {
+        let board = Board::new_from_fen("1k6/1Q6/2K5/8/8/8/8/8 b - - 1 1").unwrap();
+        assert!(board.checkmate());
+    }
+
+    #[test]
+    fn test_stalemate() {
+        let board = Board::new_from_fen("k7/2Q5/1K6/8/8/8/8/8 b - - 3 2").unwrap();
+        assert!(board.stalemate());
+    }
 }
