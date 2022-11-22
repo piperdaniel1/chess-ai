@@ -333,6 +333,29 @@ impl Board {
         true
     }
 
+    fn is_cache_desynced(&self) -> bool {
+        // Make sure everything in the cache is on the board
+        for i in 0..13 {
+            for j in 0..self.piece_positions[i].len() {
+                if self.get_square(&self.piece_positions[i][j]) != i as u8 {
+                    return true;
+                }
+            }
+        }
+
+        // Make sure everything on the board is in the cache
+        for i in 0..8 {
+            for j in 0..8 {
+                let piece = self.get_square(&Square::new(i, j));
+                if piece != EMPTY_SQUARE && !self.piece_positions[piece as usize].contains(&Square::new(i, j)) {
+                    return true;
+                }
+            }
+        }
+
+        false
+    }
+
     pub fn new_from_fen(fen: &str) -> Result<Board, Error> {
         let mut board = Board::new_empty();
         let mut row = 0;
@@ -2860,5 +2883,20 @@ mod tests {
     fn test_stalemate() {
         let board = Board::new_from_fen("k7/2Q5/1K6/8/8/8/8/8 b - - 3 2").unwrap();
         assert!(board.stalemate());
+    }
+
+    // Somehow this desync happens in the middle of a game
+    // but it never happens in any of the perft tests
+    #[test]
+    fn test_cache_desync() {
+        let mut board = Board::new();
+        // Cause a desync
+        board.cells[0][4] = EMPTY_SQUARE;
+        assert!(board.is_cache_desynced());
+
+        let mut board = Board::new();
+        // Cause a different desync
+        board.piece_positions[BLACK_KING as usize].clear();
+        assert!(board.is_cache_desynced());
     }
 }
