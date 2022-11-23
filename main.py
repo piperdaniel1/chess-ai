@@ -1,6 +1,6 @@
 import pygame
 import chess
-from socket_interface import send_message
+from socket_interface import Connection
 from typing import List, Tuple, Union
 
 # Colors
@@ -150,8 +150,8 @@ def rerender(screen, state: 'State'):
     for square in state.get_move_options():
         render_move_option(screen, square)
 
-    render_check(screen, (4, 0))
-    render_check(screen, (4, 7))
+    # render_check(screen, (4, 0))
+    # render_check(screen, (4, 7))
 
     for square in state.get_attack_options():
         render_capture_option(screen, square)
@@ -184,7 +184,22 @@ class Game:
         return square[0] + (7 - square[1]) * 8
     
     def push_move(self, from_square, to_square):
-        self.board.push(chess.Move(self.__reverse_conv_square(from_square), self.__reverse_conv_square(to_square)))
+        """
+        Pushes a move to the board.
+        Takes care of promotion (auto picks queen).
+        """
+        derived_move = chess.Move(self.__reverse_conv_square(from_square), self.__reverse_conv_square(to_square))
+
+        if self.board.piece_type_at(self.__reverse_conv_square(from_square)) == chess.PAWN and (to_square[1] == 0 or to_square[1] == 7):
+            derived_move.promotion = chess.QUEEN
+
+        self.board.push(derived_move)
+        return derived_move
+    
+    def push_uci(self, uci):
+        self.board.push_uci(uci)
+
+        return chess.Move.from_uci(uci)
 
     def get_standard_moves_from_square(self, square):
         # yayayay readibility
@@ -205,6 +220,8 @@ class Game:
 
         return list(zip(pieces, squares))
 
+# Represents the complete state of the UI
+# Also has functions for progressing the UI state based on input events
 class State:
     def __init__(self, color):
         self.player_color = color
@@ -213,6 +230,7 @@ class State:
         self.__move_options = []
         self.__capture_options = []
         self.__check_squares = []
+        self.__move_buffer = []
     
     def get_piece_list(self):
         return self.__game.get_piece_list()
@@ -225,6 +243,18 @@ class State:
     
     def get_attack_options(self):
         return self.__capture_options
+    
+    def pop_move_buffer(self):
+        if len(self.__move_buffer) == 0:
+            return None
+        else:
+            return self.__move_buffer.pop(0)
+    
+    def is_players_turn(self):
+        return self.__game.board.turn == self.player_color
+    
+    def push_move(self, uci):
+        self.__move_buffer.append(self.__game.push_uci(uci))
 
     # Mutate the state based on a Pygame event
     def next(self, event):
@@ -240,13 +270,12 @@ class State:
     def __handle_selection_change(self, square):
         # We are moving a piece
         if square in self.__move_options or square in self.__capture_options:
-            self.__game.push_move(self.__selected_square, square)
+            self.__move_buffer.append(self.__game.push_move(self.__selected_square, square))
             self.__set_selected_square(None)
             return
 
         self.__set_selected_square(square)
-
-
+    
     def __set_standard_moves(self, square):
         self.__move_options = self.__game.get_standard_moves_from_square(square)
     
@@ -283,6 +312,15 @@ def main():
     height = BORDER_WIDTH * 2 + BOARD_SIZE
     screen = init_pygame(width, height)
 
+    minimax_conn = Connection()
+
+    if state.is_players_turn():
+        minimax_conn.push_to_queue("init b")
+    else:
+        minimax_conn.push_to_queue("init w")
+
+    waiting_on_ai = False
+
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -290,6 +328,29 @@ def main():
                 break
             else:
                 state.next(event)
+        
+        pmove = state.pop_move_buffer()
+        if pmove is not None:
+            minimax_conn.push_to_queue('push ' + pmove.uci())
+        
+        # We need to ask the AI for a move
+        if not state.is_players_turn() and not waiting_on_ai:
+            minimax_conn.push_to_queue(message='query')
+            waiting_on_ai = True
+        
+        minimax_conn.handle_queue()
+
+        status, result = minimax_conn.receive()
+
+        if not state.is_players_turn() and waiting_on_ai:
+            if status:
+                assert(result is not None and result != -1)
+                result = result.decode('utf-8')
+
+                if "bestmove" in result:
+                    result = result.split(' ')[1]
+                    state.push_move(result)
+                    waiting_on_ai = False
 
         rerender(screen, state)
 

@@ -95,8 +95,6 @@ fn start_tcp_server() {
     for stream in listener.incoming() {
         match stream {
             Ok(mut stream) => {
-                println!("New connection: {}", stream.peer_addr().unwrap());
-
                 let mut buffer = [0; 512];
                 stream.read(&mut buffer).unwrap();
 
@@ -104,6 +102,8 @@ fn start_tcp_server() {
 
                 // compare the request string to 'ping'
                 let req_string = req_string.trim_end_matches(char::from(0));
+
+                println!("Request from {}: {}", stream.peer_addr().unwrap(), req_string);
 
                 if req_string.starts_with("query") {
                     let time_limit = req_string.split_whitespace().nth(1);
@@ -121,10 +121,11 @@ fn start_tcp_server() {
 
                     match ai {
                         Some(ref mut ai) => {
-                            let best_move = ai.best_move(4, time_limit);
+                            let best_move = ai.best_move(5, time_limit);
                             let best_move = match best_move {
                                 Ok(d) => d,
                                 Err(_) => {
+                                    println!("Responding with: 403 error-in-eval");
                                     stream.write("403 error-in-eval".as_bytes()).unwrap();
                                     continue;
                                 }
@@ -133,25 +134,30 @@ fn start_tcp_server() {
                             let best_move = match best_move.best_move {
                                 Some(m) => m,
                                 None => {
+                                    println!("Responding with: 403 error-in-internal-parse");
                                     stream.write("403 error-in-internal-parse".as_bytes()).unwrap();
                                     continue;
                                 }
                             };
 
                             let response = format!("bestmove {}", best_move.get_move_string());
+                            println!("Responding with: {}", response);
                             stream.write(response.as_bytes()).unwrap();
                         },
                         None => {
+                            println!("Responding with: 403 err-not-init");
                             stream.write("403 err-not-init".as_bytes()).unwrap();
                         }
                     }
                 } else if req_string.eq("init w") {
                     ai = Some(minimax::ChessAI::new_with_color(board::WHITE));
 
+                    println!("Responding with 200 ok");
                     stream.write("200 ok".as_bytes()).unwrap();
                 } else if req_string.eq("init b") {
                     ai = Some(minimax::ChessAI::new_with_color(board::BLACK));
 
+                    println!("Responding with 200 ok");
                     stream.write("200 ok".as_bytes()).unwrap();
                 } else if req_string.starts_with("push") {
                     match ai {
@@ -161,21 +167,26 @@ fn start_tcp_server() {
                             let new_move = match new_move {
                                 Ok(m) => m,
                                 Err(_) => {
+                                    println!("Responding with: 400 error-invalid-move");
                                     stream.write("400 err-invalid-move".as_bytes()).unwrap();
                                     continue;
                                 }
                             };
 
                             ai.push_move(new_move).unwrap();
+                            println!("Responding with 200 ok");
                             stream.write("200 ok".as_bytes()).unwrap();
                         },
                         None => {
+                            println!("Responding with: 403 err-not-init");
                             stream.write("403 err-not-init".as_bytes()).unwrap();
                         }
                     }
                 } else if req_string.eq("ping") {
+                    println!("Responding with: pong");
                     stream.write("pong".as_bytes()).unwrap();
                 } else {
+                    println!("Responding with: 400 err-invalid-request");
                     stream.write("400 err-invalid-request".as_bytes()).unwrap();
                 }
             },
