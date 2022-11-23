@@ -2171,6 +2171,7 @@ impl Board {
                 println!("Prepanic info:");
                 self.print();
                 println!("Cache: {:#?}", self.piece_positions);
+                println!("Move History: {:#?}", self.history);
             }
             king_square = self.piece_positions[WHITE_KING as usize][0]
         } else {
@@ -2179,6 +2180,7 @@ impl Board {
                 println!("Prepanic info:");
                 self.print();
                 println!("Cache: {:#?}", self.piece_positions);
+                println!("Move History: {:#?}", self.history);
             }
             king_square = self.piece_positions[BLACK_KING as usize][0];
         }
