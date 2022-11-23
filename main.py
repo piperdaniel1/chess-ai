@@ -1,5 +1,7 @@
 import pygame
 import chess
+import chess.pgn
+import collections
 from socket_interface import Connection
 from typing import List, Tuple, Union
 import sys
@@ -260,6 +262,9 @@ class State:
     
     def push_move(self, uci):
         self.__move_buffer.append(self.__game.push_uci(uci))
+    
+    def get_board(self):
+        return self.__game.board
 
     # Mutate the state based on a Pygame event
     def next(self, event):
@@ -310,6 +315,26 @@ class State:
         self.__set_standard_moves(square)
         self.__set_attack_moves(square)
 
+def board_to_game(board):
+    game = chess.pgn.Game()
+
+    # Undo all moves.
+    switchyard = collections.deque()
+    while board.move_stack:
+        switchyard.append(board.pop())
+
+    game.setup(board)
+    node = game
+
+    # Replay all moves.
+    while switchyard:
+        move = switchyard.pop()
+        node = node.add_variation(move)
+        board.push(move)
+
+    game.headers["Result"] = board.result()
+    return game
+
 def main():
     if len(sys.argv) > 1:
         if sys.argv[1] == "white":
@@ -345,38 +370,46 @@ def main():
 
     waiting_on_ai = False
 
-    while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                break
-            else:
-                state.next(event)
+    try:
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    break
+                else:
+                    state.next(event)
+            
+            pmove = state.pop_move_buffer()
+            if pmove is not None:
+                minimax_conn.push_to_queue('push ' + pmove.uci())
+            
+            # We need to ask the AI for a move
+            if not state.is_players_turn() and not waiting_on_ai:
+                minimax_conn.push_to_queue(message='query')
+                waiting_on_ai = True
+            
+            minimax_conn.handle_queue()
+
+            status, result = minimax_conn.receive()
+
+            if not state.is_players_turn() and waiting_on_ai:
+                if status:
+                    assert(result is not None and result != -1)
+                    result = result.decode('utf-8')
+
+                    if "bestmove" in result:
+                        result = result.split(' ')[1]
+                        state.push_move(result)
+                        waiting_on_ai = False
+
+            rerender(screen, state)
+    except:
+        pgn_game = board_to_game(state.get_board())
+
+        # print pgn game to stdout
+        print(pgn_game)
         
-        pmove = state.pop_move_buffer()
-        if pmove is not None:
-            minimax_conn.push_to_queue('push ' + pmove.uci())
-        
-        # We need to ask the AI for a move
-        if not state.is_players_turn() and not waiting_on_ai:
-            minimax_conn.push_to_queue(message='query')
-            waiting_on_ai = True
-        
-        minimax_conn.handle_queue()
 
-        status, result = minimax_conn.receive()
-
-        if not state.is_players_turn() and waiting_on_ai:
-            if status:
-                assert(result is not None and result != -1)
-                result = result.decode('utf-8')
-
-                if "bestmove" in result:
-                    result = result.split(' ')[1]
-                    state.push_move(result)
-                    waiting_on_ai = False
-
-        rerender(screen, state)
 
 # This code will always run as main
 main()

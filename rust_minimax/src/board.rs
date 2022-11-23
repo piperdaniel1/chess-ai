@@ -1667,6 +1667,8 @@ impl Board {
         moves
     }
 
+    // There is a bug that allows us a pseudo legal move to slip through if
+    // there is a double check on the king.
     pub fn gen_legal_moves(& self) -> Vec<Move> {
         let moves = self.gen_psuedo_legal_moves();
         let mut legal_moves = Vec::new();
@@ -2171,7 +2173,9 @@ impl Board {
                 println!("Prepanic info:");
                 self.print();
                 println!("Cache: {:#?}", self.piece_positions);
-                println!("Move History: {:#?}", self.history);
+                for i in self.history.len()-4..self.history.len() {
+                    println!("History: {:#?}", self.history[i])
+                }
             }
             king_square = self.piece_positions[WHITE_KING as usize][0]
         } else {
@@ -2180,7 +2184,9 @@ impl Board {
                 println!("Prepanic info:");
                 self.print();
                 println!("Cache: {:#?}", self.piece_positions);
-                println!("Move History: {:#?}", self.history);
+                for i in self.history.len()-4..self.history.len() {
+                    println!("History: {:#?}", self.history[i])
+                }
             }
             king_square = self.piece_positions[BLACK_KING as usize][0];
         }
@@ -3010,5 +3016,16 @@ mod tests {
         // Fix the desync
         board.recache();
         assert!(!board.is_cache_desynced());
+    }
+
+    #[test]
+    fn recreate_king_bug() {
+        let mut board = Board::new_from_fen("r1b1r1n1/p7/1p1k4/2p5/4N3/4P3/PPK5/3R4 b - - 5 34").unwrap();
+
+        let moves = board.gen_legal_moves();
+        for m in &moves {
+            println!("{}", m.get_move_string());
+        }
+        assert_eq!(moves.len(), 5);
     }
 }
