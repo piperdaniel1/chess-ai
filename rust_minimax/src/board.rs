@@ -708,18 +708,13 @@ impl Board {
     }
 
     fn set_square(&mut self, square: &Square, piece: u8) {
-        // Update the piece list
-        if piece != EMPTY_SQUARE {
-            self.piece_positions[piece as usize].push(*square);
-        }
-
         // TODO Maybe there is a faster way to do this
         // Potentially could use a hash map?
 
         // Make sure to remove the piece that used to be in that square
         // from the piece position cache (if there was one)
         
-        // figure out the index
+        // Check what is in the square right now
         let current_piece = self.get_square(square);
 
         // Check if there actually was a piece there
@@ -732,6 +727,11 @@ impl Board {
 
             // remove the piece at square
             self.piece_positions[current_piece as usize].swap_remove(ind);
+        }
+
+        // Update the piece list
+        if piece != EMPTY_SQUARE {
+            self.piece_positions[piece as usize].push(*square);
         }
 
         self.cells[square.row as usize][square.col as usize] = piece;
