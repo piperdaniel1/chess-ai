@@ -380,6 +380,21 @@ impl Board {
         false
     }
 
+    fn recache(&mut self) {
+        for i in 0..13 {
+            self.piece_positions[i].clear();
+        }
+
+        for i in 0..8 {
+            for j in 0..8 {
+                let piece = self.get_square(&Square::new(i, j));
+                if piece != EMPTY_SQUARE {
+                    self.piece_positions[piece as usize].push(Square::new(i, j));
+                }
+            }
+        }
+    }
+
     pub fn new_from_fen(fen: &str) -> Result<Board, Error> {
         let mut board = Board::new_empty();
         let mut row = 0;
@@ -2114,8 +2129,26 @@ impl Board {
      * Also relies on the fact that the turn is stored in the board struct.
      */
     fn has_check(&self) -> Option<Square> {
-        let king_square = if self.turn { self.piece_positions[WHITE_KING as usize][0] } 
-                                  else { self.piece_positions[BLACK_KING as usize][0] };
+        let king_square;
+
+        if self.turn {
+            if self.piece_positions[WHITE_KING as usize].len() == 0 {
+                println!("White king is missing from the cache... panic time!");
+                println!("Prepanic info:");
+                self.print();
+                println!("Cache: {:#?}", self.piece_positions);
+            }
+            king_square = self.piece_positions[WHITE_KING as usize][0]
+        } else {
+            if self.piece_positions[WHITE_KING as usize].len() == 0 {
+                println!("Black king is missing from the cache... panic time!");
+                println!("Prepanic info:");
+                self.print();
+                println!("Cache: {:#?}", self.piece_positions);
+            }
+            king_square = self.piece_positions[BLACK_KING as usize][0];
+        }
+        
 
         self.square_has_check(king_square)
     }
@@ -2918,9 +2951,18 @@ mod tests {
         board.cells[0][4] = EMPTY_SQUARE;
         assert!(board.is_cache_desynced());
 
+        // Fix the desync
+        board.recache();
+        assert!(!board.is_cache_desynced());
+
+
         let mut board = Board::new();
         // Cause a different desync
         board.piece_positions[BLACK_KING as usize].clear();
         assert!(board.is_cache_desynced());
+
+        // Fix the desync
+        board.recache();
+        assert!(!board.is_cache_desynced());
     }
 }
