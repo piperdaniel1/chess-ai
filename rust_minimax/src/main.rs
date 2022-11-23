@@ -121,7 +121,7 @@ fn start_tcp_server() {
 
                     match ai {
                         Some(ref mut ai) => {
-                            let best_move = ai.best_move(4, time_limit);
+                            let best_move = ai.best_move(5, time_limit);
                             let best_move = match best_move {
                                 Ok(d) => d,
                                 Err(_) => {
@@ -140,6 +140,7 @@ fn start_tcp_server() {
                                 }
                             };
 
+                            ai.report_search_speed();
                             let response = format!("bestmove {}", best_move.get_move_string());
                             println!("Responding with: {}", response);
                             stream.write(response.as_bytes()).unwrap();

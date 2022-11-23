@@ -5,6 +5,8 @@ pub struct ChessAI {
     board: board::Board,
     my_color: bool,
     debug_mode: bool,
+    start_time: Option<std::time::Instant>,
+    nodes_expanded: u64,
 }
 
 /* 
@@ -46,6 +48,8 @@ impl ChessAI {
             board: board::Board::new(),
             my_color: board::WHITE,
             debug_mode: false,
+            start_time: None,
+            nodes_expanded: 0,
         }
     }
 
@@ -54,6 +58,8 @@ impl ChessAI {
             board: board::Board::new(),
             my_color: color,
             debug_mode: false,
+            start_time: None,
+            nodes_expanded: 0,
         }
     }
 
@@ -91,7 +97,23 @@ impl ChessAI {
         Ok(self.minimax(depth, depth, self.my_color, -1000000, 1000000))
     }
 
+    pub fn report_search_speed(&mut self) {
+        if let Some(start_time) = self.start_time {
+            let elapsed = start_time.elapsed();
+            let elapsed_secs = elapsed.as_secs() as f64 + elapsed.subsec_nanos() as f64 * 1e-9;
+            println!("{} nodes expanded in {} seconds", self.nodes_expanded, elapsed_secs);
+            println!("{} nodes per second", self.nodes_expanded as f64 / elapsed_secs);
+        }
+    }
+
     fn minimax(&mut self, depth: u8, top_depth: u8, maximizing_player: bool, mut alpha: i32, mut beta: i32) -> TreeDecision {
+        if depth == top_depth {
+            self.start_time = Some(std::time::Instant::now());
+            self.nodes_expanded = 0;
+        }
+
+        self.nodes_expanded += 1;
+        
         let mut best_decision = TreeDecision {
             best_move: None,
             score: score_board(&self.board, top_depth as i32 - depth as i32),
