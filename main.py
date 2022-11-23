@@ -62,6 +62,21 @@ WHITE_KING = pygame.transform.scale(WHITE_KING, (SQUARE_SIZE, SQUARE_SIZE))
 BLACK_KING = pygame.image.load("pieces/png-versions/k-black.png")
 BLACK_KING = pygame.transform.scale(BLACK_KING, (SQUARE_SIZE, SQUARE_SIZE))
 
+PIECE_MAP = {
+    'p': BLACK_PAWN,
+    'r': BLACK_ROOK,
+    'n': BLACK_KNIGHT,
+    'b': BLACK_BISHOP,
+    'q': BLACK_QUEEN,
+    'k': BLACK_KING,
+    'P': WHITE_PAWN,
+    'R': WHITE_ROOK,
+    'N': WHITE_KNIGHT,
+    'B': WHITE_BISHOP,
+    'Q': WHITE_QUEEN,
+    'K': WHITE_KING,
+}
+
 # Initializes pygame and returns the screen object
 def init_pygame(width, height):
     pygame.init()
@@ -121,7 +136,7 @@ def render_capture_option(screen, square):
 def render_piece(screen, piece, square):
     screen.blit(piece, (square[0] * SQUARE_SIZE + BORDER_WIDTH, square[1] * SQUARE_SIZE + BORDER_WIDTH))
 
-def rerender(screen, sel_squares : Union[List[tuple], None] = None, move_options : Union[List[tuple], None] = None):
+def rerender(screen, piece_list : Union[List[tuple], None] = None, sel_squares : Union[List[tuple], None] = None, move_options : Union[List[tuple], None] = None):
     screen.fill((255, 255, 255))
 
     render_board_squares(screen)
@@ -139,18 +154,34 @@ def rerender(screen, sel_squares : Union[List[tuple], None] = None, move_options
     render_capture_option(screen, (6, 6))
     render_capture_option(screen, (7, 6))
 
-    render_piece(screen, BLACK_PAWN, (0, 1))
-    render_piece(screen, BLACK_KING, (4, 0))
+    if piece_list is not None:
+        for piece, square in piece_list:
+            render_piece(screen, PIECE_MAP[piece], square)
 
     pygame.display.flip()
+
+def handle_event(event):
+    print(event)
 
 class Game:
     def __init__(self):
         self.board = chess.Board()
         pass
 
+    def __conv_square(self, square):
+        return (square % 8, (63 - square) // 8)
+
+    def get_piece_list(self):
+        pieces = list(self.board.piece_map().values())
+        pieces = [piece.symbol() for piece in pieces]
+        squares = list(self.board.piece_map().keys())
+        squares = [self.__conv_square(square) for square in squares]
+
+        return list(zip(pieces, squares))
+
 def main():
     game = Game()
+    print(game.get_piece_list())
     width = BORDER_WIDTH * 2 + BOARD_SIZE + TIMER_AREA_WIDTH
     height = BORDER_WIDTH * 2 + BOARD_SIZE
     screen = init_pygame(width, height)
@@ -160,8 +191,10 @@ def main():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 break
+            else:
+                handle_event(event)
 
-        rerender(screen)
+        rerender(screen, game.get_piece_list())
 
 # This code will always run as main
 main()
