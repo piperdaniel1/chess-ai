@@ -1,11 +1,14 @@
 import socket
 import time
+import sys
 
 class Connection:
-    def __init__(self):
+    def __init__(self, ip='127.0.0.1', port=4321):
         self.refresh_socket()
         self.last_received = 0
         self.received_last = True
+        self.ip = ip
+        self.port = port
         self.queue = []
     
     def refresh_socket(self):
@@ -18,11 +21,11 @@ class Connection:
     def push_to_queue(self, message):
         self.queue.append(message)
 
-    def __send(self, ip='127.0.0.1', port=4321, message='ping'):
+    def __send(self, message='ping'):
         print(f"Sending message: '{message}'")
 
         try:
-            self.socket.connect((ip, port))
+            self.socket.connect((self.ip, self.port))
             self.socket.setblocking(False)
         except OSError as e:
             if e.errno == 106:
@@ -70,7 +73,14 @@ class Connection:
 
 # interactive mode
 if __name__ == "__main__":
-    conn = Connection()
+    if len(sys.argv) > 1:
+        ip = sys.argv[1]
+        port = int(sys.argv[2])
+    else:
+        ip = '127.0.0.1'
+        port = 4321
+
+    conn = Connection(ip, port)
 
     while True:
         message = input("Enter message: ")

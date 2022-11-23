@@ -2,6 +2,7 @@ import pygame
 import chess
 from socket_interface import Connection
 from typing import List, Tuple, Union
+import sys
 
 # Colors
 BLACK_SQUARE_COLOR = (118, 150, 86)
@@ -312,7 +313,14 @@ def main():
     height = BORDER_WIDTH * 2 + BOARD_SIZE
     screen = init_pygame(width, height)
 
-    minimax_conn = Connection()
+    if len(sys.argv) > 1:
+        ip = sys.argv[1]
+        port = int(sys.argv[2])
+    else:
+        ip = '127.0.0.1'
+        port = 4321
+
+    minimax_conn = Connection(ip, port)
 
     if state.is_players_turn():
         minimax_conn.push_to_queue("init b")
