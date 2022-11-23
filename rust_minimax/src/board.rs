@@ -197,6 +197,9 @@ fn get_piece_from_char(c: char) -> Result<u8, Error> {
     }
 }
 
+// We always return a lowercase value because
+// we don't care about the color of the piece if we are
+// parsing a move string (which is what this function is used for)
 fn get_char_from_piece(piece: u8) -> Result<char, Error> {
     match piece {
         BLACK_PAWN => Ok('p'),
@@ -205,12 +208,12 @@ fn get_char_from_piece(piece: u8) -> Result<char, Error> {
         BLACK_ROOK => Ok('r'),
         BLACK_QUEEN => Ok('q'),
         BLACK_KING => Ok('k'),
-        WHITE_PAWN => Ok('P'),
-        WHITE_KNIGHT => Ok('N'),
-        WHITE_BISHOP => Ok('B'),
-        WHITE_ROOK => Ok('R'),
-        WHITE_QUEEN => Ok('Q'),
-        WHITE_KING => Ok('K'),
+        WHITE_PAWN => Ok('p'),
+        WHITE_KNIGHT => Ok('n'),
+        WHITE_BISHOP => Ok('b'),
+        WHITE_ROOK => Ok('r'),
+        WHITE_QUEEN => Ok('q'),
+        WHITE_KING => Ok('k'),
         _ => Err(Error),
     }
 }
