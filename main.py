@@ -1,7 +1,7 @@
 import pygame
 import chess
 from socket_interface import send_message
-from typing import List, Union
+from typing import List, Tuple, Union
 
 # Colors
 BLACK_SQUARE_COLOR = (118, 150, 86)
@@ -98,6 +98,9 @@ def render_board_border(screen):
     pygame.draw.rect(screen, BORDER_COLOR, (0, 0, BOARD_SIZE + BORDER_WIDTH * 2, BOARD_SIZE + BORDER_WIDTH * 2), BORDER_WIDTH)
 
 def render_selected_square(screen, square):
+    if square is None:
+        return
+
     i, j = square
     if (i + j) % 2 == 0:
         color = WHITE_SEL_SQUARE_COLOR
@@ -136,14 +139,13 @@ def render_capture_option(screen, square):
 def render_piece(screen, piece, square):
     screen.blit(piece, (square[0] * SQUARE_SIZE + BORDER_WIDTH, square[1] * SQUARE_SIZE + BORDER_WIDTH))
 
-def rerender(screen, piece_list : Union[List[tuple], None] = None, sel_squares : Union[List[tuple], None] = None, move_options : Union[List[tuple], None] = None):
+def rerender(screen, state: 'State'):
     screen.fill((255, 255, 255))
 
     render_board_squares(screen)
     render_board_border(screen)
 
-    render_selected_square(screen, (1, 4))
-    render_selected_square(screen, (2, 4))
+    render_selected_square(screen, state.get_selected_square())
 
     render_move_option(screen, (4, 4))
     render_move_option(screen, (4, 5))
@@ -154,14 +156,21 @@ def rerender(screen, piece_list : Union[List[tuple], None] = None, sel_squares :
     render_capture_option(screen, (6, 6))
     render_capture_option(screen, (7, 6))
 
-    if piece_list is not None:
-        for piece, square in piece_list:
-            render_piece(screen, PIECE_MAP[piece], square)
+    for piece, square in state.get_piece_list():
+        render_piece(screen, PIECE_MAP[piece], square)
 
     pygame.display.flip()
 
-def handle_event(event):
-    print(event)
+def convert_pixels_to_square(x, y) -> Union[Tuple[int, int], None]:
+    x -= BORDER_WIDTH
+    y -= BORDER_WIDTH
+    x //= SQUARE_SIZE
+    y //= SQUARE_SIZE
+
+    if x < 0 or x > 7 or y < 0 or y > 7:
+        return None
+
+    return (x, y)
 
 class Game:
     def __init__(self):
@@ -179,9 +188,43 @@ class Game:
 
         return list(zip(pieces, squares))
 
+class State:
+    def __init__(self):
+        self.__game = Game()
+        self.__selected_square = None
+        self.__move_options = []
+        self.__capture_options = []
+        self.__check_squares = []
+    
+    def get_piece_list(self):
+        return self.__game.get_piece_list()
+    
+    def get_selected_square(self):
+        return self.__selected_square
+    
+    def next(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            x, y = event.pos
+            result = convert_pixels_to_square(x, y)
+
+            if result is None:
+                return
+            
+            if self.__selected_square == result:
+                self.__selected_square = None
+                self.__move_options = []
+                self.__capture_options = []
+                self.__check_squares = []
+                return
+
+            self.__selected_square = result
+
+        elif event.type == pygame.MOUSEBUTTONUP:
+            print("Mouse up")
+
 def main():
-    game = Game()
-    print(game.get_piece_list())
+    state = State()
+    print(state.get_piece_list())
     width = BORDER_WIDTH * 2 + BOARD_SIZE + TIMER_AREA_WIDTH
     height = BORDER_WIDTH * 2 + BOARD_SIZE
     screen = init_pygame(width, height)
@@ -192,9 +235,9 @@ def main():
                 pygame.quit()
                 break
             else:
-                handle_event(event)
+                state.next(event)
 
-        rerender(screen, game.get_piece_list())
+        rerender(screen, state)
 
 # This code will always run as main
 main()
