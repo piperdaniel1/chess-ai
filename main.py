@@ -153,8 +153,8 @@ def rerender(screen, state: 'State'):
     render_check(screen, (4, 0))
     render_check(screen, (4, 7))
 
-    render_capture_option(screen, (6, 6))
-    render_capture_option(screen, (7, 6))
+    for square in state.get_attack_options():
+        render_capture_option(screen, square)
 
     for piece, square in state.get_piece_list():
         render_piece(screen, PIECE_MAP[piece], square)
@@ -182,6 +182,9 @@ class Game:
     
     def __reverse_conv_square(self, square):
         return square[0] + (7 - square[1]) * 8
+    
+    def push_move(self, from_square, to_square):
+        self.board.push(chess.Move(self.__reverse_conv_square(from_square), self.__reverse_conv_square(to_square)))
 
     def get_standard_moves_from_square(self, square):
         # yayayay readibility
@@ -219,6 +222,9 @@ class State:
     
     def get_move_options(self):
         return self.__move_options
+    
+    def get_attack_options(self):
+        return self.__capture_options
 
     # Mutate the state based on a Pygame event
     def next(self, event):
@@ -229,7 +235,17 @@ class State:
             if result is None:
                 return
             
-            self.__set_selected_square(result)
+            self.__handle_selection_change(result)
+    
+    def __handle_selection_change(self, square):
+        # We are moving a piece
+        if square in self.__move_options or square in self.__capture_options:
+            self.__game.push_move(self.__selected_square, square)
+            self.__set_selected_square(None)
+            return
+
+        self.__set_selected_square(square)
+
 
     def __set_standard_moves(self, square):
         self.__move_options = self.__game.get_standard_moves_from_square(square)
@@ -243,7 +259,7 @@ class State:
         self.__capture_options = []
     
     def __is_square_friendly(self, square):
-        return self.__game.get_color_at(square) == self.player_color
+        return False if square == None else self.__game.get_color_at(square) == self.player_color
 
     def __set_selected_square(self, square):
         # We can only select a square if it is friendly to us (the human player)
