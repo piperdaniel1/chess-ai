@@ -23,7 +23,7 @@ BORDER_WIDTH = 5
 BOARD_SIZE = 960
 assert(BOARD_SIZE % 8 == 0)
 SQUARE_SIZE = BOARD_SIZE // 8
-TIMER_AREA_WIDTH = 500
+TIMER_AREA_WIDTH = 0
 
 # Sprites
 WHITE_PAWN = pygame.image.load("pieces/png-versions/P-white.png")
@@ -147,8 +147,8 @@ def rerender(screen, state: 'State'):
 
     render_selected_square(screen, state.get_selected_square())
 
-    render_move_option(screen, (4, 4))
-    render_move_option(screen, (4, 5))
+    for square in state.get_move_options():
+        render_move_option(screen, square)
 
     render_check(screen, (4, 0))
     render_check(screen, (4, 7))
@@ -180,6 +180,10 @@ class Game:
     def __conv_square(self, square):
         return (square % 8, (63 - square) // 8)
 
+    def get_standard_moves_from_square(self, square):
+        # yayayay readibility
+        return [self.__conv_square(move.to_square) for move in self.board.legal_moves if self.__conv_square(move.from_square) == square and self.board.color_at(move.to_square) == None]
+
     def get_piece_list(self):
         pieces = list(self.board.piece_map().values())
         pieces = [piece.symbol() for piece in pieces]
@@ -202,6 +206,10 @@ class State:
     def get_selected_square(self):
         return self.__selected_square
     
+    def get_move_options(self):
+        return self.__move_options
+
+    # Mutate the state based on a Pygame event
     def next(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
             x, y = event.pos
@@ -210,17 +218,26 @@ class State:
             if result is None:
                 return
             
-            if self.__selected_square == result:
-                self.__selected_square = None
-                self.__move_options = []
-                self.__capture_options = []
-                self.__check_squares = []
-                return
+            self.__set_selected_square(result)
 
-            self.__selected_square = result
+    def __get_standard_moves(self, square):
+        moves = self.__game.get_standard_moves_from_square(square)
 
-        elif event.type == pygame.MOUSEBUTTONUP:
-            print("Mouse up")
+        return moves
+    
+    def __clear_selected_square(self):
+        self.__selected_square = None
+        self.__move_options = []
+        self.__capture_options = []
+
+    def __set_selected_square(self, square):
+        # Selecting the same square twice deselects it
+        if square == self.__selected_square or square is None:
+            self.__clear_selected_square()
+            return
+
+        self.__selected_square = square
+        self.__move_options = self.__get_standard_moves(square)
 
 def main():
     state = State()
