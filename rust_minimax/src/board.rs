@@ -2140,7 +2140,7 @@ impl Board {
             }
             king_square = self.piece_positions[WHITE_KING as usize][0]
         } else {
-            if self.piece_positions[WHITE_KING as usize].len() == 0 {
+            if self.piece_positions[BLACK_KING as usize].len() == 0 {
                 println!("Black king is missing from the cache... panic time!");
                 println!("Prepanic info:");
                 self.print();
