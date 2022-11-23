@@ -18,6 +18,201 @@ pub struct TreeDecision {
     pub score: i32,
 }
 
+const WHITE_PAWN_MAP: [[i8; 8]; 8] = [
+    [0,  0,  0,  0,  0,  0,  0,  0],
+    [50, 50, 50, 50, 50, 50, 50, 50],
+    [10, 10, 20, 30, 30, 20, 10, 10],
+    [5,  5, 10, 25, 25, 10,  5,  5],
+    [0,  0,  0, 20, 20,  0,  0,  0],
+    [5, -5,-10,  0,  0,-10, -5,  5],
+    [5, 10, 10,-20,-20, 10, 10,  5],
+    [0,  0,  0,  0,  0,  0,  0,  0],
+];
+
+const BLACK_PAWN_MAP: [[i8; 8]; 8] = [
+    [0,  0,  0,  0,  0,  0,  0,  0],
+    [5, 10, 10,-20,-20, 10, 10,  5],
+    [5, -5,-10,  0,  0,-10, -5,  5],
+    [0,  0,  0, 20, 20,  0,  0,  0],
+    [5,  5, 10, 25, 25, 10,  5,  5],
+    [10, 10, 20, 30, 30, 20, 10, 10],
+    [50, 50, 50, 50, 50, 50, 50, 50],
+    [0,  0,  0,  0,  0,  0,  0,  0],
+];
+
+const KNIGHT_MAP: [[i8; 8]; 8] = [
+    [-50,-40,-30,-30,-30,-30,-40,-50],
+    [-40,-20,  0,  0,  0,  0,-20,-40],
+    [-30,  0, 10, 15, 15, 10,  0,-30],
+    [-30,  5, 15, 20, 20, 15,  5,-30],
+    [-30,  0, 15, 20, 20, 15,  0,-30],
+    [-30,  5, 10, 15, 15, 10,  5,-30],
+    [-40,-20,  0,  5,  5,  0,-20,-40],
+    [-50,-40,-30,-30,-30,-30,-40,-50],
+];
+
+const WHITE_BISHOP_MAP: [[i8; 8]; 8] = [
+    [-20,-10,-10,-10,-10,-10,-10,-20],
+    [-10,  0,  0,  0,  0,  0,  0,-10],
+    [-10,  0,  5, 10, 10,  5,  0,-10],
+    [-10,  5,  5, 10, 10,  5,  5,-10],
+    [-10,  0, 10, 10, 10, 10,  0,-10],
+    [-10, 10, 10, 10, 10, 10, 10,-10],
+    [-10,  5,  0,  0,  0,  0,  5,-10],
+    [-20,-10,-10,-10,-10,-10,-10,-20],
+];
+
+const BLACK_BISHOP_MAP: [[i8; 8]; 8] = [
+    [-20,-10,-10,-10,-10,-10,-10,-20],
+    [-10,  5,  0,  0,  0,  0,  5,-10],
+    [-10, 10, 10, 10, 10, 10, 10,-10],
+    [-10,  0, 10, 10, 10, 10,  0,-10],
+    [-10,  5,  5, 10, 10,  5,  5,-10],
+    [-10,  0,  5, 10, 10,  5,  0,-10],
+    [-10,  0,  0,  0,  0,  0,  0,-10],
+    [-20,-10,-10,-10,-10,-10,-10,-20],
+];
+
+const WHITE_ROOK_MAP: [[i8; 8]; 8] = [
+    [0,  0,  0,  0,  0,  0,  0,  0],
+    [5, 10, 10, 10, 10, 10, 10,  5],
+    [-5,  0,  0,  0,  0,  0,  0, -5],
+    [-5,  0,  0,  0,  0,  0,  0, -5],
+    [-5,  0,  0,  0,  0,  0,  0, -5],
+    [-5,  0,  0,  0,  0,  0,  0, -5],
+    [-5,  0,  0,  0,  0,  0,  0, -5],
+    [0,  0,  0,  5,  5,  0,  0,  0],
+];
+
+const BLACK_ROOK_MAP: [[i8; 8]; 8] = [
+    [0,  0,  0,  5,  5,  0,  0,  0],
+    [-5,  0,  0,  0,  0,  0,  0, -5],
+    [-5,  0,  0,  0,  0,  0,  0, -5],
+    [-5,  0,  0,  0,  0,  0,  0, -5],
+    [-5,  0,  0,  0,  0,  0,  0, -5],
+    [-5,  0,  0,  0,  0,  0,  0, -5],
+    [5, 10, 10, 10, 10, 10, 10,  5],
+    [0,  0,  0,  0,  0,  0,  0,  0],
+];
+
+const WHITE_QUEEN_MAP: [[i8; 8]; 8] = [
+    [-20,-10,-10, -5, -5,-10,-10,-20],
+    [-10,  0,  0,  0,  0,  0,  0,-10],
+    [-10,  0,  5,  5,  5,  5,  0,-10],
+    [-5,  0,  5,  5,  5,  5,  0, -5],
+    [0,  0,  5,  5,  5,  5,  0, -5],
+    [-10,  5,  5,  5,  5,  5,  0,-10],
+    [-10,  0,  5,  0,  0,  0,  0,-10],
+    [-20,-10,-10, -5, -5,-10,-10,-20],
+];
+
+const BLACK_QUEEN_MAP: [[i8; 8]; 8] = [
+    [-20,-10,-10, -5, -5,-10,-10,-20],
+    [-10,  0,  5,  0,  0,  0,  0,-10],
+    [-10,  5,  5,  5,  5,  5,  0,-10],
+    [0,  0,  5,  5,  5,  5,  0, -5],
+    [-5,  0,  5,  5,  5,  5,  0, -5],
+    [-10,  0,  5,  5,  5,  5,  0,-10],
+    [-10,  0,  0,  0,  0,  0,  0,-10],
+    [-20,-10,-10, -5, -5,-10,-10,-20],
+];
+
+const WHITE_KING_MAP: [[i8; 8]; 8] = [
+    [-20, -20, -20, -20, -20, -20, -20, -20],
+    [-20, -20, -20, -20, -20, -20, -20, -20],
+    [-20, -20, -20, -20, -20, -20, -20, -20],
+    [-20, -20, -20, -20, -20, -20, -20, -20],
+    [-15, -17, -20, -20, -20, -20, -17, -15],
+    [-10, -12, -15, -20, -20, -15, -12, -10],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [20, 20, 15, -10, -10, 15, 20, 20],
+];
+
+const BLACK_KING_MAP: [[i8; 8]; 8] = [
+    [20, 20, 15, -10, -10, 15, 20, 20],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [-10, -12, -15, -20, -20, -15, -12, -10],
+    [-15, -17, -20, -20, -20, -20, -17, -15],
+    [-20, -20, -20, -20, -20, -20, -20, -20],
+    [-20, -20, -20, -20, -20, -20, -20, -20],
+    [-20, -20, -20, -20, -20, -20, -20, -20],
+    [-20, -20, -20, -20, -20, -20, -20, -20],
+];
+
+fn normal_position_differential(board: &board::Board) -> i8 {
+    let mut differential = 0;
+    // White pawns
+    let white_pawns = board.get_pawn_list(board::WHITE);
+    for pawn in white_pawns {
+        differential += WHITE_PAWN_MAP[pawn.row as usize][pawn.col as usize];
+    }
+
+    // Black pawns
+    let black_pawns = board.get_pawn_list(board::BLACK);
+    for pawn in black_pawns {
+        differential += BLACK_PAWN_MAP[pawn.row as usize][pawn.col as usize];
+    }
+
+    // White knights
+    let white_knights = board.get_knight_list(board::WHITE);
+    for knight in white_knights {
+        differential += KNIGHT_MAP[knight.row as usize][knight.col as usize];
+    }
+
+    // Black knights
+    let black_knights = board.get_knight_list(board::BLACK);
+    for knight in black_knights {
+        differential += KNIGHT_MAP[knight.row as usize][knight.col as usize];
+    }
+
+    // White bishops
+    let white_bishops = board.get_bishop_list(board::WHITE);
+    for bishop in white_bishops {
+        differential += WHITE_BISHOP_MAP[bishop.row as usize][bishop.col as usize];
+    }
+
+    // Black bishops
+    let black_bishops = board.get_bishop_list(board::BLACK);
+    for bishop in black_bishops {
+        differential += BLACK_BISHOP_MAP[bishop.row as usize][bishop.col as usize];
+    }
+
+    // White rooks
+    let white_rooks = board.get_rook_list(board::WHITE);
+    for rook in white_rooks {
+        differential += WHITE_ROOK_MAP[rook.row as usize][rook.col as usize];
+    }
+
+    // Black rooks
+    let black_rooks = board.get_rook_list(board::BLACK);
+    for rook in black_rooks {
+        differential += BLACK_ROOK_MAP[rook.row as usize][rook.col as usize];
+    }
+
+    // White queens
+    let white_queens = board.get_queen_list(board::WHITE);
+    for queen in white_queens {
+        differential += WHITE_QUEEN_MAP[queen.row as usize][queen.col as usize];
+    }
+
+    // Black queens
+    let black_queens = board.get_queen_list(board::BLACK);
+    for queen in black_queens {
+        differential += BLACK_QUEEN_MAP[queen.row as usize][queen.col as usize];
+    }
+
+    // White king
+    let white_king = board.get_king_square(board::WHITE);
+    differential += WHITE_KING_MAP[white_king.row as usize][white_king.col as usize];
+
+    // Black king
+    let black_king = board.get_king_square(board::BLACK);
+    differential += BLACK_KING_MAP[black_king.row as usize][black_king.col as usize];
+
+    // Return the differential
+    differential
+}
+
 // High scores are good for white, low scores are good for black
 pub fn score_board(board: &board::Board, current_depth: i32) -> i32 {
     // Extremely basic scoring function
@@ -39,6 +234,8 @@ pub fn score_board(board: &board::Board, current_depth: i32) -> i32 {
     score += board.get_knight_differential() * 300;
     score += board.get_rook_differential() * 500;
     score += board.get_queen_differential() * 900;
+
+    score += normal_position_differential(board) as i32;
 
     return score;
 }

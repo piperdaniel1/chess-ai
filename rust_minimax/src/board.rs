@@ -148,7 +148,7 @@ pub struct Board {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Square { row: u8, col: u8 }
+pub struct Square { pub row: u8, pub col: u8 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Move { from: Square, to: Square, promotion: Option<u8> }
@@ -311,6 +311,30 @@ impl Board {
     pub fn get_queen_differential(&self) -> i32 {
         return self.piece_positions[WHITE_QUEEN as usize].len() as i32 -
             self.piece_positions[BLACK_QUEEN as usize].len() as i32;
+    }
+
+    pub fn get_pawn_list(&self, color: bool) -> &Vec<Square> {
+        &self.piece_positions[if color { WHITE_PAWN } else { BLACK_PAWN } as usize]
+    }
+
+    pub fn get_knight_list(&self, color: bool) -> &Vec<Square> {
+        &self.piece_positions[if color { WHITE_KNIGHT } else { BLACK_KNIGHT } as usize]
+    }
+
+    pub fn get_bishop_list(&self, color: bool) -> &Vec<Square> {
+        &self.piece_positions[if color { WHITE_BISHOP } else { BLACK_BISHOP } as usize]
+    }
+
+    pub fn get_rook_list(&self, color: bool) -> &Vec<Square> {
+        &self.piece_positions[if color { WHITE_ROOK } else { BLACK_ROOK } as usize]
+    }
+
+    pub fn get_queen_list(&self, color: bool) -> &Vec<Square> {
+        &self.piece_positions[if color { WHITE_QUEEN } else { BLACK_QUEEN } as usize]
+    }
+
+    pub fn get_king_square(&self, color: bool) -> Square {
+        self.piece_positions[if color { WHITE_KING } else { BLACK_KING } as usize][0]
     }
 
     pub fn checkmate(&self) -> bool {
