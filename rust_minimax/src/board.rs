@@ -978,9 +978,10 @@ impl Board {
             if from_piece == BLACK_PAWN {
                 self.set_square(&mv.to, promotion);
             } else {
-                // Make sure that white promotes to a white piece
                 if promotion >= BLACK_KING {
                     self.set_square(&mv.to, promotion - 6);
+                } else {
+                    self.set_square(&mv.to, promotion);
                 }
             }
             prev_move.inner_move.promotion = Some(promotion);
@@ -2979,6 +2980,8 @@ mod tests {
     fn test_promotion() {
         let mut board = Board::new_from_fen("8/1R5P/8/3k4/8/8/8/7K w - - 0 1").unwrap();
         board.push(Move::new_from_string("h7h8q").unwrap()).unwrap();
+
+        board.print();
 
         assert_eq!(board.fen(), "7Q/1R6/8/3k4/8/8/8/7K b - - 0 1")
     }
