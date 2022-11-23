@@ -975,7 +975,14 @@ impl Board {
         // If this was a promotion, promote the pawn
         // Also, set the promotion field of the PrevMove struct
         if let Some(promotion) = mv.promotion {
-            self.set_square(&mv.to, promotion);
+            if from_piece == BLACK_PAWN {
+                self.set_square(&mv.to, promotion);
+            } else {
+                // Make sure that white promotes to a white piece
+                if promotion >= BLACK_KING {
+                    self.set_square(&mv.to, promotion - 6);
+                }
+            }
             prev_move.inner_move.promotion = Some(promotion);
         }
 
@@ -2966,6 +2973,14 @@ mod tests {
     fn test_stalemate() {
         let board = Board::new_from_fen("k7/2Q5/1K6/8/8/8/8/8 b - - 3 2").unwrap();
         assert!(board.stalemate());
+    }
+
+    #[test]
+    fn test_promotion() {
+        let mut board = Board::new_from_fen("8/1R5P/8/3k4/8/8/8/7K w - - 0 1").unwrap();
+        board.push(Move::new_from_string("h7h8q").unwrap()).unwrap();
+
+        assert_eq!(board.fen(), "7Q/1R6/8/3k4/8/8/8/7K b - - 0 1")
     }
 
     // Somehow this desync happens in the middle of a game
