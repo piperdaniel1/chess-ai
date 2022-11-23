@@ -111,12 +111,12 @@ fn start_tcp_server() {
                     // We default to a time limit of 5 seconds if the client doesn't specify
                     // or if the client specifies a time limit that fails to parse
                     let time_limit = match time_limit {
-                        Some(t) => t.parse::<u64>(),
-                        None => Ok(2)
+                        Some(t) => t.parse::<f64>(),
+                        None => Ok(0.5)
                     };
                     let time_limit = match time_limit {
                         Ok(t) => t,
-                        Err(_) => 2
+                        Err(_) => 0.5
                     };
 
                     match ai {

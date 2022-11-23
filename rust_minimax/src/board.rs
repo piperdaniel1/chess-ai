@@ -197,6 +197,24 @@ fn get_piece_from_char(c: char) -> Result<u8, Error> {
     }
 }
 
+fn get_char_from_piece(piece: u8) -> Result<char, Error> {
+    match piece {
+        BLACK_PAWN => Ok('p'),
+        BLACK_KNIGHT => Ok('n'),
+        BLACK_BISHOP => Ok('b'),
+        BLACK_ROOK => Ok('r'),
+        BLACK_QUEEN => Ok('q'),
+        BLACK_KING => Ok('k'),
+        WHITE_PAWN => Ok('P'),
+        WHITE_KNIGHT => Ok('N'),
+        WHITE_BISHOP => Ok('B'),
+        WHITE_ROOK => Ok('R'),
+        WHITE_QUEEN => Ok('Q'),
+        WHITE_KING => Ok('K'),
+        _ => Err(Error),
+    }
+}
+
 impl Move {
     pub fn new(from: Square, to: Square, promotion: Option<u8>) -> Move {
         Move { from, to, promotion }
@@ -225,6 +243,11 @@ impl Move {
         let mut s = String::new();
         s.push_str(&self.from.get_square_string());
         s.push_str(&self.to.get_square_string());
+
+        if self.promotion.is_some() {
+            s.push_str(&get_char_from_piece(self.promotion.unwrap()).unwrap().to_string());
+        }
+
         s
     }
 }

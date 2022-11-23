@@ -300,10 +300,10 @@ impl ChessAI {
         Ok(result)
     }
 
-    pub fn best_move_iddfs(&mut self, time_allowed_secs: u64) -> Result<TreeDecision, Error> {
-        if self.board.turn() != self.my_color {
-            return Err(Error);
-        }
+    pub fn best_move_iddfs(&mut self, time_allowed_secs: f64) -> Result<TreeDecision, Error> {
+        //if self.board.turn() != self.my_color {
+        //    return Err(Error);
+        //}
 
         let initial_start_time = Some(std::time::Instant::now()).unwrap();
 
@@ -322,7 +322,7 @@ impl ChessAI {
 
         for i in 1..depth {
             let start_time = Some(std::time::Instant::now()).unwrap();
-            score_vec = Some(self.iddfs(i, self.my_color, score_vec));
+            score_vec = Some(self.iddfs(i, self.board.turn(), score_vec));
             let end_time = Some(std::time::Instant::now()).unwrap();
 
             let elapsed = end_time.duration_since(start_time).as_millis();
@@ -332,7 +332,7 @@ impl ChessAI {
 
             let next_end_time = end_time + std::time::Duration::from_millis(projected_ms as u64);
 
-            if next_end_time.duration_since(initial_start_time).as_secs() > time_allowed_secs {
+            if next_end_time.duration_since(initial_start_time).as_secs() as f64 > time_allowed_secs {
                 println!("Breaking after depth {}", i);
                 break;
             }

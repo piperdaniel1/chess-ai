@@ -224,8 +224,9 @@ class Game:
 # Represents the complete state of the UI
 # Also has functions for progressing the UI state based on input events
 class State:
-    def __init__(self, color):
+    def __init__(self, color, ai_only):
         self.player_color = color
+        self.ai_only = ai_only
         self.__game = Game()
         self.__selected_square = None
         self.__move_options = []
@@ -252,6 +253,9 @@ class State:
             return self.__move_buffer.pop(0)
     
     def is_players_turn(self):
+        if self.ai_only:
+            return False
+        
         return self.__game.board.turn == self.player_color
     
     def push_move(self, uci):
@@ -307,13 +311,25 @@ class State:
         self.__set_attack_moves(square)
 
 def main():
-    state = State(chess.WHITE)
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "white":
+            state = State(chess.WHITE, False)
+        elif sys.argv[1] == "black":
+            state = State(chess.BLACK, False)
+        elif sys.argv[1] == "ai":
+            state = State(chess.WHITE, True)
+        else:
+            print("Invalid argument")
+            return
+    else:
+        state = State(chess.WHITE, False)
+
     print(state.get_piece_list())
     width = BORDER_WIDTH * 2 + BOARD_SIZE + TIMER_AREA_WIDTH
     height = BORDER_WIDTH * 2 + BOARD_SIZE
     screen = init_pygame(width, height)
 
-    if len(sys.argv) > 1:
+    if len(sys.argv) > 2:
         ip = sys.argv[1]
         port = int(sys.argv[2])
     else:
