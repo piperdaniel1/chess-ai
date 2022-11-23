@@ -179,10 +179,20 @@ class Game:
 
     def __conv_square(self, square):
         return (square % 8, (63 - square) // 8)
+    
+    def __reverse_conv_square(self, square):
+        return square[0] + (7 - square[1]) * 8
 
     def get_standard_moves_from_square(self, square):
         # yayayay readibility
         return [self.__conv_square(move.to_square) for move in self.board.legal_moves if self.__conv_square(move.from_square) == square and self.board.color_at(move.to_square) == None]
+
+    def get_attack_moves_from_square(self, square):
+        # yayayay readibility pt. 2
+        return [self.__conv_square(move.to_square) for move in self.board.legal_moves if self.__conv_square(move.from_square) == square and self.board.color_at(move.to_square) != None]
+    
+    def get_color_at(self, square):
+        return self.board.color_at(self.__reverse_conv_square(square))
 
     def get_piece_list(self):
         pieces = list(self.board.piece_map().values())
@@ -193,7 +203,8 @@ class Game:
         return list(zip(pieces, squares))
 
 class State:
-    def __init__(self):
+    def __init__(self, color):
+        self.player_color = color
         self.__game = Game()
         self.__selected_square = None
         self.__move_options = []
@@ -220,27 +231,37 @@ class State:
             
             self.__set_selected_square(result)
 
-    def __get_standard_moves(self, square):
-        moves = self.__game.get_standard_moves_from_square(square)
-
-        return moves
+    def __set_standard_moves(self, square):
+        self.__move_options = self.__game.get_standard_moves_from_square(square)
+    
+    def __set_attack_moves(self, square):
+        self.__capture_options = self.__game.get_attack_moves_from_square(square)
     
     def __clear_selected_square(self):
         self.__selected_square = None
         self.__move_options = []
         self.__capture_options = []
+    
+    def __is_square_friendly(self, square):
+        return self.__game.get_color_at(square) == self.player_color
 
     def __set_selected_square(self, square):
+        # We can only select a square if it is friendly to us (the human player)
+        if not self.__is_square_friendly(square):
+            self.__clear_selected_square()
+            return
+
         # Selecting the same square twice deselects it
         if square == self.__selected_square or square is None:
             self.__clear_selected_square()
             return
 
         self.__selected_square = square
-        self.__move_options = self.__get_standard_moves(square)
+        self.__set_standard_moves(square)
+        self.__set_attack_moves(square)
 
 def main():
-    state = State()
+    state = State(chess.WHITE)
     print(state.get_piece_list())
     width = BORDER_WIDTH * 2 + BOARD_SIZE + TIMER_AREA_WIDTH
     height = BORDER_WIDTH * 2 + BOARD_SIZE
