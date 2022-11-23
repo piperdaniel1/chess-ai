@@ -121,7 +121,7 @@ fn start_tcp_server() {
 
                     match ai {
                         Some(ref mut ai) => {
-                            let best_move = ai.best_move(5, time_limit);
+                            let best_move = ai.best_move(4, time_limit);
                             let best_move = match best_move {
                                 Ok(d) => d,
                                 Err(_) => {
