@@ -72,15 +72,19 @@ class Connection:
 if __name__ == "__main__":
     conn = Connection()
 
-    # while True:
-    #     message = input()
-    #     if message == 'exit':
-    #         break
+    while True:
+        message = input("Enter message: ")
+        if message == "exit":
+            break
+        
+        if message != "":
+            conn.push_to_queue(message)
+        
+        conn.handle_queue()
+        status, val = conn.receive()
 
-    #     if message != '':
-    #         conn.send(message=message)
+        if status:
+            assert(val != None and val != -1)
+            print("Received message:", val.decode('utf-8'))
 
-    #     status, val = conn.receive()
-
-    #     if status:
-    #         print(" >", val)
+        time.sleep(0.1)
