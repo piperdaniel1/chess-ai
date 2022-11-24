@@ -2779,7 +2779,7 @@ mod tests {
     // Tests the psuedo legal move generation
     // We do not test this much at all, that is saved for the legal move tests
     fn test_psuedo_legal() {
-        let mut board = Board::new();
+        let board = Board::new();
 
         let moves = board.gen_psuedo_legal_moves();
         assert_eq!(moves.len(), 20);
@@ -3123,7 +3123,7 @@ mod tests {
 
     #[test]
     fn recreate_king_bug() {
-        let mut board = Board::new_from_fen("r1b1r1n1/p7/1p1k4/2p5/4N3/4P3/PPK5/3R4 b - - 5 34").unwrap();
+        let board = Board::new_from_fen("r1b1r1n1/p7/1p1k4/2p5/4N3/4P3/PPK5/3R4 b - - 5 34").unwrap();
 
         let moves = board.gen_legal_moves();
 
