@@ -4,6 +4,7 @@ use std::fmt::Error;
 // - Update the attacking maps every time psuedo legal moves
 //   are made. These maps are already in the board struct.
 
+#[allow(dead_code)]
 const SAFE_MODE : bool = true;
 
 pub const BLACK: bool = false;
@@ -18,13 +19,21 @@ pub const RANK_SIX: u8 = 2;
 pub const RANK_SEVEN: u8 = 1;
 pub const RANK_EIGHT: u8 = 0;
 
+#[allow(dead_code)]
 pub const FILE_A: u8 = 0;
+#[allow(dead_code)]
 pub const FILE_B: u8 = 1;
+#[allow(dead_code)]
 pub const FILE_C: u8 = 2;
+#[allow(dead_code)]
 pub const FILE_D: u8 = 3;
+#[allow(dead_code)]
 pub const FILE_E: u8 = 4;
+#[allow(dead_code)]
 pub const FILE_F: u8 = 5;
+#[allow(dead_code)]
 pub const FILE_G: u8 = 6;
+#[allow(dead_code)]
 pub const FILE_H: u8 = 7;
 
 pub const WHITE_KINGSIDE_CASTLE: usize = 0;
@@ -46,70 +55,135 @@ pub const WHITE_KING: u8 = 1;
 pub const EMPTY_SQUARE: u8 = 0;
 pub const OUT_OF_BOUNDS: u8 = 255;
 
+#[allow(dead_code)]
 pub const A8: Square = Square { row: 0, col: 0 };
+#[allow(dead_code)]
 pub const B8: Square = Square { row: 0, col: 1 };
+#[allow(dead_code)]
 pub const C8: Square = Square { row: 0, col: 2 };
+#[allow(dead_code)]
 pub const D8: Square = Square { row: 0, col: 3 };
+#[allow(dead_code)]
 pub const E8: Square = Square { row: 0, col: 4 };
+#[allow(dead_code)]
 pub const F8: Square = Square { row: 0, col: 5 };
+#[allow(dead_code)]
 pub const G8: Square = Square { row: 0, col: 6 };
+#[allow(dead_code)]
 pub const H8: Square = Square { row: 0, col: 7 };
+#[allow(dead_code)]
 pub const A7: Square = Square { row: 1, col: 0 };
+#[allow(dead_code)]
 pub const B7: Square = Square { row: 1, col: 1 };
+#[allow(dead_code)]
 pub const C7: Square = Square { row: 1, col: 2 };
+#[allow(dead_code)]
 pub const D7: Square = Square { row: 1, col: 3 };
+#[allow(dead_code)]
 pub const E7: Square = Square { row: 1, col: 4 };
+#[allow(dead_code)]
 pub const F7: Square = Square { row: 1, col: 5 };
+#[allow(dead_code)]
 pub const G7: Square = Square { row: 1, col: 6 };
+#[allow(dead_code)]
 pub const H7: Square = Square { row: 1, col: 7 };
+#[allow(dead_code)]
 pub const A6: Square = Square { row: 2, col: 0 };
+#[allow(dead_code)]
 pub const B6: Square = Square { row: 2, col: 1 };
+#[allow(dead_code)]
 pub const C6: Square = Square { row: 2, col: 2 };
+#[allow(dead_code)]
 pub const D6: Square = Square { row: 2, col: 3 };
+#[allow(dead_code)]
 pub const E6: Square = Square { row: 2, col: 4 };
+#[allow(dead_code)]
 pub const F6: Square = Square { row: 2, col: 5 };
+#[allow(dead_code)]
 pub const G6: Square = Square { row: 2, col: 6 };
+#[allow(dead_code)]
 pub const H6: Square = Square { row: 2, col: 7 };
+#[allow(dead_code)]
 pub const A5: Square = Square { row: 3, col: 0 };
+#[allow(dead_code)]
 pub const B5: Square = Square { row: 3, col: 1 };
+#[allow(dead_code)]
 pub const C5: Square = Square { row: 3, col: 2 };
+#[allow(dead_code)]
 pub const D5: Square = Square { row: 3, col: 3 };
+#[allow(dead_code)]
 pub const E5: Square = Square { row: 3, col: 4 };
+#[allow(dead_code)]
 pub const F5: Square = Square { row: 3, col: 5 };
+#[allow(dead_code)]
 pub const G5: Square = Square { row: 3, col: 6 };
+#[allow(dead_code)]
 pub const H5: Square = Square { row: 3, col: 7 };
+#[allow(dead_code)]
 pub const A4: Square = Square { row: 4, col: 0 };
+#[allow(dead_code)]
 pub const B4: Square = Square { row: 4, col: 1 };
+#[allow(dead_code)]
 pub const C4: Square = Square { row: 4, col: 2 };
+#[allow(dead_code)]
 pub const D4: Square = Square { row: 4, col: 3 };
+#[allow(dead_code)]
 pub const E4: Square = Square { row: 4, col: 4 };
+#[allow(dead_code)]
 pub const F4: Square = Square { row: 4, col: 5 };
+#[allow(dead_code)]
 pub const G4: Square = Square { row: 4, col: 6 };
+#[allow(dead_code)]
 pub const H4: Square = Square { row: 4, col: 7 };
+#[allow(dead_code)]
 pub const A3: Square = Square { row: 5, col: 0 };
+#[allow(dead_code)]
 pub const B3: Square = Square { row: 5, col: 1 };
+#[allow(dead_code)]
 pub const C3: Square = Square { row: 5, col: 2 };
+#[allow(dead_code)]
 pub const D3: Square = Square { row: 5, col: 3 };
+#[allow(dead_code)]
 pub const E3: Square = Square { row: 5, col: 4 };
+#[allow(dead_code)]
 pub const F3: Square = Square { row: 5, col: 5 };
+#[allow(dead_code)]
 pub const G3: Square = Square { row: 5, col: 6 };
+#[allow(dead_code)]
 pub const H3: Square = Square { row: 5, col: 7 };
+#[allow(dead_code)]
 pub const A2: Square = Square { row: 6, col: 0 };
+#[allow(dead_code)]
 pub const B2: Square = Square { row: 6, col: 1 };
+#[allow(dead_code)]
 pub const C2: Square = Square { row: 6, col: 2 };
+#[allow(dead_code)]
 pub const D2: Square = Square { row: 6, col: 3 };
+#[allow(dead_code)]
 pub const E2: Square = Square { row: 6, col: 4 };
+#[allow(dead_code)]
 pub const F2: Square = Square { row: 6, col: 5 };
+#[allow(dead_code)]
 pub const G2: Square = Square { row: 6, col: 6 };
+#[allow(dead_code)]
 pub const H2: Square = Square { row: 6, col: 7 };
+#[allow(dead_code)]
 pub const A1: Square = Square { row: 7, col: 0 };
+#[allow(dead_code)]
 pub const B1: Square = Square { row: 7, col: 1 };
+#[allow(dead_code)]
 pub const C1: Square = Square { row: 7, col: 2 };
+#[allow(dead_code)]
 pub const D1: Square = Square { row: 7, col: 3 };
+#[allow(dead_code)]
 pub const E1: Square = Square { row: 7, col: 4 };
+#[allow(dead_code)]
 pub const F1: Square = Square { row: 7, col: 5 };
+#[allow(dead_code)]
 pub const G1: Square = Square { row: 7, col: 6 };
+#[allow(dead_code)]
 pub const H1: Square = Square { row: 7, col: 7 };
+#[allow(dead_code)]
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Board { 
@@ -371,6 +445,7 @@ impl Board {
         self.has_check().is_none() && self.gen_legal_moves().len() == 0
     }
 
+    #[allow(dead_code)]
     fn is_other_cache_equivalent(&self, other: &Board) -> bool {
         for i in 0..13 {
             for j in 0..self.piece_positions[i].len() {
@@ -383,6 +458,7 @@ impl Board {
         true
     }
 
+    #[allow(dead_code)]
     fn is_cache_desynced(&self) -> bool {
         // Make sure everything in the cache is on the board
         for i in 0..13 {
@@ -406,6 +482,7 @@ impl Board {
         false
     }
 
+    #[allow(dead_code)]
     fn recache(&mut self) {
         for i in 0..13 {
             self.piece_positions[i].clear();
@@ -681,6 +758,7 @@ impl Board {
         castling_rights
     }
 
+    #[allow(dead_code)]
     pub fn fen(&self) -> String {
         let mut fen = String::new();
 
@@ -768,6 +846,7 @@ impl Board {
         fen
     }
 
+    #[allow(dead_code)]
     fn set_square_ind(&mut self, row: u8, col: u8, piece: u8) {
         self.set_square(&Square {row, col}, piece);
     }
@@ -1821,14 +1900,15 @@ impl Board {
         };
     }
 
-    fn is_move_on_line(&self, squareOne: Square, squareTwo: Square, m: Move) -> bool {
-        return self.is_triple_aligned(squareOne, squareTwo, m.to);
+    #[allow(dead_code)]
+    fn is_move_on_line(&self, square_one: Square, square_two: Square, m: Move) -> bool {
+        return self.is_triple_aligned(square_one, square_two, m.to);
     }
 
     // Returns the direction to go from squareOne to squareTwo
-    fn get_dir(&self, squareOne: Square, squareTwo: Square) -> (i8, i8) {
-        let row_diff = squareOne.row as i8 - squareTwo.row as i8;
-        let col_diff = squareOne.col as i8 - squareTwo.col as i8;
+    fn get_dir(&self, square_one: Square, square_two: Square) -> (i8, i8) {
+        let row_diff = square_one.row as i8 - square_two.row as i8;
+        let col_diff = square_one.col as i8 - square_two.col as i8;
 
         let row_dir = if row_diff > 0 { -1 } else if row_diff < 0 { 1 } else { 0 };
         let col_dir = if col_diff > 0 { -1 } else if col_diff < 0 { 1 } else { 0 };

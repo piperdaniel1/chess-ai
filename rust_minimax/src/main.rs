@@ -26,6 +26,7 @@ mod minimax;
 // It seems like 2 and 3 could be solved by storing which squares
 // are under attack by which pieces.
 
+#[allow(dead_code)]
 fn get_move_from_player(possible_moves: Vec<board::Move>) -> board::Move {
     let mut input = String::new();
     std::io::stdin().read_line(&mut input).unwrap();
@@ -49,6 +50,7 @@ fn get_move_from_player(possible_moves: Vec<board::Move>) -> board::Move {
     }
 }
 
+#[allow(dead_code)]
 fn play_against_ai(player_color: bool) {
     let mut ai = minimax::ChessAI::new_with_color(!player_color);
 

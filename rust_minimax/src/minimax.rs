@@ -241,6 +241,7 @@ pub fn score_board(board: &board::Board, current_depth: i32) -> i32 {
 }
 
 impl ChessAI {
+    #[allow(dead_code)]
     pub fn new() -> ChessAI {
         ChessAI {
             board: board::Board::new(),
@@ -261,14 +262,17 @@ impl ChessAI {
         }
     }
 
+    #[allow(dead_code)]
     pub fn enable_debug(&mut self) {
         self.debug_mode = true;
     }
 
+    #[allow(dead_code)]
     pub fn disable_debug(&mut self) {
         self.debug_mode = false;
     }
 
+    #[allow(dead_code)]
     pub fn import_position(&mut self, fen: &str) -> Result<(), Error> {
         match self.board.import_from_fen(fen) {
             Ok(_) => Ok(()),
@@ -283,16 +287,16 @@ impl ChessAI {
         }
     }
 
+    #[allow(dead_code)]
     pub fn print_internal_board(&self) {
         self.board.print();
     }
 
+    #[allow(dead_code)]
     pub fn best_move(&mut self, depth: u8) -> Result<TreeDecision, Error> {
         if self.board.turn() != self.my_color {
             return Err(Error);
         }
-
-        let start_time = Some(std::time::Instant::now());
 
         // Iterative deepening
         let result = self.minimax(depth, depth, self.my_color, -1000000, 1000000);
