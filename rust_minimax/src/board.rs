@@ -1675,11 +1675,21 @@ impl Board {
 
         // If we are in check, we need to filter out all moves that don't
         // protect the king
-        let check_square = self.has_check();
-        
-        let check_piece = match check_square {
-            Some(square) => Some(self.get_square(&square)),
-            None => None,
+        let check_vec = self.has_check();
+        let mut double_check: bool;
+
+
+        let check_piece = match check_vec {
+            Some(square) => {
+                if square.len() > 1 {
+                    double_check = true;
+                } else {
+                    double_check = false;
+                }
+
+                Some(self.get_square(&square[0]))
+            },
+            None => {double_check = false; None},
         };
 
         let king = if self.turn == WHITE { WHITE_KING } else { BLACK_KING };
@@ -1695,10 +1705,10 @@ impl Board {
                 legal_moves.push(m);
             // We are moving a piece other than the king
             // but we are in check
-            } else if check_square.is_some() {
+            } else if check_square.is_some() && !double_check {
                 // We are taking the piece that is checking us without
                 // creating a new discovered check
-                if m.to == check_square.unwrap() && !self.creates_discovered_attack(m) {
+                if m.to == check_square.unwrap()[0] && !self.creates_discovered_attack(m) {
                     legal_moves.push(m);
                     continue;
                 }
@@ -1708,7 +1718,7 @@ impl Board {
                     let king_square = self.piece_positions[king as usize][0];
                     // We are moving to a square that will block the check
                     // Strict triple aligned ensures that p2 is between p1 and p3 (and therefore blocks the check)
-                    if self.is_strict_triple_aligned(king_square, m.to, check_square.unwrap()) {
+                    if self.is_strict_triple_aligned(king_square, m.to, check_square.unwrap()[0]) {
                         if !self.creates_discovered_attack(m) {
                             legal_moves.push(m);
                         }
@@ -1719,7 +1729,7 @@ impl Board {
                 // taking it with en passant.
                 let en_passant_square = self.is_en_passant_move(m);
                 if en_passant_square.is_some() {
-                    if en_passant_square.unwrap() == check_square.unwrap() 
+                    if en_passant_square.unwrap() == check_square.unwrap()[0]
                        && !self.creates_discovered_attack(m) {
                         legal_moves.push(m);
                     }
@@ -2164,7 +2174,7 @@ impl Board {
      * Relies on the fact that the king is stored in the piece positions array.
      * Also relies on the fact that the turn is stored in the board struct.
      */
-    fn has_check(&self) -> Option<Square> {
+    fn has_check(&self) -> Option<Vec<Square>> {
         let king_square;
 
         if self.turn {
@@ -2195,28 +2205,34 @@ impl Board {
         self.square_has_check(king_square)
     }
 
-    fn square_has_check(&self, king_square: Square) -> Option<Square> {
+    fn square_has_check(&self, king_square: Square) -> Option<Vec<Square>> {
+        let mut checks = Vec::new();
+
         // Check for knights
         let knight_attacks = self.is_knight_attacking(king_square, !self.turn);
 
         match knight_attacks {
-            Some(square) => return Some(square),
+            Some(square) => checks.push(square),
             None => (),
         }
 
         let diagonal_attacks = self.is_diagonal_attacking(king_square, !self.turn, None);
         match diagonal_attacks {
-            Some(square) => return Some(square),
+            Some(square) => checks.push(square),
             None => (),
         }
 
         let straight_attacks = self.is_straight_attacking(king_square, !self.turn, None);
         match straight_attacks {
-            Some(square) => return Some(square),
+            Some(square) => checks.push(square),
             None => (),
         }
 
-        return None
+        if checks.len() > 0 {
+            return Some(checks);
+        } else {
+            return None;
+        }
     }
 }
 
