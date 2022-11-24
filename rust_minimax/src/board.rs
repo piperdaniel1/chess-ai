@@ -1,5 +1,7 @@
 use std::fmt::Error;
-
+use rand_chacha::rand_core::SeedableRng;
+use rand_core::RngCore;
+use rand_chacha;
 // TODO
 // - Update the attacking maps every time psuedo legal moves
 //   are made. These maps are already in the board struct.
@@ -219,6 +221,19 @@ pub struct Board {
     // Used for fast lookup of pieces
     // Index using the piece type defined in the constant
     piece_positions: [Vec<Square>; 13],
+
+    // Zobrist keys for each piece on each square
+    // The theory is that it is okay to store all these keys in here
+    // because the board is not supposed to be lightweight -- it is supposed to be fast.
+    square_keys: [[u64; 64]; 12],
+
+    // Zobrist keys for other board properties
+    turn_key: u64,
+    en_passant_file_keys: [u64; 8],
+    castling_keys: [u64; 4],
+
+    // The current zobrist hash of the board
+    hash: u64,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -290,6 +305,19 @@ fn get_char_from_piece(piece: u8) -> Result<char, Error> {
         WHITE_KING => Ok('k'),
         _ => Err(Error),
     }
+}
+
+fn get_zobrist_keys() -> [u64; 793] {
+    let seed: u64 = 8675309_2357_31415926;
+    let mut gen = rand_chacha::ChaCha8Rng::seed_from_u64(seed);
+
+    let mut keys = [0; 793];
+
+    for i in 0..793 {
+        keys[i] = gen.next_u64();
+    }
+
+    keys
 }
 
 impl Move {
@@ -380,6 +408,11 @@ impl Board {
             fullmove_number: 1,
             piece_positions: [vec![], vec![], vec![], vec![], vec![], vec![], vec![],
                               vec![], vec![], vec![], vec![], vec![], vec![]],
+            square_keys: [[0; 64]; 12],
+            turn_key: 0,
+            en_passant_file_keys: [0; 8],
+            castling_keys: [0; 4],
+            hash: 0,
         }
     }
 
@@ -580,7 +613,68 @@ impl Board {
             Err(_) => return Err(Error),
         };
 
+        // Fill in the zobrist keys
+        let mut i = 0;
+        let keys = get_zobrist_keys();
+
+        for piece in 0..12 {
+            for square in 0..64 {
+                board.square_keys[piece][square] = keys[i];
+                i += 1;
+            }
+        }
+
+        board.turn_key = keys[i];
+        i += 1;
+
+        for j in 0..4 {
+            board.castling_keys[j] = keys[i];
+            i += 1;
+        }
+
+        for j in 0..8 {
+            board.en_passant_file_keys[j] = keys[i];
+            i += 1;
+        }
+
+        // Calculate the hash using the zobrist keys
+        board.hash = board.calculate_zobrist_hash();
+
         Ok(board)
+    }
+
+    fn calculate_zobrist_hash(&self) -> u64 {
+        let mut hash = 0;
+
+        for i in 0..8 {
+            for j in 0..8 {
+                let piece = self.get_square_ind(i as i8, j as i8);
+
+                if piece != EMPTY_SQUARE {
+                    hash ^= self.square_keys[(piece-1) as usize][(i * 8 + j) as usize];
+                }
+            }
+        }
+
+        if !self.turn {
+            hash ^= self.turn_key;
+        }
+
+        for i in 0..4 {
+            if self.castling[i] {
+                hash ^= self.castling_keys[i];
+            }
+        }
+
+        if let Some(square) = self.en_passant {
+            hash ^= self.en_passant_file_keys[square.col as usize];
+        }
+
+        hash
+    }
+
+    pub fn get_hash(&self) -> u64 {
+        self.hash
     }
     
     // Setup the board to the starting position
@@ -678,6 +772,9 @@ impl Board {
             Ok(n) => n,
             Err(_) => return Err(Error),
         };
+
+        // Calculate the hash using the zobrist keys
+        self.hash = self.calculate_zobrist_hash();
 
         Ok(())
     }
@@ -3128,5 +3225,23 @@ mod tests {
         let moves = board.gen_legal_moves();
 
         assert_eq!(moves.len(), 5);
+    }
+
+    #[test]
+    fn test_psuedo_random() {
+        let keys = get_zobrist_keys();
+
+        assert_eq!(keys[0], 5717137336360897368);
+        assert_eq!(keys[206], 6427430163083693146);
+        assert_eq!(keys[399], 15028282355671535552);
+        assert_eq!(keys[617], 4186175680712125785);
+        assert_eq!(keys[792], 6153439440954588254);
+    }
+
+    #[test]
+    fn test_zobrist_hashing() {
+        let board = Board::new();
+        println!("{}", board.get_hash());
+        assert_eq!(board.get_hash(), 7467127324528350544);
     }
 }
