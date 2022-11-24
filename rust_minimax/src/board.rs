@@ -1676,8 +1676,8 @@ impl Board {
         // If we are in check, we need to filter out all moves that don't
         // protect the king
         let check_vec = self.has_check();
-        let mut double_check: bool;
-
+        let double_check: bool;
+        let check_square: Option<Square>;
 
         let check_piece = match check_vec {
             Some(square) => {
@@ -1687,9 +1687,10 @@ impl Board {
                     double_check = false;
                 }
 
+                check_square = Some(square[0]);
                 Some(self.get_square(&square[0]))
             },
-            None => {double_check = false; None},
+            None => {double_check = false; check_square = None; None},
         };
 
         let king = if self.turn == WHITE { WHITE_KING } else { BLACK_KING };
@@ -1705,10 +1706,16 @@ impl Board {
                 legal_moves.push(m);
             // We are moving a piece other than the king
             // but we are in check
-            } else if check_square.is_some() && !double_check {
+            } else if check_square.is_some() {
+                // We cannot resolve the check by taking a piece if multiple
+                // pieces are checking the king at the same time
+                if double_check {
+                    continue;
+                }
+
                 // We are taking the piece that is checking us without
                 // creating a new discovered check
-                if m.to == check_square.unwrap()[0] && !self.creates_discovered_attack(m) {
+                if m.to == check_square.unwrap() && !self.creates_discovered_attack(m) {
                     legal_moves.push(m);
                     continue;
                 }
@@ -1718,7 +1725,7 @@ impl Board {
                     let king_square = self.piece_positions[king as usize][0];
                     // We are moving to a square that will block the check
                     // Strict triple aligned ensures that p2 is between p1 and p3 (and therefore blocks the check)
-                    if self.is_strict_triple_aligned(king_square, m.to, check_square.unwrap()[0]) {
+                    if self.is_strict_triple_aligned(king_square, m.to, check_square.unwrap()) {
                         if !self.creates_discovered_attack(m) {
                             legal_moves.push(m);
                         }
@@ -1729,7 +1736,7 @@ impl Board {
                 // taking it with en passant.
                 let en_passant_square = self.is_en_passant_move(m);
                 if en_passant_square.is_some() {
-                    if en_passant_square.unwrap() == check_square.unwrap()[0]
+                    if en_passant_square.unwrap() == check_square.unwrap()
                        && !self.creates_discovered_attack(m) {
                         legal_moves.push(m);
                     }
@@ -3039,9 +3046,7 @@ mod tests {
         let mut board = Board::new_from_fen("r1b1r1n1/p7/1p1k4/2p5/4N3/4P3/PPK5/3R4 b - - 5 34").unwrap();
 
         let moves = board.gen_legal_moves();
-        for m in &moves {
-            println!("{}", m.get_move_string());
-        }
+
         assert_eq!(moves.len(), 5);
     }
 }
