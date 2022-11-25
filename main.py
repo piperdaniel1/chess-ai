@@ -363,10 +363,14 @@ def main():
 
     minimax_conn = Connection(ip, port)
 
+    '''
     if state.is_players_turn():
         minimax_conn.push_to_queue("init b")
     else:
         minimax_conn.push_to_queue("init w")
+    '''
+
+    minimax_conn.push_to_queue("init b fen " + state.get_board().fen())
 
     waiting_on_ai = False
 

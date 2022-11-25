@@ -117,11 +117,11 @@ fn start_tcp_server() {
                     // or if the client specifies a time limit that fails to parse
                     let time_limit = match time_limit {
                         Some(t) => t.parse::<f64>(),
-                        None => Ok(0.25)
+                        None => Ok(1.0)
                     };
                     let time_limit = match time_limit {
                         Ok(t) => t,
-                        Err(_) => 0.25
+                        Err(_) => 1.0
                     };
 
                     match ai {
@@ -165,6 +165,24 @@ fn start_tcp_server() {
 
                     println!("Responding with 200 ok");
                     stream.write("200 ok".as_bytes()).unwrap();
+                } else if req_string.starts_with("init b fen ") {
+                    ai = Some(minimax::ChessAI::new_with_color(board::BLACK));
+
+                    let fen = req_string.split_at(11).1;
+
+                    ai.as_mut().unwrap().import_position(fen).unwrap();
+
+                    println!("Responding with 200 ok");
+                    stream.write("200 ok".as_bytes()).unwrap();
+                } else if req_string.starts_with("init w fen ") {
+                    ai = Some(minimax::ChessAI::new_with_color(board::WHITE));
+
+                    let fen = req_string.split_at(11).1;
+
+                    ai.as_mut().unwrap().import_position(fen).unwrap();
+
+                    println!("Responding with 200 ok");
+                    stream.write("200 ok".as_bytes()).unwrap();
                 } else if req_string.starts_with("push") {
                     match ai {
                         Some(ref mut ai) => {
@@ -204,6 +222,7 @@ fn start_tcp_server() {
 
     drop(listener);
 }
+
 fn main() {
     start_tcp_server();
     //play_against_ai(board::WHITE);

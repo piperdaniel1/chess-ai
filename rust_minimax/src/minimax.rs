@@ -444,7 +444,7 @@ impl ChessAI {
             let next_end_time = end_time + std::time::Duration::from_millis(projected_ms as u64);
 
             if next_end_time.duration_since(initial_start_time).as_secs() as f64 > time_allowed_secs {
-                println!("Breaking after depth {}", i);
+                println!("Breaking after depth {} with evaluation {}", i, score_vec.as_ref().unwrap()[0].score);
                 break;
             }
         }
