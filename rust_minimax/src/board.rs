@@ -485,7 +485,7 @@ impl Board {
         self.has_check().is_none() && self.gen_legal_moves().len() == 0
     }
 
-    pub fn threefold_repitition(&self) -> bool {
+    pub fn threefold_repetition(&self) -> bool {
         let mut count = 0;
 
         for i in 0..self.history.len() {

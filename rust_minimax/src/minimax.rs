@@ -265,7 +265,7 @@ pub fn score_board(board: &board::Board, current_depth: i32, debug: bool) -> i32
         return 0;
     }
 
-    if board.threefold_repitition() {
+    if board.threefold_repetition() {
         if debug { println!("Returning 0 because threefold repitition") }
         return 0;
     }
