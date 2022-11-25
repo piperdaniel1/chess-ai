@@ -349,7 +349,7 @@ def main():
     else:
         state = State(chess.WHITE, False)
 
-    print(state.get_piece_list())
+    state.get_board().set_fen("8/8/3k4/4r3/8/5K2/8/8 w - - 0 1")
     width = BORDER_WIDTH * 2 + BOARD_SIZE + TIMER_AREA_WIDTH
     height = BORDER_WIDTH * 2 + BOARD_SIZE
     screen = init_pygame(width, height)

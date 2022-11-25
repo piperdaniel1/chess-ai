@@ -445,6 +445,12 @@ impl ChessAI {
 
             if next_end_time.duration_since(initial_start_time).as_secs() as f64 > time_allowed_secs {
                 println!("Breaking after depth {} with evaluation {}", i, score_vec.as_ref().unwrap()[0].score);
+                println!("Moves:");
+
+                for m in score_vec.as_ref().unwrap().iter() {
+                    println!("{} - {}", m.best_move.unwrap().get_move_string(), m.score);
+                }
+
                 break;
             }
         }
@@ -639,7 +645,12 @@ impl ChessAI {
 
             match tt_entry {
                 Some(entry) => {
-                    if entry.depth >= depth {
+                    // We want to favor checkmates that are closer to the top of the tree
+                    if entry.score > 100000 {
+                        return TreeDecision { best_move: None, score: entry.score - depth as i32 };
+                    } else if entry.score < -100000 {
+                        return TreeDecision { best_move: None, score: entry.score + depth as i32 };
+                    } else {
                         return TreeDecision { best_move: None, score: entry.score };
                     }
                 },
