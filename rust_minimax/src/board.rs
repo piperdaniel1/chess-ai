@@ -2537,12 +2537,16 @@ mod tests {
 
         // Tests most of the special cases in the push and pop functions
 
+        assert_eq!(board.get_hash(), 7467127324528350544);
+
         let current_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
         assert_eq!(board.fen(), current_fen);
 
         board.push(Move::new_from_string("g1f3").unwrap()).unwrap();
         board.push(Move::new_from_string("g8f6").unwrap()).unwrap();
         board.push(Move::new_from_string("c2c4").unwrap()).unwrap();
+
+        assert_eq!(board.calculate_zobrist_hash(), board.get_hash());
 
         // This tests the en passant square
         let current_fen = "rnbqkb1r/pppppppp/5n2/8/2P5/5N2/PP1PPPPP/RNBQKB1R b KQkq c3 0 2";
@@ -2554,6 +2558,8 @@ mod tests {
         board.push(Move::new_from_string("d2d4").unwrap()).unwrap();
         board.push(Move::new_from_string("e8g8").unwrap()).unwrap();
         board.push(Move::new_from_string("c1f4").unwrap()).unwrap();
+
+        assert_eq!(board.calculate_zobrist_hash(), board.get_hash());
 
         let current_fen = "rnbq1rk1/ppppppbp/5np1/8/2PP1B2/2N2N2/PP2PPPP/R2QKB1R b KQ - 2 5";
         assert_eq!(board.fen(), current_fen);
@@ -2569,6 +2575,8 @@ mod tests {
         board.push(Move::new_from_string("d7b6").unwrap()).unwrap();
         board.push(Move::new_from_string("c4c5").unwrap()).unwrap();
 
+        assert_eq!(board.calculate_zobrist_hash(), board.get_hash());
+
         let current_fen = "r1bq1rk1/pp2ppbp/1np2np1/2Q5/3PPB2/2N2N2/PP3PPP/3RKB1R b K - 4 10";
         assert_eq!(board.fen(), current_fen);
 
@@ -2582,6 +2590,8 @@ mod tests {
         board.push(Move::new_from_string("g5e7").unwrap()).unwrap();
         board.push(Move::new_from_string("d8b6").unwrap()).unwrap();
         board.push(Move::new_from_string("f1c4").unwrap()).unwrap();
+
+        assert_eq!(board.calculate_zobrist_hash(), board.get_hash());
 
         let current_fen = "r4rk1/pp2Bpbp/1qp3p1/8/2BPn1b1/Q1P2N2/P4PPP/3RK2R b K - 2 15";
         assert_eq!(board.fen(), current_fen);
@@ -2597,6 +2607,8 @@ mod tests {
         board.push(Move::new_from_string("c3e2").unwrap()).unwrap();
         board.push(Move::new_from_string("g1f1").unwrap()).unwrap();
 
+        assert_eq!(board.calculate_zobrist_hash(), board.get_hash());
+
         let current_fen = "r3r1k1/pp3pbp/1Bp3p1/8/2bP4/Q4N2/P3nPPP/3R1K1R b - - 3 20";
         assert_eq!(board.fen(), current_fen);
 
@@ -2610,6 +2622,8 @@ mod tests {
         board.push(Move::new_from_string("a3b4").unwrap()).unwrap();
         board.push(Move::new_from_string("a8a4").unwrap()).unwrap();
         board.push(Move::new_from_string("b4b6").unwrap()).unwrap();
+
+        assert_eq!(board.calculate_zobrist_hash(), board.get_hash());
 
         let current_fen = "4r1k1/1p3pbp/1Qp3p1/8/r1b5/2n2N2/P4PPP/3R2KR b - - 0 25";
         assert_eq!(board.fen(), current_fen);
@@ -2625,6 +2639,8 @@ mod tests {
         board.push(Move::new_from_string("g7f8").unwrap()).unwrap();
         board.push(Move::new_from_string("f3e1").unwrap()).unwrap();
 
+        assert_eq!(board.calculate_zobrist_hash(), board.get_hash());
+
         let current_fen = "3Q1bk1/1p3p1p/2p3p1/8/2b5/7P/r4nPK/4N3 b - - 0 30";
         assert_eq!(board.fen(), current_fen);
 
@@ -2638,6 +2654,8 @@ mod tests {
         board.push(Move::new_from_string("f3e5").unwrap()).unwrap();
         board.push(Move::new_from_string("g8g7").unwrap()).unwrap();
         board.push(Move::new_from_string("h2g1").unwrap()).unwrap();
+
+        assert_eq!(board.calculate_zobrist_hash(), board.get_hash());
 
         let current_fen = "1Q3b2/5pk1/2p3p1/1p1bN2p/4n2P/8/r5P1/6K1 b - - 3 35";
         assert_eq!(board.fen(), current_fen);
@@ -2656,6 +2674,8 @@ mod tests {
         board.push(Move::new_from_string("b1c1").unwrap()).unwrap();
         board.push(Move::new_from_string("a2c2").unwrap()).unwrap();
 
+        assert_eq!(board.calculate_zobrist_hash(), board.get_hash());
+
         let current_fen = "1Q6/5pk1/2p3p1/1p2N2p/1b5P/1bn5/2r3P1/2K5 w - - 16 42";
         assert_eq!(board.fen(), current_fen);
 
@@ -2665,6 +2685,8 @@ mod tests {
                 break;
             }
         }
+
+        assert_eq!(board.get_hash(), 7467127324528350544);
 
         // Check that the board is back to the default position
         let current_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -3115,6 +3137,7 @@ mod tests {
         let mut board = Board::new();
         let count = perft(&mut board, 1, 1, 1);
         assert_eq!(count, 20);
+        assert_eq!(board.get_hash(), board.calculate_zobrist_hash());
     }
 
     #[test]
@@ -3122,6 +3145,7 @@ mod tests {
         let mut board = Board::new();
         let count = perft(&mut board, 2, 2, 1);
         assert_eq!(count, 400);
+        assert_eq!(board.get_hash(), board.calculate_zobrist_hash());
     }
 
     #[test]
@@ -3129,6 +3153,7 @@ mod tests {
         let mut board = Board::new();
         let count = perft(&mut board, 3, 3, 1);
         assert_eq!(count, 8_902);
+        assert_eq!(board.get_hash(), board.calculate_zobrist_hash());
     }
 
     #[test]
@@ -3136,6 +3161,7 @@ mod tests {
         let mut board = Board::new();
         let count = perft(&mut board, 4, 4, 1);
         assert_eq!(count, 197_281);
+        assert_eq!(board.get_hash(), board.calculate_zobrist_hash());
     }
 
     #[test]
@@ -3143,6 +3169,7 @@ mod tests {
         let mut board = Board::new_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1").unwrap();
         let count = perft(&mut board, 1, 1, 1);
         assert_eq!(count, 48);
+        assert_eq!(board.get_hash(), board.calculate_zobrist_hash());
     }
 
     #[test]
@@ -3150,6 +3177,7 @@ mod tests {
         let mut board = Board::new_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1").unwrap();
         let count = perft(&mut board, 2, 2, 1);
         assert_eq!(count, 2039);
+        assert_eq!(board.get_hash(), board.calculate_zobrist_hash());
     }
 
     #[test]
@@ -3157,6 +3185,7 @@ mod tests {
         let mut board = Board::new_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1").unwrap();
         let count = perft(&mut board, 3, 3, 1);
         assert_eq!(count, 97862);
+        assert_eq!(board.get_hash(), board.calculate_zobrist_hash());
     }
 
     #[test]
@@ -3164,6 +3193,7 @@ mod tests {
         let mut board = Board::new_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1").unwrap();
         let count = perft(&mut board, 4, 4, 1);
         assert_eq!(count, 4085603);
+        assert_eq!(board.get_hash(), board.calculate_zobrist_hash());
     }
 
     #[test]
@@ -3171,6 +3201,7 @@ mod tests {
         let mut board = Board::new_from_fen("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1").unwrap();
         let count = perft(&mut board, 1, 1, 2);
         assert_eq!(count, 14);
+        assert_eq!(board.get_hash(), board.calculate_zobrist_hash());
     }
 
     #[test]
@@ -3178,6 +3209,7 @@ mod tests {
         let mut board = Board::new_from_fen("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1").unwrap();
         let count = perft(&mut board, 2, 2, 2);
         assert_eq!(count, 191);
+        assert_eq!(board.get_hash(), board.calculate_zobrist_hash());
     }
 
     #[test]
@@ -3185,6 +3217,7 @@ mod tests {
         let mut board = Board::new_from_fen("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1").unwrap();
         let count = perft(&mut board, 3, 3, 2);
         assert_eq!(count, 2812);
+        assert_eq!(board.get_hash(), board.calculate_zobrist_hash());
     }
 
     #[test]
@@ -3192,6 +3225,7 @@ mod tests {
         let mut board = Board::new_from_fen("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1").unwrap();
         let count = perft(&mut board, 4, 4, 2);
         assert_eq!(count, 43238);
+        assert_eq!(board.get_hash(), board.calculate_zobrist_hash());
     }
 
     #[test]
@@ -3199,6 +3233,7 @@ mod tests {
         let mut board = Board::new_from_fen("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1").unwrap();
         let count = perft(&mut board, 5, 5, 2);
         assert_eq!(count, 674624);
+        assert_eq!(board.get_hash(), board.calculate_zobrist_hash());
     }
 
     #[test]
@@ -3206,6 +3241,7 @@ mod tests {
         let mut board = Board::new_from_fen("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1").unwrap();
         let count = perft(&mut board, 4, 4, 2);
         assert_eq!(count, 422333);
+        assert_eq!(board.get_hash(), board.calculate_zobrist_hash());
     }
 
     #[test]
@@ -3213,6 +3249,7 @@ mod tests {
         let mut board = Board::new_from_fen("r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1").unwrap();
         let count = perft(&mut board, 4, 4, 2);
         assert_eq!(count, 422333);
+        assert_eq!(board.get_hash(), board.calculate_zobrist_hash());
     }
 
     #[test]
@@ -3220,6 +3257,7 @@ mod tests {
         let mut board = Board::new_from_fen("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8").unwrap();
         let count = perft(&mut board, 4, 4, 2);
         assert_eq!(count, 2_103_487);
+        assert_eq!(board.get_hash(), board.calculate_zobrist_hash());
     }
 
     #[test]
@@ -3227,18 +3265,21 @@ mod tests {
         let mut board = Board::new_from_fen("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10").unwrap();
         let count = perft(&mut board, 4, 4, 2);
         assert_eq!(count, 3_894_594);
+        assert_eq!(board.get_hash(), board.calculate_zobrist_hash());
     }
 
     #[test]
     fn test_checkmate() {
         let board = Board::new_from_fen("1k6/1Q6/2K5/8/8/8/8/8 b - - 1 1").unwrap();
         assert!(board.checkmate());
+        assert_eq!(board.get_hash(), board.calculate_zobrist_hash());
     }
 
     #[test]
     fn test_stalemate() {
         let board = Board::new_from_fen("k7/2Q5/1K6/8/8/8/8/8 b - - 3 2").unwrap();
         assert!(board.stalemate());
+        assert_eq!(board.get_hash(), board.calculate_zobrist_hash());
     }
 
     #[test]
@@ -3248,7 +3289,8 @@ mod tests {
 
         board.print();
 
-        assert_eq!(board.fen(), "7Q/1R6/8/3k4/8/8/8/7K b - - 0 1")
+        assert_eq!(board.fen(), "7Q/1R6/8/3k4/8/8/8/7K b - - 0 1");
+        assert_eq!(board.get_hash(), board.calculate_zobrist_hash());
     }
 
     // Somehow this desync happens in the middle of a game
