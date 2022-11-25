@@ -7,6 +7,14 @@ pub struct ChessAI {
     debug_mode: bool,
     start_time: Option<std::time::Instant>,
     nodes_expanded: u64,
+    tt_table: [Option<PositionScore>; 10_000_000],
+}
+
+#[derive(Copy, Clone)]
+struct PositionScore {
+    score: i32,
+    depth: u8,
+    hash: u64,
 }
 
 /* 
@@ -249,6 +257,7 @@ impl ChessAI {
             debug_mode: false,
             start_time: None,
             nodes_expanded: 0,
+            tt_table: [None; 10_000_000],
         }
     }
 
@@ -259,6 +268,7 @@ impl ChessAI {
             debug_mode: false,
             start_time: None,
             nodes_expanded: 0,
+            tt_table: [None; 10_000_000],
         }
     }
 
@@ -346,6 +356,34 @@ impl ChessAI {
         result.score = score_vec.as_ref().unwrap()[0].score;
 
         Ok(result)
+    }
+
+    // Saves the score to the transposition table using the zobrist hash
+    fn save_to_tt_table(&mut self, depth: u8, score: i32, hash: u64) {
+        let entry = PositionScore {
+            hash,
+            depth,
+            score,
+        };
+
+        self.tt_table[hash as usize % self.tt_table.len()] = Some(entry);
+    }
+
+    // Returns the score from the transposition table using the zobrist hash if it exists
+    fn get_from_tt_table(&mut self, curr_depth: u8, hash: u64) -> Option<PositionScore> {
+        let entry = self.tt_table[hash as usize % self.tt_table.len()];
+
+        if entry.is_none() {
+            return None;
+        }
+
+        let entry = entry.unwrap();
+
+        if entry.depth >= curr_depth {
+            return Some(entry);
+        }
+
+        None
     }
 
     fn project_next_ms(&self, times: &Vec<u128>) -> u128 {
