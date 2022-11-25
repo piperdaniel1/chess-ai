@@ -497,6 +497,31 @@ impl Board {
         return count >= 3;
     }
 
+    pub fn get_game_phase(&self) -> i32 {
+        // The opening lasts for the first 10 moves each.
+        // This should probably give the engine time to develop its pieces.
+        if self.history.len() < 20 {
+            return 0;
+        }
+
+        // The endgame starts when there are four or fewer major pieces on the board (besides kings).
+        let mut major_pieces = 0;
+        major_pieces += self.piece_positions[WHITE_QUEEN as usize].len();
+        major_pieces += self.piece_positions[BLACK_QUEEN as usize].len();
+        major_pieces += self.piece_positions[WHITE_ROOK as usize].len();
+        major_pieces += self.piece_positions[BLACK_ROOK as usize].len();
+        major_pieces += self.piece_positions[WHITE_BISHOP as usize].len();
+        major_pieces += self.piece_positions[BLACK_BISHOP as usize].len();
+        major_pieces += self.piece_positions[WHITE_KNIGHT as usize].len();
+        major_pieces += self.piece_positions[BLACK_KNIGHT as usize].len();
+        if major_pieces <= 4 {
+            return 2;
+        }
+
+        // The middle game is when both the opening and endgame are not happening.
+        return 1;
+    }
+
     #[allow(dead_code)]
     fn is_other_cache_equivalent(&self, other: &Board) -> bool {
         for i in 0..13 {

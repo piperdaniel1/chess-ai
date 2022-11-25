@@ -137,6 +137,17 @@ const WHITE_KING_MAP: [[i32; 8]; 8] = [
     [20, 20, 15, -10, -10, 15, 20, 20],
 ];
 
+const ENDGAME_KING_MAP: [[i32; 8]; 8] = [
+    [-50,-40,-30,-20,-20,-30,-40,-50],
+    [-30,-20,-10,  0,  0,-10,-20,-30],
+    [-30,-10, 20, 30, 30, 20,-10,-30],
+    [-30,-10, 30, 40, 40, 30,-10,-30],
+    [-30,-10, 30, 40, 40, 30,-10,-30],
+    [-30,-10, 20, 30, 30, 20,-10,-30],
+    [-30,-30,  0,  0,  0,  0,-30,-30],
+    [-50,-30,-30,-30,-30,-30,-30,-50],
+];
+
 const BLACK_KING_MAP: [[i32; 8]; 8] = [
     [20, 20, 15, -10, -10, 15, 20, 20],
     [0, 0, 0, 0, 0, 0, 0, 0],
@@ -148,7 +159,7 @@ const BLACK_KING_MAP: [[i32; 8]; 8] = [
     [-20, -20, -20, -20, -20, -20, -20, -20],
 ];
 
-fn normal_position_differential(board: &board::Board, debug: bool) -> i32 {
+fn opening_position_differential(board: &board::Board, debug: bool) -> i32 {
     if debug { println!("Normal Position Differential ====================") }
     let mut differential: i32 = 0;
     // White pawns
@@ -247,6 +258,41 @@ fn normal_position_differential(board: &board::Board, debug: bool) -> i32 {
     differential
 }
 
+fn endgame_position_differential(board: &board::Board, debug: bool) -> i32 {
+    if debug { println!("Endgame Position Differential ====================") }
+    let mut differential: i32 = 0;
+    // White pawns
+    let white_pawns = board.get_pawn_list(board::WHITE);
+    for pawn in white_pawns {
+        differential += WHITE_PAWN_MAP[pawn.row as usize][pawn.col as usize];
+    }
+
+    if debug { println!("After White Pawns: {}", differential) }
+
+    // Black pawns
+    let black_pawns = board.get_pawn_list(board::BLACK);
+    for pawn in black_pawns {
+        differential -= BLACK_PAWN_MAP[pawn.row as usize][pawn.col as usize];
+    }
+
+    if debug { println!("After Black Pawns: {}", differential) }
+
+    // White king
+    let white_king = board.get_king_square(board::WHITE);
+    differential += ENDGAME_KING_MAP[white_king.row as usize][white_king.col as usize];
+
+    if debug { println!("After White King: {}", differential) }
+
+    // Black king
+    let black_king = board.get_king_square(board::BLACK);
+    differential -= ENDGAME_KING_MAP[black_king.row as usize][black_king.col as usize];
+
+    if debug { println!("After Black King: {}", differential) }
+
+    // Return the differential
+    differential
+}
+
 // High scores are good for white, low scores are good for black
 pub fn score_board(board: &board::Board, current_depth: i32, debug: bool) -> i32 {
     // Extremely basic scoring function
@@ -282,8 +328,17 @@ pub fn score_board(board: &board::Board, current_depth: i32, debug: bool) -> i32
     score += board.get_queen_differential() * 900;
     if debug { println!("Queen differential: {}", board.get_queen_differential()) }
 
-    score += normal_position_differential(board, debug) as i32;
-    if debug { println!("Normal position differential: {}", normal_position_differential(board, false)) }
+    let phase = board.get_game_phase();
+
+    if phase == 0 {
+        score += opening_position_differential(board, debug) as i32;
+    } else if phase == 1 {
+        score += opening_position_differential(board, debug) as i32 / 2;
+    } else if phase == 2 {
+        score += endgame_position_differential(board, debug) as i32;
+    }
+
+    if debug { println!("Normal position differential: {}", opening_position_differential(board, false)) }
 
     return score;
 }
