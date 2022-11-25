@@ -389,6 +389,10 @@ impl Square {
 
         Square { row: y, col: x }
     }
+
+    fn get_index(&self) -> usize {
+        (self.row * 8 + self.col) as usize
+    }
 }
 
 impl Board {
@@ -661,7 +665,7 @@ impl Board {
         }
 
         for i in 0..4 {
-            if self.castling[i] {
+            if self.get_castling_bool(i) {
                 hash ^= self.castling_keys[i];
             }
         }
@@ -747,10 +751,10 @@ impl Board {
         // Set the castling rights
         for c in fen_parts[2].chars() {
             match c {
-                'K' => self.castling[0] = true,
-                'Q' => self.castling[1] = true,
-                'k' => self.castling[2] = true,
-                'q' => self.castling[3] = true,
+                'K' => self.set_castling_rights(WHITE_KINGSIDE_CASTLE, true),
+                'Q' => self.set_castling_rights(WHITE_QUEENSIDE_CASTLE, true),
+                'k' => self.set_castling_rights(BLACK_KINGSIDE_CASTLE, true),
+                'q' => self.set_castling_rights(BLACK_QUEENSIDE_CASTLE, true),
                 '-' => break,
                 _ => return Err(Error),
             }
@@ -758,7 +762,7 @@ impl Board {
 
         // Set en passant target square
         if fen_parts[3] != "-" {
-            self.en_passant = Some(Square::new_from_string(fen_parts[3]));
+            self.set_en_passant_square(Some(Square::new_from_string(fen_parts[3])));
         }
 
         // Set the halfmove clock
@@ -832,19 +836,19 @@ impl Board {
     fn get_castling_rights(&self) -> String {
         let mut castling_rights = String::new();
 
-        if self.castling[0] {
+        if self.get_castling_bool(WHITE_KINGSIDE_CASTLE) {
             castling_rights.push('K');
         }
 
-        if self.castling[1] {
+        if self.get_castling_bool(WHITE_QUEENSIDE_CASTLE) {
             castling_rights.push('Q');
         }
 
-        if self.castling[2] {
+        if self.get_castling_bool(BLACK_KINGSIDE_CASTLE) {
             castling_rights.push('k');
         }
 
-        if self.castling[3] {
+        if self.get_castling_bool(BLACK_QUEENSIDE_CASTLE) {
             castling_rights.push('q');
         }
 
@@ -908,19 +912,22 @@ impl Board {
 
         // Castling availability
         fen.push(' ');
-        if self.castling[0] {
+        if self.get_castling_bool(WHITE_KINGSIDE_CASTLE) {
             fen.push('K');
         }
-        if self.castling[1] {
+        if self.get_castling_bool(WHITE_QUEENSIDE_CASTLE) {
             fen.push('Q');
         }
-        if self.castling[2] {
+        if self.get_castling_bool(BLACK_KINGSIDE_CASTLE) {
             fen.push('k');
         }
-        if self.castling[3] {
+        if self.get_castling_bool(BLACK_QUEENSIDE_CASTLE) {
             fen.push('q');
         }
-        if !self.castling[0] && !self.castling[1] && !self.castling[2] && !self.castling[3] {
+        if !self.get_castling_bool(WHITE_KINGSIDE_CASTLE)
+           && !self.get_castling_bool(WHITE_QUEENSIDE_CASTLE)
+           && !self.get_castling_bool(BLACK_KINGSIDE_CASTLE)
+           && !self.get_castling_bool(BLACK_QUEENSIDE_CASTLE) {
             fen.push('-');
         }
 
@@ -943,9 +950,49 @@ impl Board {
         fen
     }
 
+    fn set_castling_rights(&mut self, ind: usize, value: bool) {
+        if self.castling[ind] != value {
+            // Update the hash
+            self.hash ^= self.castling_keys[ind];
+        }
+
+        // Set the castling rights
+        self.castling[ind] = value;
+    }
+
+    fn get_castling_bool(&self, ind: usize) -> bool {
+        self.castling[ind]
+    }
+
+    fn set_en_passant_square(&mut self, square: Option<Square>) {
+        // If the old en passant square is not None, remove it from the hash
+        if let Some(old_square) = &self.en_passant {
+            self.hash ^= self.en_passant_file_keys[old_square.col as usize];
+        }
+
+        // If the en passant square is not None, update the hash
+        if let Some(square) = square {
+            // Update the hash
+            self.hash ^= self.en_passant_file_keys[square.col as usize];
+        }
+
+        // Set the en passant square
+        self.en_passant = square;
+    }
+
+    fn flip_turn(&mut self) {
+        self.turn = !self.turn;
+        self.hash ^= self.turn_key;
+    }
+
     #[allow(dead_code)]
     fn set_square_ind(&mut self, row: u8, col: u8, piece: u8) {
         self.set_square(&Square {row, col}, piece);
+    }
+
+    /* These functions are used to cheaply mutate the zobrist hash of the board */
+    fn xor_hash_piece(&mut self, piece: u8, square: &Square) {
+        self.hash ^= self.square_keys[(piece-1) as usize][square.get_index()];
     }
 
     fn set_square(&mut self, square: &Square, piece: u8) {
@@ -968,13 +1015,20 @@ impl Board {
 
             // remove the piece at square
             self.piece_positions[current_piece as usize].swap_remove(ind);
+
+            // xor the piece out of the hash
+            self.xor_hash_piece(current_piece, square);
         }
 
         // Update the piece list
         if piece != EMPTY_SQUARE {
             self.piece_positions[piece as usize].push(*square);
+
+            // xor the piece into the hash
+            self.xor_hash_piece(piece, square);
         }
 
+        // Update the board
         self.cells[square.row as usize][square.col as usize] = piece;
     }
 
@@ -1040,15 +1094,15 @@ impl Board {
         if to_piece.is_some() {
             if to_piece.unwrap() == WHITE_ROOK  {
                 if mv.to == H1 {
-                    self.castling[0] = false;
+                    self.set_castling_rights(WHITE_KINGSIDE_CASTLE, false);
                 } else if mv.to == A1 {
-                    self.castling[1] = false;
+                    self.set_castling_rights(WHITE_QUEENSIDE_CASTLE, false);
                 }
             } else if to_piece.unwrap() == BLACK_ROOK {
                 if mv.to == H8 {
-                    self.castling[2] = false;
+                    self.set_castling_rights(BLACK_KINGSIDE_CASTLE, false);
                 } else if mv.to == A8 {
-                    self.castling[3] = false;
+                    self.set_castling_rights(BLACK_QUEENSIDE_CASTLE, false);
                 }
             }
         }
@@ -1065,8 +1119,8 @@ impl Board {
             }
 
             // Once the king has moved, castling is no longer possible
-            self.castling[WHITE_KINGSIDE_CASTLE] = false;
-            self.castling[WHITE_QUEENSIDE_CASTLE] = false;
+            self.set_castling_rights(WHITE_KINGSIDE_CASTLE, false);
+            self.set_castling_rights(WHITE_QUEENSIDE_CASTLE, false);
         } else if from_piece == BLACK_KING {
             // Black king side castling
             if mv.from == E8 && mv.to == G8 {
@@ -1078,22 +1132,22 @@ impl Board {
             }
 
             // Once the king has moved, castling is no longer possible
-            self.castling[BLACK_KINGSIDE_CASTLE] = false;
-            self.castling[BLACK_QUEENSIDE_CASTLE] = false;
+            self.set_castling_rights(BLACK_KINGSIDE_CASTLE, false);
+            self.set_castling_rights(BLACK_QUEENSIDE_CASTLE, false);
         }
 
         // If this was a rook move, castling is no longer possible on that side
         if from_piece == WHITE_ROOK {
             if mv.from == A1 {
-                self.castling[WHITE_QUEENSIDE_CASTLE] = false;
+                self.set_castling_rights(WHITE_QUEENSIDE_CASTLE, false);
             } else if mv.from == H1 {
-                self.castling[WHITE_KINGSIDE_CASTLE] = false;
+                self.set_castling_rights(WHITE_KINGSIDE_CASTLE, false);
             }
         } else if from_piece == BLACK_ROOK {
             if mv.from == A8 {
-                self.castling[BLACK_QUEENSIDE_CASTLE] = false;
+                self.set_castling_rights(BLACK_QUEENSIDE_CASTLE, false);
             } else if mv.from == H8 {
-                self.castling[BLACK_KINGSIDE_CASTLE] = false;
+                self.set_castling_rights(BLACK_KINGSIDE_CASTLE, false);
             }
         }
 
@@ -1132,20 +1186,20 @@ impl Board {
         if from_piece == WHITE_PAWN
             && mv.from.row == RANK_TWO && mv.to.row == RANK_FOUR {
 
-            self.en_passant = Some(Square {
+            self.set_en_passant_square(Some(Square {
                 row: RANK_THREE,
                 col: mv.to.col,
-            });
+            }));
         } else if from_piece == BLACK_PAWN
             && mv.from.row == RANK_SEVEN && mv.to.row == RANK_FIVE {
 
-            self.en_passant = Some(Square {
+            self.set_en_passant_square(Some(Square {
                 row: RANK_SIX,
                 col: mv.to.col,
-            });
+            }));
         // Otherwise, clear the en passant target square
         } else {
-            self.en_passant = None;
+            self.set_en_passant_square(None);
         }
 
         // If this was a promotion, promote the pawn
@@ -1180,7 +1234,7 @@ impl Board {
         }
 
         // Switch the turn
-        self.turn = !self.turn;
+        self.flip_turn();
 
         Ok(prev_move)
     }
@@ -1296,7 +1350,7 @@ impl Board {
         }
 
         // Restore the en passant square
-        self.en_passant = prev_move.prev_en_passant;
+        self.set_en_passant_square(prev_move.prev_en_passant);
 
         // Restore the half move clock
         self.halfmove_clock = prev_move.prev_halfmove_clock;
@@ -1307,10 +1361,12 @@ impl Board {
         }
 
         // Switch the turn
-        self.turn = !self.turn;
+        self.flip_turn();
 
         // Restore the castling rights
-        self.castling = prev_move.prev_castling;
+        for (i, &castling) in prev_move.prev_castling.iter().enumerate() {
+            self.set_castling_rights(i, castling);
+        }
 
         Ok(())
     }
@@ -1733,7 +1789,7 @@ impl Board {
         // White castling
         if self.turn {
             // Kingside
-            if self.castling[0] {
+            if self.get_castling_bool(WHITE_KINGSIDE_CASTLE) {
                 if self.square_has_check(F1).is_none() && self.get_square(&F1) == EMPTY_SQUARE {
                     if self.square_has_check(G1).is_none() && self.get_square(&G1) == EMPTY_SQUARE {
                         moves.push(Move {
@@ -1746,7 +1802,7 @@ impl Board {
 
             }
             // Queenside
-            if self.castling[1] {
+            if self.get_castling_bool(WHITE_QUEENSIDE_CASTLE) {
                 if self.square_has_check(D1).is_none() && self.get_square(&D1) == EMPTY_SQUARE {
                     if self.square_has_check(C1).is_none() && self.get_square(&C1) == EMPTY_SQUARE {
                         if self.get_square(&B1) == EMPTY_SQUARE {
@@ -1762,7 +1818,7 @@ impl Board {
         // Black castling
         } else {
             // Kingside
-            if self.castling[2] {
+            if self.get_castling_bool(BLACK_KINGSIDE_CASTLE) {
                 if self.square_has_check(F8).is_none() && self.get_square(&F8) == EMPTY_SQUARE {
                     if self.square_has_check(G8).is_none() && self.get_square(&G8) == EMPTY_SQUARE {
                         moves.push(Move {
@@ -1775,7 +1831,7 @@ impl Board {
 
             }
             // Queenside
-            if self.castling[3] {
+            if self.get_castling_bool(BLACK_QUEENSIDE_CASTLE) {
                 if self.square_has_check(D8).is_none() && self.get_square(&D8) == EMPTY_SQUARE {
                     if self.square_has_check(C8).is_none() && self.get_square(&C8) == EMPTY_SQUARE {
                         if self.get_square(&B8) == EMPTY_SQUARE {
