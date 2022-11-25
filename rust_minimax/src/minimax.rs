@@ -359,6 +359,7 @@ impl ChessAI {
     }
 
     // Saves the score to the transposition table using the zobrist hash
+    #[allow(dead_code)]
     fn save_to_tt_table(&mut self, depth: u8, score: i32, hash: u64) {
         let entry = PositionScore {
             hash,
@@ -370,6 +371,7 @@ impl ChessAI {
     }
 
     // Returns the score from the transposition table using the zobrist hash if it exists
+    #[allow(dead_code)]
     fn get_from_tt_table(&mut self, curr_depth: u8, hash: u64) -> Option<PositionScore> {
         let entry = self.tt_table[hash as usize % self.tt_table.len()];
 
