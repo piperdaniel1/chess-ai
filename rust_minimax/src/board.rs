@@ -3295,6 +3295,9 @@ mod tests {
 
     // Somehow this desync happens in the middle of a game
     // but it never happens in any of the perft tests
+    // Future me: the reason it happens is because you allow the king to remain
+    // in check after a move when there is a double check and one of the pieces
+    // checking is taken (but not the other one).
     #[test]
     fn test_cache_desync() {
         let mut board = Board::new();
