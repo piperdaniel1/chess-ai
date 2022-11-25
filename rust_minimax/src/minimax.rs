@@ -255,7 +255,7 @@ fn opening_position_differential(board: &board::Board, debug: bool) -> i32 {
     if debug { println!("After Black King: {}", differential) }
 
     // Return the differential
-    differential
+    differential / 2
 }
 
 fn endgame_position_differential(board: &board::Board, debug: bool) -> i32 {
@@ -445,11 +445,11 @@ impl ChessAI {
 
             if next_end_time.duration_since(initial_start_time).as_secs() as f64 > time_allowed_secs {
                 println!("Breaking after depth {} with evaluation {}", i, score_vec.as_ref().unwrap()[0].score);
-                println!("Moves:");
 
-                for m in score_vec.as_ref().unwrap().iter() {
-                    println!("{} - {}", m.best_move.unwrap().get_move_string(), m.score);
-                }
+                // println!("Moves:");
+                // for m in score_vec.as_ref().unwrap().iter() {
+                //     println!("{} - {}", m.best_move.unwrap().get_move_string(), m.score);
+                // }
 
                 break;
             }

@@ -4,6 +4,7 @@ import chess.pgn
 import collections
 from socket_interface import Connection
 from typing import List, Tuple, Union
+import time
 import sys
 
 # Colors
@@ -235,6 +236,13 @@ class State:
         self.__capture_options = []
         self.__check_squares = []
         self.__move_buffer = []
+        self.__is_busy = False
+        self.__ani_mode = 0
+        self.__ani_time = 0
+        self.__ani_uci = None
+
+    def is_busy(self):
+        return self.__is_busy
     
     def get_piece_list(self):
         return self.__game.get_piece_list()
@@ -262,6 +270,25 @@ class State:
     
     def push_move(self, uci):
         self.__move_buffer.append(self.__game.push_uci(uci))
+
+    def ani_push_move(self, uci):
+        self.__ani_mode = 1
+        self.__ani_time = time.time()
+        square = chess.Move.from_uci(uci).from_square
+        square = (square % 8, (63 - square) // 8)
+        self.__set_selected_square(square)
+        self.__ani_uci = uci
+        self.__is_busy = True
+
+    def update_ani(self):
+        if self.__ani_mode == 1:
+            if time.time() - self.__ani_time > 1.0:
+                self.__move_buffer.append(self.__game.push_uci(self.__ani_uci))
+                self.__ani_mode = 0
+                self.__ani_time = 0
+                self.__ani_uci = None
+                self.__set_selected_square(None)
+                self.__is_busy = False
     
     def get_board(self):
         return self.__game.board
@@ -301,6 +328,13 @@ class State:
         return False if square == None else self.__game.get_color_at(square) == self.player_color
 
     def __set_selected_square(self, square):
+        # We an select for animation purposes
+        if self.__ani_mode == 1:
+            self.__selected_square = square
+            self.__set_standard_moves(square)
+            self.__set_attack_moves(square)
+            return
+
         # We can only select a square if it is friendly to us (the human player)
         if not self.__is_square_friendly(square):
             self.__clear_selected_square()
@@ -349,7 +383,7 @@ def main():
     else:
         state = State(chess.WHITE, False)
 
-    state.get_board().set_fen("8/8/3k4/4r3/8/5K2/8/8 w - - 0 1")
+    #state.get_board().set_fen("8/8/3k4/4r3/8/5K2/8/8 w - - 0 1")
     width = BORDER_WIDTH * 2 + BOARD_SIZE + TIMER_AREA_WIDTH
     height = BORDER_WIDTH * 2 + BOARD_SIZE
     screen = init_pygame(width, height)
@@ -363,14 +397,12 @@ def main():
 
     minimax_conn = Connection(ip, port)
 
-    '''
     if state.is_players_turn():
         minimax_conn.push_to_queue("init b")
     else:
         minimax_conn.push_to_queue("init w")
-    '''
 
-    minimax_conn.push_to_queue("init b fen " + state.get_board().fen())
+    # minimax_conn.push_to_queue("init b fen " + state.get_board().fen())
 
     waiting_on_ai = False
 
@@ -388,7 +420,7 @@ def main():
                 minimax_conn.push_to_queue('push ' + pmove.uci())
             
             # We need to ask the AI for a move
-            if not state.is_players_turn() and not waiting_on_ai:
+            if not state.is_players_turn() and not waiting_on_ai and not state.is_busy():
                 minimax_conn.push_to_queue(message='query')
                 waiting_on_ai = True
             
@@ -403,8 +435,10 @@ def main():
 
                     if "bestmove" in result:
                         result = result.split(' ')[1]
-                        state.push_move(result)
+                        state.ani_push_move(result)
                         waiting_on_ai = False
+            
+            state.update_ani()
 
             rerender(screen, state)
     except:
