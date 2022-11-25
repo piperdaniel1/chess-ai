@@ -266,6 +266,9 @@ struct PrevMove {
 
     // Turn and full move number are not stored as they can be trivially
     // derived due to the nature of the game
+
+    // Stores the zobrist hash that was present
+    hash: u64,
 }
 
 fn get_piece_from_char(c: char) -> Result<u8, Error> {
@@ -419,7 +422,7 @@ impl Board {
             hash: 0,
         }
     }
-
+        
     pub fn turn(&self) -> bool {
         self.turn
     }
@@ -480,6 +483,18 @@ impl Board {
 
     pub fn stalemate(&self) -> bool {
         self.has_check().is_none() && self.gen_legal_moves().len() == 0
+    }
+
+    pub fn threefold_repitition(&self) -> bool {
+        let mut count = 0;
+
+        for i in 0..self.history.len() {
+            if self.history[i].hash == self.hash {
+                count += 1;
+            }
+        }
+
+        return count >= 3;
     }
 
     #[allow(dead_code)]
@@ -1079,6 +1094,7 @@ impl Board {
             prev_castling: self.castling.clone(),
             prev_en_passant: self.en_passant.clone(),
             prev_halfmove_clock: self.halfmove_clock,
+            hash: self.hash,
         };
 
         // Set the square we are leaving to empty

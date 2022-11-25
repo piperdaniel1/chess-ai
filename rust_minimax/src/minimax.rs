@@ -265,6 +265,11 @@ pub fn score_board(board: &board::Board, current_depth: i32, debug: bool) -> i32
         return 0;
     }
 
+    if board.threefold_repitition() {
+        if debug { println!("Returning 0 because threefold repitition") }
+        return 0;
+    }
+
     let mut score = 0;
     score += board.get_pawn_differential() * 100;
     if debug { println!("Pawn differential: {}", board.get_pawn_differential()) }
