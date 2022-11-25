@@ -317,10 +317,6 @@ impl ChessAI {
         Ok(result)
     }
 
-    fn tiebreak_decisions(&self, decisions: &mut Vec<TreeDecision>) {
-        // Sort moves by the number of pieces they capture
-    }
-
     pub fn best_move_iddfs(&mut self, time_allowed_secs: f64) -> Result<TreeDecision, Error> {
         //if self.board.turn() != self.my_color {
         //    return Err(Error);
