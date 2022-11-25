@@ -90,6 +90,7 @@ fn play_against_ai(player_color: bool) {
 
 }
 
+#[allow(dead_code)]
 fn start_tcp_server() {
     let listener = TcpListener::bind("0.0.0.0:4321").unwrap();
     let mut ai: Option<minimax::ChessAI> = None;

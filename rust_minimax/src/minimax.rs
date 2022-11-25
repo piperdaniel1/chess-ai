@@ -18,7 +18,7 @@ pub struct TreeDecision {
     pub score: i32,
 }
 
-const WHITE_PAWN_MAP: [[i8; 8]; 8] = [
+const WHITE_PAWN_MAP: [[i32; 8]; 8] = [
     [0,  0,  0,  0,  0,  0,  0,  0],
     [50, 50, 50, 50, 50, 50, 50, 50],
     [10, 10, 20, 30, 30, 20, 10, 10],
@@ -29,7 +29,7 @@ const WHITE_PAWN_MAP: [[i8; 8]; 8] = [
     [0,  0,  0,  0,  0,  0,  0,  0],
 ];
 
-const BLACK_PAWN_MAP: [[i8; 8]; 8] = [
+const BLACK_PAWN_MAP: [[i32; 8]; 8] = [
     [0,  0,  0,  0,  0,  0,  0,  0],
     [5, 10, 10,-20,-20, 10, 10,  5],
     [5, -5,-10,  0,  0,-10, -5,  5],
@@ -40,7 +40,7 @@ const BLACK_PAWN_MAP: [[i8; 8]; 8] = [
     [0,  0,  0,  0,  0,  0,  0,  0],
 ];
 
-const KNIGHT_MAP: [[i8; 8]; 8] = [
+const KNIGHT_MAP: [[i32; 8]; 8] = [
     [-50,-40,-30,-30,-30,-30,-40,-50],
     [-40,-20,  0,  0,  0,  0,-20,-40],
     [-30,  0, 10, 15, 15, 10,  0,-30],
@@ -51,7 +51,7 @@ const KNIGHT_MAP: [[i8; 8]; 8] = [
     [-50,-40,-30,-30,-30,-30,-40,-50],
 ];
 
-const WHITE_BISHOP_MAP: [[i8; 8]; 8] = [
+const WHITE_BISHOP_MAP: [[i32; 8]; 8] = [
     [-20,-10,-10,-10,-10,-10,-10,-20],
     [-10,  0,  0,  0,  0,  0,  0,-10],
     [-10,  0,  5, 10, 10,  5,  0,-10],
@@ -62,7 +62,7 @@ const WHITE_BISHOP_MAP: [[i8; 8]; 8] = [
     [-20,-10,-10,-10,-10,-10,-10,-20],
 ];
 
-const BLACK_BISHOP_MAP: [[i8; 8]; 8] = [
+const BLACK_BISHOP_MAP: [[i32; 8]; 8] = [
     [-20,-10,-10,-10,-10,-10,-10,-20],
     [-10,  5,  0,  0,  0,  0,  5,-10],
     [-10, 10, 10, 10, 10, 10, 10,-10],
@@ -73,7 +73,7 @@ const BLACK_BISHOP_MAP: [[i8; 8]; 8] = [
     [-20,-10,-10,-10,-10,-10,-10,-20],
 ];
 
-const WHITE_ROOK_MAP: [[i8; 8]; 8] = [
+const WHITE_ROOK_MAP: [[i32; 8]; 8] = [
     [0,  0,  0,  0,  0,  0,  0,  0],
     [5, 10, 10, 10, 10, 10, 10,  5],
     [-5,  0,  0,  0,  0,  0,  0, -5],
@@ -84,7 +84,7 @@ const WHITE_ROOK_MAP: [[i8; 8]; 8] = [
     [0,  0,  0,  5,  5,  0,  0,  0],
 ];
 
-const BLACK_ROOK_MAP: [[i8; 8]; 8] = [
+const BLACK_ROOK_MAP: [[i32; 8]; 8] = [
     [0,  0,  0,  5,  5,  0,  0,  0],
     [-5,  0,  0,  0,  0,  0,  0, -5],
     [-5,  0,  0,  0,  0,  0,  0, -5],
@@ -95,7 +95,7 @@ const BLACK_ROOK_MAP: [[i8; 8]; 8] = [
     [0,  0,  0,  0,  0,  0,  0,  0],
 ];
 
-const WHITE_QUEEN_MAP: [[i8; 8]; 8] = [
+const WHITE_QUEEN_MAP: [[i32; 8]; 8] = [
     [-20,-10,-10, -5, -5,-10,-10,-20],
     [-10,  0,  0,  0,  0,  0,  0,-10],
     [-10,  0,  5,  5,  5,  5,  0,-10],
@@ -106,7 +106,7 @@ const WHITE_QUEEN_MAP: [[i8; 8]; 8] = [
     [-20,-10,-10, -5, -5,-10,-10,-20],
 ];
 
-const BLACK_QUEEN_MAP: [[i8; 8]; 8] = [
+const BLACK_QUEEN_MAP: [[i32; 8]; 8] = [
     [-20,-10,-10, -5, -5,-10,-10,-20],
     [-10,  0,  5,  0,  0,  0,  0,-10],
     [-10,  5,  5,  5,  5,  5,  0,-10],
@@ -117,7 +117,7 @@ const BLACK_QUEEN_MAP: [[i8; 8]; 8] = [
     [-20,-10,-10, -5, -5,-10,-10,-20],
 ];
 
-const WHITE_KING_MAP: [[i8; 8]; 8] = [
+const WHITE_KING_MAP: [[i32; 8]; 8] = [
     [-20, -20, -20, -20, -20, -20, -20, -20],
     [-20, -20, -20, -20, -20, -20, -20, -20],
     [-20, -20, -20, -20, -20, -20, -20, -20],
@@ -128,7 +128,7 @@ const WHITE_KING_MAP: [[i8; 8]; 8] = [
     [20, 20, 15, -10, -10, 15, 20, 20],
 ];
 
-const BLACK_KING_MAP: [[i8; 8]; 8] = [
+const BLACK_KING_MAP: [[i32; 8]; 8] = [
     [20, 20, 15, -10, -10, 15, 20, 20],
     [0, 0, 0, 0, 0, 0, 0, 0],
     [-10, -12, -15, -20, -20, -15, -12, -10],
@@ -139,8 +139,8 @@ const BLACK_KING_MAP: [[i8; 8]; 8] = [
     [-20, -20, -20, -20, -20, -20, -20, -20],
 ];
 
-fn normal_position_differential(board: &board::Board) -> i8 {
-    let mut differential = 0;
+fn normal_position_differential(board: &board::Board) -> i32 {
+    let mut differential: i32 = 0;
     // White pawns
     let white_pawns = board.get_pawn_list(board::WHITE);
     for pawn in white_pawns {
@@ -518,5 +518,20 @@ impl ChessAI {
         }
 
         return best_decision;
+    }
+}
+
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn test_bad_position() {
+        let mut ai = ChessAI::new();
+        ai.import_position("3k2n1/p5p1/8/1n6/4BP2/r4P1P/1NR5/4K3 b - - 0 43").unwrap();
+        //ai.print_internal_board();
+        let bmove = ai.best_move_iddfs(1.0).unwrap();
+
+        println!("Best move: {}", bmove.best_move.unwrap().get_move_string());
     }
 }
