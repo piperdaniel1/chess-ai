@@ -355,8 +355,8 @@ def main():
     screen = init_pygame(width, height)
 
     if len(sys.argv) > 2:
-        ip = sys.argv[1]
-        port = int(sys.argv[2])
+        ip = sys.argv[2]
+        port = int(sys.argv[3])
     else:
         ip = '127.0.0.1'
         port = 4321
