@@ -1900,6 +1900,7 @@ impl Board {
         moves
     }
 
+    #[allow(dead_code)]
     pub fn get_piece_at(&self, square: &Square) -> Option<u8> {
         let piece = self.get_square(square);
 
