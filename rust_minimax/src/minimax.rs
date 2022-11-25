@@ -317,6 +317,10 @@ impl ChessAI {
         Ok(result)
     }
 
+    fn tiebreak_decisions(&self, decisions: &mut Vec<TreeDecision>) {
+        // Sort moves by the number of pieces they capture
+    }
+
     pub fn best_move_iddfs(&mut self, time_allowed_secs: f64) -> Result<TreeDecision, Error> {
         //if self.board.turn() != self.my_color {
         //    return Err(Error);
@@ -354,6 +358,7 @@ impl ChessAI {
                 break;
             }
         }
+
 
         result.best_move = score_vec.as_ref().unwrap()[0].best_move;
         result.score = score_vec.as_ref().unwrap()[0].score;
@@ -493,6 +498,36 @@ impl ChessAI {
             scored_moves.reverse();
         }
 
+        /*println!("===================================");
+        for m in scored_moves.iter() {
+            println!("Move: {:?}, Score: {}", m.best_move.unwrap().get_move_string(), m.score);
+        }*/
+        
+        /*scored_moves.sort_by(|a, b| {
+            if a.score > b.score {
+                std::cmp::Ordering::Less
+            } else if a.score < b.score {
+                std::cmp::Ordering::Greater
+            } else {
+                // There should always be a best_move and a piece should always be at the from square
+                let from_piece_a = self.board.get_piece_at(&a.best_move.unwrap().from).unwrap();
+                let from_piece_b = self.board.get_piece_at(&b.best_move.unwrap().from).unwrap();
+
+                if from_piece_a > from_piece_b {
+                    std::cmp::Ordering::Less
+                } else if from_piece_a < from_piece_b {
+                    std::cmp::Ordering::Greater
+                } else {
+                    std::cmp::Ordering::Equal
+                }
+            }
+        });*/
+
+        /*println!("===================================");
+        for m in scored_moves.iter() {
+            println!("Move: {:?}, Score: {}", m.best_move.unwrap().get_move_string(), m.score);
+        }*/
+
         return scored_moves;
     }
 
@@ -589,7 +624,7 @@ mod tests {
     #[test]
     fn test_bad_position() {
         let mut ai = ChessAI::new();
-        ai.import_position("3k2n1/p5p1/8/1n6/4BP2/r4P1P/1NR5/4K3 b - - 0 43").unwrap();
+        //ai.import_position("3k2n1/p5p1/8/1n6/4BP2/r4P1P/1NR5/4K3 b - - 0 43").unwrap();
         //ai.print_internal_board();
         let bmove = ai.best_move_iddfs(1.0).unwrap();
 

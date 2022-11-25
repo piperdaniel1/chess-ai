@@ -240,7 +240,7 @@ pub struct Board {
 pub struct Square { pub row: u8, pub col: u8 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Move { from: Square, to: Square, promotion: Option<u8> }
+pub struct Move { pub from: Square, pub to: Square, pub promotion: Option<u8> }
 
 // These PrevMove objects are used to keep track of the previous move
 // with enough detail to undo it
@@ -1898,6 +1898,15 @@ impl Board {
         }
 
         moves
+    }
+
+    pub fn get_piece_at(&self, square: &Square) -> Option<u8> {
+        let piece = self.get_square(square);
+
+        return match piece {
+            EMPTY_SQUARE => None,
+            _ => Some(piece),
+        };
     }
 
     // There is a bug that allows us a pseudo legal move to slip through if
