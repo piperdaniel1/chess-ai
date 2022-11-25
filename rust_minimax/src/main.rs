@@ -53,8 +53,10 @@ fn get_move_from_player(possible_moves: Vec<board::Move>) -> board::Move {
 #[allow(dead_code)]
 fn play_against_ai(player_color: bool) {
     let mut ai = minimax::ChessAI::new_with_color(!player_color);
+    ai.import_position("8/4q3/3k4/8/8/5K2/8/8 w - - 0 1").unwrap();
 
     let mut board = board::Board::new();
+    board.import_from_fen("8/4q3/3k4/8/8/5K2/8/8 w - - 0 1").unwrap();
 
     while !board.checkmate() && !board.stalemate() {
         println!("DISPLAY BOARD =====================");
@@ -66,7 +68,7 @@ fn play_against_ai(player_color: bool) {
             new_move = get_move_from_player(board.gen_legal_moves());
         } else {
             println!("AI's turn!");
-            new_move = ai.best_move(4).unwrap().best_move.unwrap();
+            new_move = ai.best_move_iddfs(2.0).unwrap().best_move.unwrap();
             println!("AI chose: {}", new_move.get_move_string());
         }
 
@@ -203,5 +205,6 @@ fn start_tcp_server() {
     drop(listener);
 }
 fn main() {
-    start_tcp_server()
+    start_tcp_server();
+    //play_against_ai(board::WHITE);
 }
