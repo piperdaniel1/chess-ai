@@ -7,7 +7,7 @@ pub struct ChessAI {
     debug_mode: bool,
     start_time: Option<std::time::Instant>,
     nodes_expanded: u64,
-    tt_table: [Option<PositionScore>; 10_000_000],
+    tt_table: Vec<Option<PositionScore>>,
     use_tt: bool,
 }
 
@@ -258,7 +258,7 @@ impl ChessAI {
             debug_mode: false,
             start_time: None,
             nodes_expanded: 0,
-            tt_table: [None; 10_000_000],
+            tt_table: vec![None; 100_000_000],
             use_tt: true,
         }
     }
@@ -270,7 +270,7 @@ impl ChessAI {
             debug_mode: false,
             start_time: None,
             nodes_expanded: 0,
-            tt_table: [None; 10_000_000],
+            tt_table: vec![None; 100_000_000],
             use_tt: true,
         }
     }
@@ -334,7 +334,7 @@ impl ChessAI {
         let mut times = Vec::new();
 
         // max depth
-        let depth = 10;
+        let depth = 100;
         let mut score_vec: Option<Vec<TreeDecision>> = Option::from(None);
 
         for i in 1..depth {
@@ -370,7 +370,8 @@ impl ChessAI {
             score,
         };
 
-        self.tt_table[hash as usize % self.tt_table.len()] = Some(entry);
+        let index = (hash as usize % self.tt_table.len()) as usize;
+        self.tt_table[index] = Some(entry);
     }
 
     // Returns the score from the transposition table using the zobrist hash if it exists
