@@ -381,7 +381,7 @@ impl ChessAI {
 
         let entry = entry.unwrap();
 
-        if entry.depth >= curr_depth {
+        if entry.depth >= curr_depth && entry.hash == hash {
             return Some(entry);
         }
 
