@@ -677,6 +677,7 @@ impl Board {
         hash
     }
 
+    #[allow(dead_code)]
     pub fn get_hash(&self) -> u64 {
         self.hash
     }
