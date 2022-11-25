@@ -148,7 +148,8 @@ const BLACK_KING_MAP: [[i32; 8]; 8] = [
     [-20, -20, -20, -20, -20, -20, -20, -20],
 ];
 
-fn normal_position_differential(board: &board::Board) -> i32 {
+fn normal_position_differential(board: &board::Board, debug: bool) -> i32 {
+    if debug { println!("Normal Position Differential ====================") }
     let mut differential: i32 = 0;
     // White pawns
     let white_pawns = board.get_pawn_list(board::WHITE);
@@ -156,11 +157,15 @@ fn normal_position_differential(board: &board::Board) -> i32 {
         differential += WHITE_PAWN_MAP[pawn.row as usize][pawn.col as usize];
     }
 
+    if debug { println!("After White Pawns: {}", differential) }
+
     // Black pawns
     let black_pawns = board.get_pawn_list(board::BLACK);
     for pawn in black_pawns {
-        differential += BLACK_PAWN_MAP[pawn.row as usize][pawn.col as usize];
+        differential -= BLACK_PAWN_MAP[pawn.row as usize][pawn.col as usize];
     }
+
+    if debug { println!("After Black Pawns: {}", differential) }
 
     // White knights
     let white_knights = board.get_knight_list(board::WHITE);
@@ -168,11 +173,15 @@ fn normal_position_differential(board: &board::Board) -> i32 {
         differential += KNIGHT_MAP[knight.row as usize][knight.col as usize];
     }
 
+    if debug { println!("After White Knights: {}", differential) }
+
     // Black knights
     let black_knights = board.get_knight_list(board::BLACK);
     for knight in black_knights {
-        differential += KNIGHT_MAP[knight.row as usize][knight.col as usize];
+        differential -= KNIGHT_MAP[knight.row as usize][knight.col as usize];
     }
+
+    if debug { println!("After Black Knights: {}", differential) }
 
     // White bishops
     let white_bishops = board.get_bishop_list(board::WHITE);
@@ -180,11 +189,15 @@ fn normal_position_differential(board: &board::Board) -> i32 {
         differential += WHITE_BISHOP_MAP[bishop.row as usize][bishop.col as usize];
     }
 
+    if debug { println!("After White Bishops: {}", differential) }
+
     // Black bishops
     let black_bishops = board.get_bishop_list(board::BLACK);
     for bishop in black_bishops {
-        differential += BLACK_BISHOP_MAP[bishop.row as usize][bishop.col as usize];
+        differential -= BLACK_BISHOP_MAP[bishop.row as usize][bishop.col as usize];
     }
+
+    if debug { println!("After Black Bishops: {}", differential) }
 
     // White rooks
     let white_rooks = board.get_rook_list(board::WHITE);
@@ -192,11 +205,15 @@ fn normal_position_differential(board: &board::Board) -> i32 {
         differential += WHITE_ROOK_MAP[rook.row as usize][rook.col as usize];
     }
 
+    if debug { println!("After White Rooks: {}", differential) }
+
     // Black rooks
     let black_rooks = board.get_rook_list(board::BLACK);
     for rook in black_rooks {
-        differential += BLACK_ROOK_MAP[rook.row as usize][rook.col as usize];
+        differential -= BLACK_ROOK_MAP[rook.row as usize][rook.col as usize];
     }
+
+    if debug { println!("After Black Rooks: {}", differential) }
 
     // White queens
     let white_queens = board.get_queen_list(board::WHITE);
@@ -204,47 +221,64 @@ fn normal_position_differential(board: &board::Board) -> i32 {
         differential += WHITE_QUEEN_MAP[queen.row as usize][queen.col as usize];
     }
 
+    if debug { println!("After White Queens: {}", differential) }
+
     // Black queens
     let black_queens = board.get_queen_list(board::BLACK);
     for queen in black_queens {
-        differential += BLACK_QUEEN_MAP[queen.row as usize][queen.col as usize];
+        differential -= BLACK_QUEEN_MAP[queen.row as usize][queen.col as usize];
     }
+
+    if debug { println!("After Black Queens: {}", differential) }
 
     // White king
     let white_king = board.get_king_square(board::WHITE);
     differential += WHITE_KING_MAP[white_king.row as usize][white_king.col as usize];
 
+    if debug { println!("After White King: {}", differential) }
+
     // Black king
     let black_king = board.get_king_square(board::BLACK);
-    differential += BLACK_KING_MAP[black_king.row as usize][black_king.col as usize];
+    differential -= BLACK_KING_MAP[black_king.row as usize][black_king.col as usize];
+
+    if debug { println!("After Black King: {}", differential) }
 
     // Return the differential
     differential
 }
 
 // High scores are good for white, low scores are good for black
-pub fn score_board(board: &board::Board, current_depth: i32) -> i32 {
+pub fn score_board(board: &board::Board, current_depth: i32, debug: bool) -> i32 {
     // Extremely basic scoring function
     if board.checkmate() {
         if board.turn() {
+            if debug { println!("Returning -1000000 because white is checkmated") }
             return -1000000 + current_depth;
         } else {
+            if debug { println!("Returning 1000000 because black is checkmated") }
             return 1000000 - current_depth;
         }
     }
     
     if board.stalemate() {
+        if debug { println!("Returning 0 because stalemate") }
         return 0;
     }
 
     let mut score = 0;
     score += board.get_pawn_differential() * 100;
+    if debug { println!("Pawn differential: {}", board.get_pawn_differential()) }
     score += board.get_bishop_differential() * 300;
+    if debug { println!("Bishop differential: {}", board.get_bishop_differential()) }
     score += board.get_knight_differential() * 300;
+    if debug { println!("Knight differential: {}", board.get_knight_differential()) }
     score += board.get_rook_differential() * 500;
+    if debug { println!("Rook differential: {}", board.get_rook_differential()) }
     score += board.get_queen_differential() * 900;
+    if debug { println!("Queen differential: {}", board.get_queen_differential()) }
 
-    score += normal_position_differential(board) as i32;
+    score += normal_position_differential(board, debug) as i32;
+    if debug { println!("Normal position differential: {}", normal_position_differential(board, false)) }
 
     return score;
 }
@@ -537,7 +571,7 @@ impl ChessAI {
         
         let mut best_decision = TreeDecision {
             best_move: None,
-            score: score_board(&self.board, top_depth as i32 - depth as i32),
+            score: score_board(&self.board, top_depth as i32 - depth as i32, false),
         };
 
         if self.use_tt {
@@ -625,5 +659,15 @@ mod tests {
         let bmove = ai.best_move_iddfs(1.0).unwrap();
 
         println!("Best move: {}", bmove.best_move.unwrap().get_move_string());
+    }
+
+    #[test]
+    fn test_score() {
+        let mut ai = ChessAI::new();
+        ai.import_position("rnbqkbnr/pppppppp/8/8/4P3/2NPBNP1/PPPQ1PBP/R2R2K1 w kq - 0 1").unwrap();
+
+        ai.print_internal_board();
+        let score = score_board(&ai.board, 4, true);
+        println!("Score: {}", score);
     }
 }
