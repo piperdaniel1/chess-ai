@@ -505,6 +505,18 @@ impl ChessAI {
             score: score_board(&self.board, top_depth as i32 - depth as i32),
         };
 
+        let tt_entry = self.get_from_tt_table(depth, self.board.get_hash());
+
+        match tt_entry {
+            Some(entry) => {
+                if entry.depth >= depth {
+                    return TreeDecision { best_move: None, score: entry.score };
+                }
+            },
+            None => {}
+        }
+
+
         if depth == 0 {
             return best_decision
         }
@@ -556,6 +568,8 @@ impl ChessAI {
                 }
             }
         }
+
+        self.save_to_tt_table(depth, best_decision.score, self.board.get_hash());
 
         return best_decision;
     }
