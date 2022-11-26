@@ -117,11 +117,11 @@ fn start_tcp_server() {
                     // or if the client specifies a time limit that fails to parse
                     let time_limit = match time_limit {
                         Some(t) => t.parse::<f64>(),
-                        None => Ok(1.0)
+                        None => Ok(15.0)
                     };
                     let time_limit = match time_limit {
                         Ok(t) => t,
-                        Err(_) => 1.0
+                        Err(_) => 15.0
                     };
 
                     match ai {

@@ -18,6 +18,8 @@ struct PositionScore {
     hash: u64,
 }
 
+// Misanalyzed position (8/P4k2/5p2/7q/4P3/3PK3/R7/8 b - - 12 64) and lost, it played Queen H6 and it should have played Queen H3
+
 /* 
  * This struct stores the state of the minimax algorithm at a given point.
  */
