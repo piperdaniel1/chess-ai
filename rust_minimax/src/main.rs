@@ -1,5 +1,14 @@
+#[macro_use] extern crate hyper;
+
 use std::net::TcpListener;
 use std::io::{Read, Write};
+use reqwest::Client;
+use std::fs::File;
+use tokio::runtime::Runtime;
+
+use hyper::header::{HeaderMap, HeaderValue};
+use serde_json::Value;
+use futures_util::StreamExt;
 
 mod board;
 mod minimax;
@@ -223,12 +232,59 @@ fn start_tcp_server() {
     drop(listener);
 }
 
-fn start_uci_engine() {
+fn get_lichess_token() -> String {
+    let mut file = File::open("/home/daniel/personal-projects/chess-ai/rust_minimax/src/.lichess-token").unwrap();
+    let mut token = String::new();
+    file.read_to_string(&mut token).unwrap();
+    token.trim().to_string()
+}
 
+async fn play_on_lichess() {
+    println!("Starting lichess bot...");
+
+    let token = get_lichess_token();
+
+    let client = Client::new();
+
+    let mut nutty = HeaderMap::new();
+    let val = HeaderValue::from_str(&format!("Bearer {}", token)).unwrap();
+    nutty.insert("Authorization", val);
+
+    //let stream = client.get("https://lichess.org/api/bot/game/stream").headers(nutty).send().await.unwrap();
+
+    // let res = client.get("https://lichess.org/api/account")
+    //     .headers(nutty)
+    //     .send()
+    //     .await
+    //     .unwrap();https://lichess.org/api/stream/event
+    println!("Sending request...");
+    let mut res = client.get("https://lichess.org/api/stream/event")
+        .headers(nutty)
+        .send()
+        .await
+        .unwrap()
+        .bytes_stream();
+
+    println!("Got response!");
+
+    // Parse the stream
+    while let Some(item) = res.next().await {
+        println!("Chunk: {:?}", item);
+    }
+
+    // let text = res.text().await.unwrap();
+    // println!("Got text: {}", text);
+    
+    //let res_json = res.json::<serde_json::Value>();
+    //println!("{:#?}", res_json.await);
 }
 
 fn main() {
-    start_uci_engine();
+    let rt = Runtime::new().unwrap();
+
+    rt.block_on(async {play_on_lichess().await});
+
+
     //start_tcp_server();
     //play_against_ai(board::WHITE);
 }
