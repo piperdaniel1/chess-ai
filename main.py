@@ -384,6 +384,7 @@ def main():
         state = State(chess.WHITE, False)
 
     #state.get_board().set_fen("8/8/3k4/4r3/8/5K2/8/8 w - - 0 1")
+    #state.get_board().set_fen("8/P4k2/5p2/7q/4P3/3PK3/R7/8 b - - 12 64")
     width = BORDER_WIDTH * 2 + BOARD_SIZE + TIMER_AREA_WIDTH
     height = BORDER_WIDTH * 2 + BOARD_SIZE
     screen = init_pygame(width, height)
@@ -402,7 +403,7 @@ def main():
     else:
         minimax_conn.push_to_queue("init w")
 
-    # minimax_conn.push_to_queue("init b fen " + state.get_board().fen())
+    #minimax_conn.push_to_queue("init b fen " + state.get_board().fen())
 
     waiting_on_ai = False
 

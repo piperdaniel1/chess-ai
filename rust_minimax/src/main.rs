@@ -117,11 +117,11 @@ fn start_tcp_server() {
                     // or if the client specifies a time limit that fails to parse
                     let time_limit = match time_limit {
                         Some(t) => t.parse::<f64>(),
-                        None => Ok(15.0)
+                        None => Ok(0.25)
                     };
                     let time_limit = match time_limit {
                         Ok(t) => t,
-                        Err(_) => 15.0
+                        Err(_) => 0.25
                     };
 
                     match ai {
@@ -223,7 +223,12 @@ fn start_tcp_server() {
     drop(listener);
 }
 
+fn start_uci_engine() {
+
+}
+
 fn main() {
-    start_tcp_server();
+    start_uci_engine();
+    //start_tcp_server();
     //play_against_ai(board::WHITE);
 }
