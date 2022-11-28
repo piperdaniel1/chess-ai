@@ -1,17 +1,17 @@
-#[macro_use] extern crate hyper;
-
+// Local Networking stuff
 use std::net::TcpListener;
 use std::io::{Read, Write};
+
+// Lichess stuff
 use reqwest::Client;
 use std::fs::File;
 use tokio::runtime::Runtime;
-
 use hyper::header::{HeaderMap, HeaderValue};
-use serde_json::Value;
 use futures_util::StreamExt;
 
 mod board;
 mod minimax;
+mod lichess_api;
 
 // Goal: Make board.legal_moves() a function that takes
 // an immutable self reference while also not having it
@@ -236,7 +236,7 @@ fn get_lichess_token() -> String {
     let mut file = File::open("/home/daniel/personal-projects/chess-ai/rust_minimax/src/.lichess-token").unwrap();
     let mut token = String::new();
     file.read_to_string(&mut token).unwrap();
-    token.trim().to_string()
+    token.trim().to_string()Challenge
 }
 
 async fn play_on_lichess() {
@@ -269,7 +269,21 @@ async fn play_on_lichess() {
 
     // Parse the stream
     while let Some(item) = res.next().await {
-        println!("Chunk: {:?}", item);
+        match item {
+            Ok(bytes) => {
+                if bytes.len() > 1 {
+                    println!("Received {} bytes", bytes.len());
+                    let s = String::from_utf8(bytes.to_vec()).unwrap();
+                    println!("String: {}", s);
+
+                    let json_chunk: serde_json::Value = serde_json::from_str(&s).unwrap();
+                    println!("{:#?}", json_chunk);
+                }
+            },
+            Err(e) => {
+                println!("Error: {}", e);
+            }
+        }
     }
 
     // let text = res.text().await.unwrap();
