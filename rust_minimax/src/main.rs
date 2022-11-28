@@ -293,11 +293,45 @@ async fn play_on_lichess() {
     //println!("{:#?}", res_json.await);
 }
 
-fn main() {
-    let rt = Runtime::new().unwrap();
+#[tokio::main]
+async fn main() {
+    let api = lichess_api::Lichess::new(get_lichess_token());
 
-    rt.block_on(async {play_on_lichess().await});
+    // Main event loop
+    // Structure:
+    // First half gets a Game struct that contains the game ID we want
+    // to play in
+    // Second half (the game loop) plays this game until it is complete
+    //
+    // The issue with this design is that it will only allow us to play one
+    // person at a time. This can be fixed in the future by refactoring the event loop
+    // to get rid of the blocking functions and storing a list of games that we are in.
+    // However, we will not do this yet because it is a bit more complicated
+    loop {
+        // Wait for someone to challenge us
+        let new_challenge = api.block_until_challenge().await;
+        let name = new_challenge.challenger.name.clone();
 
+        match api.accept_challenge(new_challenge).await {
+            Ok(_) => {
+                println!("Accepted challenge from {}", name);
+            },
+            Err(e) => {
+                println!("Error accepting challenge: {}", e);
+            }
+        }
+
+        // Get the game struct
+        let game= api.block_until_game_start().await;
+
+        // Play the game (game loop)
+        loop {
+            break;
+        }
+
+
+        break;
+    }
 
     //start_tcp_server();
     //play_against_ai(board::WHITE);

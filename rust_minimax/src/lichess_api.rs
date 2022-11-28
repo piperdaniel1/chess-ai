@@ -5,9 +5,10 @@ use futures_util::StreamExt;
 use std::io::Read;
 use serde::Deserialize;
 use tokio::runtime::Runtime;
+use core::fmt::Error;
 
 #[derive(Debug)]
-struct Lichess {
+pub struct Lichess {
     client: reqwest::Client,
     token: String,
 }
@@ -16,68 +17,106 @@ struct Lichess {
  * Structs for deserializing the /api/stream/event response if type is "challenge"
  */
 #[derive(Debug, Deserialize)]
-struct Challenger {
-    id: String,
-    name: String,
-    title: Option<String>,
-    rating: u32,
-    online: bool,
+pub struct Challenger {
+    pub id: String,
+    pub name: String,
+    pub title: Option<String>,
+    pub rating: u32,
+    pub online: Option<bool>,
 }
 #[derive(Debug, Deserialize)]
-struct DestUser {
-    id: String,
-    name: String,
-    title: String,
-    rating: u32,
-    provisional: bool,
-    online: Option<bool>,
-    lag: Option<u32>,
+pub struct DestUser {
+    pub id: String,
+    pub name: String,
+    pub title: String,
+    pub rating: u32,
+    pub provisional: bool,
+    pub online: Option<bool>,
+    pub lag: Option<u32>,
 }
 #[derive(Debug, Deserialize)]
-struct Variant {
-    key: String,
-    name: String,
-    short: String,
+pub struct Variant {
+    pub key: Option<String>,
+    pub name: Option<String>,
+    pub short: Option<String>,
 }
 #[derive(Debug, Deserialize)]
-struct TimeControl {
+pub struct TimeControl {
     #[serde(rename = "type")]
-    type_: String,
-    limit: Option<u32>,
-    increment: Option<u32>,
-    show: Option<String>,
+    pub type_: String,
+    pub limit: Option<u32>,
+    pub increment: Option<u32>,
+    pub show: Option<String>,
 }
 #[derive(Debug, Deserialize)]
-struct Perf {
-    icon: String,
-    name: String,
+pub struct Perf {
+    pub icon: String,
+    pub name: String,
 }
 #[derive(Debug, Deserialize)]
-struct Challenge {
-    id: String,
-    url: String,
-    status: String,
-    challenger: Challenger,
+pub struct Challenge {
+    pub id: String,
+    pub url: String,
+    pub status: String,
+    pub challenger: Challenger,
     #[serde(rename = "destUser")]
-    dest_user: DestUser,
-    variant: Variant,
-    rated: bool,
+    pub dest_user: DestUser,
+    pub variant: Variant,
+    pub rated: bool,
     #[serde(rename = "timeControl")]
-    time_control: TimeControl,
-    color: String,
-    speed: String,
-    perf: Perf,
+    pub time_control: TimeControl,
+    pub color: String,
+    pub speed: String,
+    pub perf: Perf,
+}
+/*
+ * Structs for deserializing the /api/stream/event response if type is "gameStart"
+ */
+#[derive(Debug, Deserialize)]
+pub struct Opponent {
+    pub id: String,
+    pub rating: u32,
+    pub name: String,
+}
+#[derive(Debug, Deserialize)]
+pub struct Compat {
+    bot: Option<bool>,
+    board: Option<String>,
+}
+#[derive(Debug, Deserialize)]
+pub struct Game {
+    #[serde(rename="gameId")]
+    pub game_id: String,
+    #[serde(rename="fullId")]
+    pub full_id: String,
+    pub color: String,
+    pub fen: String,
+    #[serde(rename="hasMoved")]
+    pub has_moved: bool,
+    #[serde(rename="isMyTurn")]
+    pub is_my_turn: bool,
+    #[serde(rename="lastMove")]
+    pub last_move: bool,
+    pub opponent: Opponent,
+    pub perf: String,
+    pub rated: bool,
+    #[serde(rename="secondsLeft")]
+    pub seconds_left: Option<u32>,
+    pub source: String,
+    pub speed: String,
+    pub variant: Variant,
+    pub compat: Compat,
 }
 
 impl Lichess {
-    fn new(token: String) -> Self {
+    pub fn new(token: String) -> Self {
         Self {
             client: Client::new(),
             token,
         }
     }
 
-    async fn block_until_challenge(&self) -> Challenge {
+    pub async fn block_until_challenge(&self) -> Challenge {
         let mut req_header = HeaderMap::new();
         let auth_header = HeaderValue::from_str(&format!("Bearer {}", self.token)).unwrap();
         req_header.insert("Authorization", auth_header);
@@ -120,6 +159,70 @@ impl Lichess {
 
         panic!("No challenge received before stream ended");
     }
+
+    pub async fn block_until_game_start(&self) -> Game {
+        let mut req_header = HeaderMap::new();
+        let auth_header = HeaderValue::from_str(&format!("Bearer {}", self.token)).unwrap();
+        req_header.insert("Authorization", auth_header);
+
+        let mut res = self.client.get("https://lichess.org/api/stream/event")
+            .headers(req_header)
+            .send()
+            .await
+            .unwrap()
+            .bytes_stream();
+
+        // Parse the stream
+        while let Some(item) = res.next().await {
+            match item {
+                Ok(bytes) => {
+                    if bytes.len() > 1 {
+                        println!("Received {} bytes", bytes.len());
+                        let s = String::from_utf8(bytes.to_vec()).unwrap();
+                        let json_chunk: serde_json::Value = serde_json::from_str(&s).unwrap();
+                        let event_type = json_chunk["type"].as_str().unwrap();
+
+                        match event_type {
+                            "gameStart" => {
+                                let req_json = json_chunk["game"].to_string();
+
+                                let game: Game = serde_json::from_str(&req_json.as_str()).unwrap();
+                                //let challenge_id = json_chunk["challenge"]["id"].as_str().unwrap();
+                                //return challenge_id.to_string();
+                                return game
+                            },
+                            _ => continue,
+                        }
+                    }
+                },
+                Err(e) => {
+                    println!("Error: {}", e);
+                }
+            }
+        }
+
+        panic!("No game start event received before stream ended");
+    }
+
+    pub async fn accept_challenge(&self, challenge: Challenge) -> Result<(), Error> {
+        let res = self.client.post(format!("https://lichess.org/api/challenge/{}/accept", challenge.id))
+            .bearer_auth(&self.token)
+            .send()
+            .await;
+
+        let res = match res {
+            Ok(res) => res,
+            Err(_) => {
+                return Err(Error);
+            }
+        };
+
+        if res.status().is_success() {
+            Ok(())
+        } else {
+            Err(Error)
+        }
+    }
 }
 
 fn get_lichess_token() -> String {
@@ -130,10 +233,12 @@ fn get_lichess_token() -> String {
 }
 
 mod tests {
-    use super::*;
-
     #[test]
     fn test_block_until_challenge() {
+        use tokio::runtime::Runtime;
+        use crate::lichess_api::Lichess;
+        use crate::lichess_api::get_lichess_token;
+
         let rt = Runtime::new().unwrap();
         let lichess = Lichess::new(get_lichess_token());
 
