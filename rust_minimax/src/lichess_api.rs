@@ -3,6 +3,8 @@ use std::fs::File;
 use hyper::header::{HeaderMap, HeaderValue};
 use futures_util::StreamExt;
 use std::io::Read;
+use serde::Deserialize;
+use tokio::runtime::Runtime;
 
 #[derive(Debug)]
 struct Lichess {
@@ -10,65 +12,57 @@ struct Lichess {
     token: String,
 }
 
-#[derive(Debug)]
-struct Compat {
-    bot: bool,
-    board: bool,
-}
-
-#[derive(Debug)]
+/*
+ * Structs for deserializing the /api/stream/event response if type is "challenge"
+ */
+#[derive(Debug, Deserialize)]
 struct Challenger {
     id: String,
     name: String,
-    title: String,
+    title: Option<String>,
     rating: u32,
-    patron: bool,
     online: bool,
-    lag: u32,
 }
-
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 struct DestUser {
     id: String,
     name: String,
     title: String,
     rating: u32,
     provisional: bool,
-    online: bool,
-    lag: u32,
+    online: Option<bool>,
+    lag: Option<u32>,
 }
-
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 struct Variant {
     key: String,
     name: String,
     short: String,
 }
-
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 struct TimeControl {
+    #[serde(rename = "type")]
     type_: String,
-    limit: u32,
-    increment: u32,
-    show: String,
+    limit: Option<u32>,
+    increment: Option<u32>,
+    show: Option<String>,
 }
-
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 struct Perf {
     icon: String,
     name: String,
 }
-
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 struct Challenge {
     id: String,
     url: String,
     status: String,
-    compat: Compat,
     challenger: Challenger,
+    #[serde(rename = "destUser")]
     dest_user: DestUser,
     variant: Variant,
     rated: bool,
+    #[serde(rename = "timeControl")]
     time_control: TimeControl,
     color: String,
     speed: String,
@@ -109,7 +103,7 @@ impl Lichess {
                             "challenge" => {
                                 let challenge_json = json_chunk["challenge"].to_string();
 
-                                let challenge: Challenge = serde_json::from_str(&challenge_json).unwrap();
+                                let challenge: Challenge = serde_json::from_str(challenge_json.as_str()).unwrap();
                                 //let challenge_id = json_chunk["challenge"]["id"].as_str().unwrap();
                                 //return challenge_id.to_string();
                                 return challenge
@@ -140,8 +134,10 @@ mod tests {
 
     #[test]
     fn test_block_until_challenge() {
+        let rt = Runtime::new().unwrap();
         let lichess = Lichess::new(get_lichess_token());
-        let challenge = lichess.block_until_challenge();
-        println!("{:?}", challenge);
+
+        let challenge = rt.block_on(async {lichess.block_until_challenge().await});
+        println!("{:#?}", challenge);
     }
 }

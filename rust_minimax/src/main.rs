@@ -236,7 +236,7 @@ fn get_lichess_token() -> String {
     let mut file = File::open("/home/daniel/personal-projects/chess-ai/rust_minimax/src/.lichess-token").unwrap();
     let mut token = String::new();
     file.read_to_string(&mut token).unwrap();
-    token.trim().to_string()Challenge
+    token.trim().to_string()
 }
 
 async fn play_on_lichess() {
