@@ -2,8 +2,10 @@ use reqwest::Client;
 use std::fs::File;
 use hyper::header::{HeaderMap, HeaderValue};
 use futures_util::StreamExt;
+use futures_util::Stream;
 use std::io::Read;
 use serde::Deserialize;
+use std::io::Bytes;
 use tokio::runtime::Runtime;
 use core::fmt::Error;
 
@@ -50,8 +52,8 @@ pub struct TimeControl {
 }
 #[derive(Debug, Deserialize)]
 pub struct Perf {
-    pub icon: String,
-    pub name: String,
+    pub icon: Option<String>,
+    pub name: Option<String>,
 }
 #[derive(Debug, Deserialize)]
 pub struct Challenge {
@@ -76,12 +78,12 @@ pub struct Challenge {
 pub struct Opponent {
     pub id: String,
     pub rating: u32,
-    pub name: String,
+    pub username: String,
 }
 #[derive(Debug, Deserialize)]
 pub struct Compat {
     bot: Option<bool>,
-    board: Option<String>,
+    board: Option<bool>,
 }
 #[derive(Debug, Deserialize)]
 pub struct Game {
@@ -96,7 +98,7 @@ pub struct Game {
     #[serde(rename="isMyTurn")]
     pub is_my_turn: bool,
     #[serde(rename="lastMove")]
-    pub last_move: bool,
+    pub last_move: String,
     pub opponent: Opponent,
     pub perf: String,
     pub rated: bool,
@@ -105,7 +107,38 @@ pub struct Game {
     pub source: String,
     pub speed: String,
     pub variant: Variant,
-    pub compat: Compat,
+    pub compat: Option<Compat>,
+}
+
+/*
+ * Structs for deserializing the /api/bot/game/stream/{gameId} response if type is "gameFull"
+ */
+pub enum GameEvent {
+    GameFull(FullGame),
+    GameState(GameState)
+}
+#[derive(Debug, Deserialize)]
+pub struct Clock {
+    pub initial: u32,
+    pub increment: u32,
+}
+#[derive(Debug, Deserialize)]
+pub struct GameState {
+    #[serde(rename="type")]
+    pub _type: String,
+    pub moves: String,
+    pub wtime: u32,
+    pub btime: u32,
+    pub winc: u32,
+    pub binc: u32,
+    pub status: String,
+}
+#[derive(Debug, Deserialize)]
+pub struct FullGame {
+    pub clock: Option<Clock>,
+    #[serde(rename="initialFen")]
+    pub initial_fen: String,
+    pub state: GameState,
 }
 
 impl Lichess {
@@ -133,7 +166,6 @@ impl Lichess {
             match item {
                 Ok(bytes) => {
                     if bytes.len() > 1 {
-                        println!("Received {} bytes", bytes.len());
                         let s = String::from_utf8(bytes.to_vec()).unwrap();
                         let json_chunk: serde_json::Value = serde_json::from_str(&s).unwrap();
                         let event_type = json_chunk["type"].as_str().unwrap();
@@ -184,9 +216,9 @@ impl Lichess {
 
                         match event_type {
                             "gameStart" => {
-                                let req_json = json_chunk["game"].to_string();
+                                let req_json = json_chunk["game"].clone();
 
-                                let game: Game = serde_json::from_str(&req_json.as_str()).unwrap();
+                                let game: Game = serde_json::from_value(req_json).unwrap();
                                 //let challenge_id = json_chunk["challenge"]["id"].as_str().unwrap();
                                 //return challenge_id.to_string();
                                 return game
@@ -202,6 +234,21 @@ impl Lichess {
         }
 
         panic!("No game start event received before stream ended");
+    }
+
+    pub async fn get_game_stream(&self, game: Game) -> impl Stream<Item = Result<hyper::body::Bytes, reqwest::Error>> {
+        let mut req_header = HeaderMap::new();
+        let auth_header = HeaderValue::from_str(&format!("Bearer {}", self.token)).unwrap();
+        req_header.insert("Authorization", auth_header);
+
+        let res = self.client.get(format!("https://lichess.org/api/bot/game/stream/{}", game.game_id))
+            .headers(req_header)
+            .send()
+            .await
+            .unwrap()
+            .bytes_stream();
+        
+        res
     }
 
     pub async fn accept_challenge(&self, challenge: Challenge) -> Result<(), Error> {
@@ -222,6 +269,56 @@ impl Lichess {
         } else {
             Err(Error)
         }
+    }
+
+    pub fn parse_game_event(&self, bytes: hyper::body::Bytes) -> Result<GameEvent, Error> {
+        let s = String::from_utf8(bytes.to_vec()).unwrap();
+        if s.len() <= 1 {
+            return Err(Error);
+        }
+        let json_chunk: serde_json::Value = serde_json::from_str(&s).unwrap();
+
+        if json_chunk["type"] == "gameFull" {
+            let game_full_json = json_chunk.to_string();
+            let game_full: FullGame = serde_json::from_str(game_full_json.as_str()).unwrap();
+            Ok(GameEvent::GameFull(game_full))
+        } else if json_chunk["type"] == "gameState" {
+            let game_state_json = json_chunk.to_string();
+            let game_state: GameState = serde_json::from_str(game_state_json.as_str()).unwrap();
+            Ok(GameEvent::GameState(game_state))
+        } else {
+            Err(Error)
+        }
+    }
+
+    pub async fn get_current_game(&self) -> Option<Game> {
+        let res = self.client.get("https://lichess.org/api/account/playing")
+            .bearer_auth(&self.token)
+            .send()
+            .await;
+        
+        let res = match res {
+            Ok(res) => res,
+            Err(_) => {
+                panic!("Error getting current game");
+            }
+        };
+
+        assert!(res.status().is_success());
+
+        let json = res.json::<serde_json::Value>().await.unwrap();
+        
+        // get length of first_game
+        let len = json["nowPlaying"].as_array().unwrap().len();
+
+        if len == 0 {
+            return None;
+        }
+
+        let game_json = json["nowPlaying"][0].clone();
+        let game: Game = serde_json::from_value(game_json).unwrap();
+
+        Some(game)
     }
 }
 

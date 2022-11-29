@@ -308,25 +308,49 @@ async fn main() {
     // to get rid of the blocking functions and storing a list of games that we are in.
     // However, we will not do this yet because it is a bit more complicated
     loop {
-        // Wait for someone to challenge us
-        let new_challenge = api.block_until_challenge().await;
-        let name = new_challenge.challenger.name.clone();
+        // Attempt to get a game we can play in
+        let curr_game = api.get_current_game().await;
 
-        match api.accept_challenge(new_challenge).await {
-            Ok(_) => {
-                println!("Accepted challenge from {}", name);
-            },
-            Err(e) => {
-                println!("Error accepting challenge: {}", e);
+        // If there was no game, wait for someone to challenge us
+        if curr_game.is_none() {
+            // Wait for someone to challenge us
+            let new_challenge = api.block_until_challenge().await;
+            let name = new_challenge.challenger.name.clone();
+
+            match api.accept_challenge(new_challenge).await {
+                Ok(_) => {
+                    println!("Accepted challenge from {}", name);
+                },
+                Err(e) => {
+                    println!("Error accepting challenge: {}", e);
+                }
             }
         }
 
         // Get the game struct
         let game= api.block_until_game_start().await;
 
+        let mut stream = api.get_game_stream(game).await;
+
         // Play the game (game loop)
-        loop {
-            break;
+        // Handle stream events
+        while let Some(event) = stream.next().await {
+            let event = match event {
+                Ok(e) => e,
+                Err(_) => continue,
+            };
+            let event = match api.parse_game_event(event) {
+                Ok(e) => e,
+                Err(_) => continue,
+            };
+
+            let state = match event {
+                lichess_api::GameEvent::GameFull(game) => game.state,
+                lichess_api::GameEvent::GameState(state) => state,
+            };
+
+            // Print the state
+            println!("State: {:#?}", state);
         }
 
 
