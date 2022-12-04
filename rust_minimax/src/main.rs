@@ -62,10 +62,10 @@ fn get_move_from_player(possible_moves: Vec<board::Move>) -> board::Move {
 #[allow(dead_code)]
 fn play_against_ai(player_color: bool) {
     let mut ai = minimax::ChessAI::new_with_color(!player_color);
-    ai.import_position("8/4q3/3k4/8/8/5K2/8/8 w - - 0 1").unwrap();
+    // ai.import_position("8/4q3/3k4/8/8/5K2/8/8 w - - 0 1").unwrap();
 
     let mut board = board::Board::new();
-    board.import_from_fen("8/4q3/3k4/8/8/5K2/8/8 w - - 0 1").unwrap();
+    // board.import_from_fen("8/4q3/3k4/8/8/5K2/8/8 w - - 0 1").unwrap();
 
     while !board.checkmate() && !board.stalemate() {
         println!("DISPLAY BOARD =====================");
@@ -78,6 +78,7 @@ fn play_against_ai(player_color: bool) {
         } else {
             println!("AI's turn!");
             new_move = ai.best_move_iddfs(2.0).unwrap().best_move.unwrap();
+            ai.report_search_speed();
             println!("AI chose: {}", new_move.get_move_string());
         }
 
@@ -306,6 +307,6 @@ async fn play_on_lichess() {
 #[tokio::main]
 async fn main() {
     //play_on_lichess().await;
-    start_tcp_server();
-    //play_against_ai(board::WHITE);
+    //start_tcp_server();
+    play_against_ai(board::WHITE);
 }
