@@ -240,61 +240,6 @@ fn get_lichess_token() -> String {
 }
 
 async fn play_on_lichess() {
-    println!("Starting lichess bot...");
-
-    let token = get_lichess_token();
-
-    let client = Client::new();
-
-    let mut nutty = HeaderMap::new();
-    let val = HeaderValue::from_str(&format!("Bearer {}", token)).unwrap();
-    nutty.insert("Authorization", val);
-
-    //let stream = client.get("https://lichess.org/api/bot/game/stream").headers(nutty).send().await.unwrap();
-
-    // let res = client.get("https://lichess.org/api/account")
-    //     .headers(nutty)
-    //     .send()
-    //     .await
-    //     .unwrap();https://lichess.org/api/stream/event
-    println!("Sending request...");
-    let mut res = client.get("https://lichess.org/api/stream/event")
-        .headers(nutty)
-        .send()
-        .await
-        .unwrap()
-        .bytes_stream();
-
-    println!("Got response!");
-
-    // Parse the stream
-    while let Some(item) = res.next().await {
-        match item {
-            Ok(bytes) => {
-                if bytes.len() > 1 {
-                    println!("Received {} bytes", bytes.len());
-                    let s = String::from_utf8(bytes.to_vec()).unwrap();
-                    println!("String: {}", s);
-
-                    let json_chunk: serde_json::Value = serde_json::from_str(&s).unwrap();
-                    println!("{:#?}", json_chunk);
-                }
-            },
-            Err(e) => {
-                println!("Error: {}", e);
-            }
-        }
-    }
-
-    // let text = res.text().await.unwrap();
-    // println!("Got text: {}", text);
-    
-    //let res_json = res.json::<serde_json::Value>();
-    //println!("{:#?}", res_json.await);
-}
-
-#[tokio::main]
-async fn main() {
     let api = lichess_api::Lichess::new(get_lichess_token());
 
     // Main event loop
@@ -356,7 +301,11 @@ async fn main() {
 
         break;
     }
+}
 
-    //start_tcp_server();
+#[tokio::main]
+async fn main() {
+    //play_on_lichess().await;
+    start_tcp_server();
     //play_against_ai(board::WHITE);
 }
