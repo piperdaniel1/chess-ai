@@ -162,7 +162,7 @@ const BLACK_KING_MAP: [[i32; 8]; 8] = [
 ];
 
 fn opening_position_differential(board: &board::Board, debug: bool) -> i32 {
-    if debug { println!("Normal Position Differential ====================") }
+    if debug { println!("\nNormal Position Differential ====================") }
     let mut differential: i32 = 0;
     // White pawns
     let white_pawns = board.get_pawn_list(board::WHITE);
@@ -261,7 +261,7 @@ fn opening_position_differential(board: &board::Board, debug: bool) -> i32 {
 }
 
 fn endgame_position_differential(board: &board::Board, debug: bool) -> i32 {
-    if debug { println!("Endgame Position Differential ====================") }
+    if debug { println!("\nEndgame Position Differential ====================") }
     let mut differential: i32 = 0;
     // White pawns
     let white_pawns = board.get_pawn_list(board::WHITE);
@@ -293,6 +293,41 @@ fn endgame_position_differential(board: &board::Board, debug: bool) -> i32 {
 
     // Return the differential
     differential
+}
+
+fn pawn_structure_differential(board: &board::Board, debug: bool) -> i32 {
+    let mut differential: i32 = 0;
+    let mut white_pawns = board.get_white_pawn_structure();
+    let mut black_pawns = board.get_black_pawn_structure();
+
+    white_pawns.sort_by(|a, b| a.col.cmp(&b.col));
+    black_pawns.sort_by(|a, b| a.col.cmp(&b.col));
+
+    // Isolated pawns
+    for i in 0..white_pawns.len() {
+        let mut has_left = true;
+        let mut has_right = true;
+        if i > 0 {
+            if white_pawns[i].col != white_pawns[i - 1].col + 1 {
+                has_left = false;
+            }
+        }
+
+        if i < white_pawns.len() - 1 {
+            if white_pawns[i].col != white_pawns[i + 1].col - 1 {
+                has_right = false;
+            }
+        }
+    }
+
+
+    // A pawn is considered "isolated" if it has no friendly pawns on either side of it
+    
+    // A pawn is considered "doubled" if it has a friendly pawn on the same file
+
+    // A pawn is considered "passed" if it has no enemy pawns on either side of it
+    // and on the same file on the way to the other side of the board
+    todo!();
 }
 
 // High scores are good for white, low scores are good for black
@@ -740,6 +775,7 @@ mod tests {
         ai.import_position("rnbqkbnr/pppppppp/8/8/4P3/2NPBNP1/PPPQ1PBP/R2R2K1 w kq - 0 1").unwrap();
 
         ai.print_internal_board();
+        println!("");
         let score = score_board(&ai.board, 4, true);
         println!("Score: {}", score);
     }

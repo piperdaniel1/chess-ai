@@ -497,6 +497,14 @@ impl Board {
         return count >= 3;
     }
 
+    pub fn get_white_pawn_structure(&self) -> Vec<Square> {
+        self.piece_positions[WHITE_PAWN as usize].clone()
+    }
+
+    pub fn get_black_pawn_structure(&self) -> Vec<Square> {
+        self.piece_positions[BLACK_PAWN as usize].clone()
+    }
+
     pub fn get_game_phase(&self) -> i32 {
         // The opening lasts for the first 10 moves each.
         // This should probably give the engine time to develop its pieces.

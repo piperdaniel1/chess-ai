@@ -309,5 +309,5 @@ async fn play_on_lichess() {
 async fn main() {
     //play_on_lichess().await;
     start_tcp_server();
-    // play_against_ai(board::WHITE);
+    //play_against_ai(board::WHITE);
 }
