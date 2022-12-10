@@ -62,10 +62,10 @@ fn get_move_from_player(possible_moves: Vec<board::Move>) -> board::Move {
 #[allow(dead_code)]
 fn play_against_ai(player_color: bool) {
     let mut ai = minimax::ChessAI::new_with_color(!player_color);
-    ai.import_position("8/4q3/3k4/8/8/5K2/8/8 w - - 0 1").unwrap();
+    // ai.import_position("8/4q3/3k4/8/8/5K2/8/8 w - - 0 1").unwrap();
 
     let mut board = board::Board::new();
-    board.import_from_fen("8/4q3/3k4/8/8/5K2/8/8 w - - 0 1").unwrap();
+    // board.import_from_fen("8/4q3/3k4/8/8/5K2/8/8 w - - 0 1").unwrap();
 
     while !board.checkmate() && !board.stalemate() {
         println!("DISPLAY BOARD =====================");
@@ -78,6 +78,7 @@ fn play_against_ai(player_color: bool) {
         } else {
             println!("AI's turn!");
             new_move = ai.best_move_iddfs(2.0).unwrap().best_move.unwrap();
+            ai.report_search_speed();
             println!("AI chose: {}", new_move.get_move_string());
         }
 
@@ -126,11 +127,11 @@ fn start_tcp_server() {
                     // or if the client specifies a time limit that fails to parse
                     let time_limit = match time_limit {
                         Some(t) => t.parse::<f64>(),
-                        None => Ok(0.25)
+                        None => Ok(2.0)
                     };
                     let time_limit = match time_limit {
                         Ok(t) => t,
-                        Err(_) => 0.25
+                        Err(_) => 2.0
                     };
 
                     match ai {
@@ -145,6 +146,7 @@ fn start_tcp_server() {
                                 }
                             };
 
+                            let eval = best_move.score;
                             let best_move = match best_move.best_move {
                                 Some(m) => m,
                                 None => {
@@ -155,7 +157,7 @@ fn start_tcp_server() {
                             };
 
                             ai.report_search_speed();
-                            let response = format!("bestmove {}", best_move.get_move_string());
+                            let response = format!("bestmove {} {}", best_move.get_move_string(), eval);
                             println!("Responding with: {}", response);
                             stream.write(response.as_bytes()).unwrap();
                         },
@@ -307,5 +309,5 @@ async fn play_on_lichess() {
 async fn main() {
     //play_on_lichess().await;
     start_tcp_server();
-    //play_against_ai(board::WHITE);
+    // play_against_ai(board::WHITE);
 }

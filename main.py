@@ -29,6 +29,17 @@ assert(BOARD_SIZE % 8 == 0)
 SQUARE_SIZE = BOARD_SIZE // 8
 TIMER_AREA_WIDTH = 0
 
+EVAL_BAR_WIDTH = 30
+EVAL_BAR_VERT_PADDING = 10
+EVAL_BAR_HORZ_PADDING = 20
+
+EVAL_BAR_HEIGHT = BOARD_SIZE - EVAL_BAR_VERT_PADDING * 2
+
+EVAL_WHITE_COLOR = (255, 255, 255)
+EVAL_BLACK_COLOR = (0, 0, 0)
+EVAL_BG_COLOR = (200, 200, 200)
+
+
 # Sprites
 WHITE_PAWN = pygame.image.load("pieces/png-versions/P-white.png")
 WHITE_PAWN = pygame.transform.scale(WHITE_PAWN, (SQUARE_SIZE, SQUARE_SIZE))
@@ -99,7 +110,25 @@ def render_board_squares(screen):
             pygame.draw.rect(screen, color, (i * SQUARE_SIZE + BORDER_WIDTH, j * SQUARE_SIZE + BORDER_WIDTH, SQUARE_SIZE, SQUARE_SIZE))
 
 def render_board_border(screen):
-    pygame.draw.rect(screen, BORDER_COLOR, (0, 0, BOARD_SIZE + BORDER_WIDTH * 2, BOARD_SIZE + BORDER_WIDTH * 2), BORDER_WIDTH)
+    pygame.draw.rect(screen, BORDER_COLOR, (0, 0, BOARD_SIZE + BORDER_WIDTH * 2 + EVAL_BAR_HORZ_PADDING * 2 + EVAL_BAR_WIDTH, BOARD_SIZE + BORDER_WIDTH * 2), BORDER_WIDTH)
+
+def render_eval_bar(screen, eval):
+    if eval > 1500:
+        eval = 1500
+    elif eval < -1500:
+        eval = -1500
+
+    eval = (eval + 1500) / 3000
+
+    EVAL_START = BORDER_WIDTH + BOARD_SIZE
+    EVAL_BAR_START_X = EVAL_START + EVAL_BAR_HORZ_PADDING
+
+    pygame.draw.rect(screen, EVAL_BG_COLOR, (EVAL_START, BORDER_WIDTH, EVAL_BAR_WIDTH + EVAL_BAR_HORZ_PADDING * 2, BOARD_SIZE))
+    pygame.draw.rect(screen, EVAL_BLACK_COLOR, (EVAL_BAR_START_X, BORDER_WIDTH + EVAL_BAR_VERT_PADDING, EVAL_BAR_WIDTH, EVAL_BAR_HEIGHT))
+
+    eval_px = int(EVAL_BAR_HEIGHT * eval)
+
+    pygame.draw.rect(screen, EVAL_WHITE_COLOR, (EVAL_BAR_START_X, BORDER_WIDTH + EVAL_BAR_VERT_PADDING + EVAL_BAR_HEIGHT - eval_px, EVAL_BAR_WIDTH, eval_px))
 
 def render_selected_square(screen, square):
     if square is None:
@@ -148,6 +177,8 @@ def rerender(screen, state: 'State'):
 
     render_board_squares(screen)
     render_board_border(screen)
+
+    render_eval_bar(screen, state.get_eval())
 
     render_selected_square(screen, state.get_selected_square())
 
@@ -240,6 +271,7 @@ class State:
         self.__ani_mode = 0
         self.__ani_time = 0
         self.__ani_uci = None
+        self.__eval = 0
 
     def is_busy(self):
         return self.__is_busy
@@ -292,6 +324,12 @@ class State:
     
     def get_board(self):
         return self.__game.board
+
+    def get_eval(self):
+        return self.__eval
+    
+    def set_eval(self, eval):
+        self.__eval = eval
 
     # Mutate the state based on a Pygame event
     def next(self, event):
@@ -384,8 +422,9 @@ def main():
         state = State(chess.WHITE, False)
 
     #state.get_board().set_fen("8/8/3k4/4r3/8/5K2/8/8 w - - 0 1")
-    #state.get_board().set_fen("8/P4k2/5p2/7q/4P3/3PK3/R7/8 b - - 12 64")
-    width = BORDER_WIDTH * 2 + BOARD_SIZE + TIMER_AREA_WIDTH
+    state.get_board().set_fen("8/P4k2/5p2/7q/4P3/3PK3/R7/8 w - - 12 64")
+    width = BORDER_WIDTH * 2 + BOARD_SIZE + TIMER_AREA_WIDTH + \
+            EVAL_BAR_HORZ_PADDING * 2 + EVAL_BAR_WIDTH
     height = BORDER_WIDTH * 2 + BOARD_SIZE
     screen = init_pygame(width, height)
 
@@ -403,7 +442,9 @@ def main():
     else:
         minimax_conn.push_to_queue("init w")
 
-    #minimax_conn.push_to_queue("init b fen " + state.get_board().fen())
+    minimax_conn.push_to_queue("init b fen " + state.get_board().fen())
+
+    minimax_conn.push_to_queue("query")
 
     waiting_on_ai = False
 
@@ -435,14 +476,25 @@ def main():
                     result = result.decode('utf-8')
 
                     if "bestmove" in result:
-                        result = result.split(' ')[1]
+                        result, eval = result.split(' ')[1], float(result.split(' ')[2])
+                        state.set_eval(eval)
                         state.ani_push_move(result)
                         waiting_on_ai = False
-            
+            else:
+                if status:
+                    assert(result is not None and result != -1)
+                    result = result.decode('utf-8')
+
+                    if "bestmove" in result:
+                        result, eval = result.split(' ')[1], float(result.split(' ')[2])
+                        state.set_eval(eval)
+
+
             state.update_ani()
 
             rerender(screen, state)
-    except:
+    except Exception as e:
+        print(e)
         pgn_game = board_to_game(state.get_board())
 
         # print pgn game to stdout
