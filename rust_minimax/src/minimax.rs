@@ -459,7 +459,6 @@ pub fn score_board(board: &mut board::Board, current_depth: i32, debug: bool, pe
             }
             let end_time = std::time::Instant::now();
             vec[0] += end_time - start_time;
-            vec[4] += std::time::Duration::from_nanos(1);
         },
         None => {
             if board.checkmate() {
@@ -475,6 +474,27 @@ pub fn score_board(board: &mut board::Board, current_depth: i32, debug: bool, pe
             if debug { println!("Returning 1000000 because black is checkmated") }
             return 1000000 - current_depth;
         }
+    }
+
+    let mut is_stalemate = false;
+    match perf_time_vec {
+        Some(vec) => {
+            let start_time = std::time::Instant::now();
+            if board.stalemate() {
+                is_stalemate = true;
+            }
+            let end_time = std::time::Instant::now();
+            vec[1] += end_time - start_time;
+        },
+        None => {
+            if board.stalemate() {
+                is_stalemate = true;
+            }
+        }
+    }
+    if is_stalemate {
+        if debug { println!("Returning 0 because stalemate") }
+        return 0;
     }
 
     let mut is_repetition = false;
@@ -518,10 +538,28 @@ pub fn score_board(board: &mut board::Board, current_depth: i32, debug: bool, pe
 
     if phase == 0 {
         score += opening_position_differential(board, debug) as i32;
-        score += pawn_structure_differential(board, debug) as i32;
+        match perf_time_vec {
+            Some(vec) => {
+                let inner_stime = std::time::Instant::now();
+                score += pawn_structure_differential(board, debug) as i32;
+                vec[4] += std::time::Instant::now() - inner_stime;
+            },
+            None => {
+                score += pawn_structure_differential(board, debug) as i32;
+            }
+        }
     } else if phase == 1 {
         score += opening_position_differential(board, debug) as i32 / 2;
-        score += pawn_structure_differential(board, debug) as i32;
+        match perf_time_vec {
+            Some(vec) => {
+                let inner_stime = std::time::Instant::now();
+                score += pawn_structure_differential(board, debug) as i32;
+                vec[4] += std::time::Instant::now() - inner_stime;
+            },
+            None => {
+                score += pawn_structure_differential(board, debug) as i32;
+            }
+        }
     } else if phase == 2 {
         score += endgame_position_differential(board, debug) as i32;
     }
@@ -733,6 +771,7 @@ impl ChessAI {
             println!("  - Stalemates: {}% ({}s, {})", self.time_scoring_vec[1].as_secs_f64() / elapsed_secs * 100.0, self.time_scoring_vec[1].as_secs_f64(), self.time_scoring_vec[5].as_nanos());
             println!("  - Threefold rep: {}% ({}s)", self.time_scoring_vec[2].as_secs_f64() / elapsed_secs * 100.0, self.time_scoring_vec[2].as_secs_f64());
             println!("  - Others: {}% ({}s)", self.time_scoring_vec[3].as_secs_f64() / elapsed_secs * 100.0, self.time_scoring_vec[3].as_secs_f64());
+            println!("     * Pawn Structure: {}% ({}s)", self.time_scoring_vec[4].as_secs_f64() / elapsed_secs * 100.0, self.time_scoring_vec[4].as_secs_f64());
         }
     }
 
