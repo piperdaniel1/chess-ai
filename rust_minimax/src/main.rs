@@ -308,15 +308,18 @@ async fn play_on_lichess() {
             // Print the state
             println!("State: {:#?}", state);
 
-            let move_vec = state.moves.split(" ").collect::<Vec<&str>>();
-
             ai.reset_internal_board();
 
-            // Push all moves to the AI (this might fail if moves are sent twice)
-            for m in move_vec {
-                let m = board::Move::new_from_string(m).unwrap();
-                ai.push_move(m).unwrap();
+            if state.moves.len() > 0 {
+                let move_vec = state.moves.split(" ").collect::<Vec<&str>>();
+
+                // Push all moves to the AI (this might fail if moves are sent twice)
+                for m in move_vec {
+                    let m = board::Move::new_from_string(m).unwrap();
+                    ai.push_move(m).unwrap();
+                }
             }
+
 
             // If it is our turn, make a move
             if ai.get_board_turn() == bot_color {
