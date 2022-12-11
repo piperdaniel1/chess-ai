@@ -5,8 +5,6 @@ use futures_util::StreamExt;
 use futures_util::Stream;
 use std::io::Read;
 use serde::Deserialize;
-use std::io::Bytes;
-use tokio::runtime::Runtime;
 use core::fmt::Error;
 
 #[derive(Debug)]
@@ -81,6 +79,7 @@ pub struct Opponent {
     pub username: String,
 }
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 pub struct Compat {
     bot: Option<bool>,
     board: Option<bool>,
@@ -338,6 +337,7 @@ impl Lichess {
     }
 }
 
+#[allow(dead_code)]
 fn get_lichess_token() -> String {
     let mut file = File::open("/home/daniel/personal-projects/chess-ai/rust_minimax/src/.lichess-token").unwrap();
     let mut token = String::new();
@@ -346,7 +346,7 @@ fn get_lichess_token() -> String {
 }
 
 mod tests {
-    #[test]
+    #[allow(dead_code)]
     fn test_block_until_challenge() {
         use tokio::runtime::Runtime;
         use crate::lichess_api::Lichess;

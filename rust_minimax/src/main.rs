@@ -3,10 +3,7 @@ use std::net::TcpListener;
 use std::io::{Read, Write};
 
 // Lichess stuff
-use reqwest::Client;
 use std::fs::File;
-use tokio::runtime::Runtime;
-use hyper::header::{HeaderMap, HeaderValue};
 use futures_util::StreamExt;
 
 mod board;
@@ -333,9 +330,46 @@ async fn play_on_lichess() {
     }
 }
 
+fn test_ai() {
+    let board = board::Board::new_from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 0").unwrap();
+
+    let mut ai = minimax::ChessAI::new();
+    ai.import_position(&board.fen()).unwrap();
+    ai.enable_perf_test();
+
+    let best_move = ai.best_move_iddfs(4.0).unwrap();
+
+    let (best_move, eval) = (best_move.best_move.unwrap().get_move_string(), best_move.score);
+
+    println!("Best move: {}", best_move);
+    println!("Eval: {}", eval);
+    ai.report_search_speed();
+}
+
 #[tokio::main]
 async fn main() {
-    play_on_lichess().await;
-    //start_tcp_server();
-    //play_against_ai(board::WHITE);
+    let args = std::env::args().collect::<Vec<String>>();
+
+    if args.len() == 1 {
+        println!("Usage: {} [server|client|lichess|test]", args[0]);
+        return;
+    }
+
+    match args[1].as_str() {
+        "server" => {
+            start_tcp_server();
+        },
+        "client" => {
+            play_against_ai(board::WHITE);
+        },
+        "lichess" => {
+            play_on_lichess().await;
+        },
+        "test" => {
+            test_ai();
+        },
+        _ => {
+            println!("Usage: {} [server|client|lichess]", args[0]);
+        }
+    }
 }

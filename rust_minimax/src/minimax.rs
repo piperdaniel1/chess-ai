@@ -9,6 +9,14 @@ pub struct ChessAI {
     nodes_expanded: u64,
     tt_table: Vec<Option<PositionScore>>,
     use_tt: bool,
+    perf_test: bool,
+    time_scoring: std::time::Duration,
+    time_legal_moves: std::time::Duration,
+    // 0: Checkmate test
+    // 1: Stalemate test
+    // 2: Repitition test
+    // 3: Other tests
+    time_scoring_vec: Vec<std::time::Duration>,
 }
 
 #[derive(Copy, Clone)]
@@ -295,31 +303,139 @@ fn endgame_position_differential(board: &board::Board, debug: bool) -> i32 {
     differential
 }
 
-fn pawn_structure_differential(board: &board::Board, debug: bool) -> i32 {
+// The pawns should be stored sorted by row and column in the board struct already
+// Then we could figure out how many pawns are on each row easily
+// We can also figure out the pawn on the left and the right of each pawn to figure out
+// isolation
+pub fn pawn_structure_differential(board: &board::Board, debug: bool) -> i32 {
     let mut differential: i32 = 0;
     let mut white_pawns = board.get_white_pawn_structure();
     let mut black_pawns = board.get_black_pawn_structure();
 
-    white_pawns.sort_by(|a, b| a.col.cmp(&b.col));
-    black_pawns.sort_by(|a, b| a.col.cmp(&b.col));
+    white_pawns.sort_by(|a, b| if a.col != b.col { a.col.cmp(&b.col) } else { a.row.cmp(&b.row) });
+    black_pawns.sort_by(|a, b| if a.col != b.col { a.col.cmp(&b.col) } else { a.row.cmp(&b.row) });
 
-    // Isolated pawns
-    for i in 0..white_pawns.len() {
-        let mut has_left = true;
-        let mut has_right = true;
-        if i > 0 {
-            if white_pawns[i].col != white_pawns[i - 1].col + 1 {
-                has_left = false;
+    let mut white_pawn_counts = [0, 0, 0, 0, 0, 0, 0, 0];
+
+    for pawn in &white_pawns {
+        white_pawn_counts[pawn.col as usize] += 1;
+    }
+
+    let mut black_pawn_counts = [0, 0, 0, 0, 0, 0, 0, 0];
+    for pawn in &black_pawns {
+        black_pawn_counts[pawn.col as usize] += 1;
+    }
+
+    for i in 0..8 {
+        if white_pawn_counts[i] > 1 {
+            // Doubled / Tripled / Quadrupled pawns are bad
+            differential -= 20 * (white_pawn_counts[i] - 1);
+            if debug { println!("White doubled pawns on col {}: {}", i, white_pawn_counts[i]) }
+        }
+
+        if black_pawn_counts[i] > 1 {
+            // Doubled / Tripled / Quadrupled pawns are bad
+            differential += 20 * (black_pawn_counts[i] - 1);
+            if debug { println!("Black doubled pawns on col {}: {}", i, black_pawn_counts[i]) }
+        }
+
+        // White Isolated Pawns
+        if white_pawn_counts[i] > 0 {
+            let mut isolated_left = true;
+            if i > 0 && white_pawn_counts[i - 1] > 0 {
+                isolated_left = false;
+            }
+
+            let mut isolated_right = true;
+            if i < 7 && white_pawn_counts[i + 1] > 0 {
+                isolated_right = false;
+            }
+
+            if isolated_left && isolated_right {
+                differential -= 20;
+                if debug { println!("White isolated pawn on col {}", i) }
             }
         }
 
-        if i < white_pawns.len() - 1 {
-            if white_pawns[i].col != white_pawns[i + 1].col - 1 {
-                has_right = false;
+        // Black Isolated Pawns
+        if black_pawn_counts[i] > 0 {
+            let mut isolated_left = true;
+            if i > 0 && black_pawn_counts[i - 1] > 0 {
+                isolated_left = false;
+            }
+
+            let mut isolated_right = true;
+            if i < 7 && black_pawn_counts[i + 1] > 0 {
+                isolated_right = false;
+            }
+
+            if isolated_left && isolated_right {
+                differential += 20;
+                if debug { println!("Black isolated pawn on col {}", i) }
+            }
+        }
+
+        // White Passed Pawns
+        // Passed pawns count as an extra pawn (is that good??)
+        if white_pawn_counts[i] > 0 {
+            let mut passed = true;
+            let left_side = if i > 0 { i - 1 } else { 0 };
+            let right_side = if i < 7 { i + 1 } else { 7 };
+
+            for j in left_side..=right_side {
+                if black_pawn_counts[j] > 0 {
+                    passed = false;
+                }
+            }
+
+            if passed {
+                differential += 100;
+                if debug { println!("White passed pawn on col {}", i) }
+            }
+        }
+
+        // Black Passed Pawns
+        // Passed pawns count as an extra pawn (is that good??)
+        if black_pawn_counts[i] > 0 {
+            let mut passed = true;
+            let left_side = if i > 0 { i - 1 } else { 0 };
+            let right_side = if i < 7 { i + 1 } else { 7 };
+
+            for j in left_side..=right_side {
+                if white_pawn_counts[j] > 0 {
+                    passed = false;
+                }
+            }
+
+            if passed {
+                differential -= 100;
+                if debug { println!("Black passed pawn on col {}", i) }
             }
         }
     }
 
+    // King safety
+    let white_king_col = board.get_king_square(board::WHITE).col;
+    let left_side = if white_king_col > 0 { white_king_col - 1 } else { 0 };
+    let right_side = if white_king_col < 7 { white_king_col + 1 } else { 7 };
+    for i in left_side..=right_side {
+        if white_pawn_counts[i as usize] == 0 {
+            differential -= 40;
+            if debug { println!("White king is unsafe") }
+        }
+    }
+
+    let black_king_col = board.get_king_square(board::BLACK).col;
+    let left_side = if black_king_col > 0 { black_king_col - 1 } else { 0 };
+    let right_side = if black_king_col < 7 { black_king_col + 1 } else { 7 };
+    for i in left_side..=right_side {
+        if black_pawn_counts[i as usize] == 0 {
+            differential += 40;
+            if debug { println!("Black king is unsafe") }
+        }
+    }
+
+    // Doubled pawns
 
     // A pawn is considered "isolated" if it has no friendly pawns on either side of it
     
@@ -327,13 +443,31 @@ fn pawn_structure_differential(board: &board::Board, debug: bool) -> i32 {
 
     // A pawn is considered "passed" if it has no enemy pawns on either side of it
     // and on the same file on the way to the other side of the board
-    todo!();
+
+    return differential;
 }
 
 // High scores are good for white, low scores are good for black
-pub fn score_board(board: &board::Board, current_depth: i32, debug: bool) -> i32 {
+pub fn score_board(board: &board::Board, current_depth: i32, debug: bool, perf_time_vec: &mut Option<&mut Vec<std::time::Duration>>) -> i32 {
     // Extremely basic scoring function
-    if board.checkmate() {
+    let mut is_checkmate = false;
+    match perf_time_vec {
+        Some(vec) => {
+            let start_time = std::time::Instant::now();
+            if board.checkmate() {
+                is_checkmate = true;
+            }
+            let end_time = std::time::Instant::now();
+            vec[0] += end_time - start_time;
+            vec[4] += std::time::Duration::from_nanos(1);
+        },
+        None => {
+            if board.checkmate() {
+                is_checkmate = true;
+            }
+        }
+    }
+    if is_checkmate {
         if board.turn() {
             if debug { println!("Returning -1000000 because white is checkmated") }
             return -1000000 + current_depth;
@@ -342,22 +476,59 @@ pub fn score_board(board: &board::Board, current_depth: i32, debug: bool) -> i32
             return 1000000 - current_depth;
         }
     }
-    
-    if board.stalemate() {
+
+    let mut is_stalemate = false;
+    match perf_time_vec {
+        Some(vec) => {
+            let start_time = std::time::Instant::now();
+            if board.stalemate() {
+                is_stalemate = true;
+            }
+            let end_time = std::time::Instant::now();
+            vec[1] += end_time - start_time;
+            vec[5] += std::time::Duration::from_nanos(1);
+        },
+        None => {
+            if board.stalemate() {
+                is_stalemate = true;
+            }
+        }
+    }
+    if is_stalemate {
         if debug { println!("Returning 0 because stalemate") }
         return 0;
     }
 
-    if board.threefold_repetition() {
+    let mut is_repetition = false;
+    match perf_time_vec {
+        Some(vec) => {
+            let start_time = std::time::Instant::now();
+            if board.threefold_repetition() {
+                is_repetition = true;
+            }
+            let end_time = std::time::Instant::now();
+            vec[2] += end_time - start_time;
+        },
+        None => {
+            if board.threefold_repetition() {
+                is_repetition = true;
+            }
+        }
+    }
+    if is_repetition {
         if debug { println!("Returning 0 because threefold repitition") }
         return 0;
     }
 
+    let start_time = std::time::Instant::now();
+
     let mut score = 0;
     score += board.get_pawn_differential() * 100;
     if debug { println!("Pawn differential: {}", board.get_pawn_differential()) }
-    score += board.get_bishop_differential() * 300;
-    if debug { println!("Bishop differential: {}", board.get_bishop_differential()) }
+    let (diff, bonus) = board.get_bishop_differential();
+    score += diff * 300;
+    score += (bonus * 300.0) as i32;
+    if debug { println!("Bishop differential: {}", board.get_bishop_differential().0) }
     score += board.get_knight_differential() * 300;
     if debug { println!("Knight differential: {}", board.get_knight_differential()) }
     score += board.get_rook_differential() * 500;
@@ -369,13 +540,23 @@ pub fn score_board(board: &board::Board, current_depth: i32, debug: bool) -> i32
 
     if phase == 0 {
         score += opening_position_differential(board, debug) as i32;
+        score += pawn_structure_differential(board, debug) as i32;
     } else if phase == 1 {
         score += opening_position_differential(board, debug) as i32 / 2;
+        score += pawn_structure_differential(board, debug) as i32;
     } else if phase == 2 {
         score += endgame_position_differential(board, debug) as i32;
     }
 
     if debug { println!("Normal position differential: {}", opening_position_differential(board, false)) }
+
+    match perf_time_vec {
+        Some(vec) => {
+            let end_time = std::time::Instant::now();
+            vec[3] += end_time - start_time;
+        },
+        None => {}
+    }
 
     return score;
 }
@@ -391,6 +572,10 @@ impl ChessAI {
             nodes_expanded: 0,
             tt_table: vec![None; 100_000_000],
             use_tt: true,
+            perf_test: false,
+            time_scoring: std::time::Duration::from_secs(0),
+            time_legal_moves: std::time::Duration::from_secs(0),
+            time_scoring_vec: vec![std::time::Duration::from_secs(0); 8],
         }
     }
 
@@ -403,6 +588,10 @@ impl ChessAI {
             nodes_expanded: 0,
             tt_table: vec![None; 100_000_000],
             use_tt: true,
+            perf_test: false,
+            time_scoring: std::time::Duration::from_secs(0),
+            time_legal_moves: std::time::Duration::from_secs(0),
+            time_scoring_vec: vec![std::time::Duration::from_secs(0); 8],
         }
     }
 
@@ -457,18 +646,15 @@ impl ChessAI {
     }
 
     pub fn best_move_iddfs(&mut self, time_allowed_secs: f64) -> Result<TreeDecision, Error> {
-        //if self.board.turn() != self.my_color {
-        //    return Err(Error);
-        //}
-
         let initial_start_time = Some(std::time::Instant::now()).unwrap();
+        self.time_scoring = std::time::Duration::from_secs(0);
+        self.time_legal_moves = std::time::Duration::from_secs(0);
 
         // Iterative deepening
         let mut result = TreeDecision {
             best_move: None,
             score: 0,
         };
-
 
         let mut times = Vec::new();
 
@@ -491,15 +677,9 @@ impl ChessAI {
             if next_end_time.duration_since(initial_start_time).as_secs() as f64 > time_allowed_secs {
                 println!("Breaking after depth {} with evaluation {}", i, score_vec.as_ref().unwrap()[0].score);
 
-                // println!("Moves:");
-                // for m in score_vec.as_ref().unwrap().iter() {
-                //     println!("{} - {}", m.best_move.unwrap().get_move_string(), m.score);
-                // }
-
                 break;
             }
         }
-
 
         result.best_move = score_vec.as_ref().unwrap()[0].best_move;
         result.score = score_vec.as_ref().unwrap()[0].score;
@@ -558,12 +738,23 @@ impl ChessAI {
         return projected_ms;
     }
 
+    #[allow(dead_code)]
+    pub fn enable_perf_test(&mut self) {
+        self.perf_test = true;
+    }
+
     pub fn report_search_speed(&mut self) {
         if let Some(start_time) = self.start_time {
             let elapsed = start_time.elapsed();
             let elapsed_secs = elapsed.as_secs() as f64 + elapsed.subsec_nanos() as f64 * 1e-9;
             println!("{} nodes expanded in {} seconds", self.nodes_expanded, elapsed_secs);
             println!("{} nodes per second", self.nodes_expanded as f64 / elapsed_secs);
+            println!("Percent spent generating legal moves: {}%", self.time_legal_moves.as_secs_f64() / elapsed_secs * 100.0);
+            println!("Percent spent scoring: {}% ({}s)", self.time_scoring.as_secs_f64() / elapsed_secs * 100.0, self.time_scoring.as_secs_f64());
+            println!("  - Checkmates: {}% ({}s, {})", self.time_scoring_vec[0].as_secs_f64() / elapsed_secs * 100.0, self.time_scoring_vec[0].as_secs_f64(), self.time_scoring_vec[4].as_nanos());
+            println!("  - Stalemates: {}% ({}s, {})", self.time_scoring_vec[1].as_secs_f64() / elapsed_secs * 100.0, self.time_scoring_vec[1].as_secs_f64(), self.time_scoring_vec[5].as_nanos());
+            println!("  - Threefold rep: {}% ({}s)", self.time_scoring_vec[2].as_secs_f64() / elapsed_secs * 100.0, self.time_scoring_vec[2].as_secs_f64());
+            println!("  - Others: {}% ({}s)", self.time_scoring_vec[3].as_secs_f64() / elapsed_secs * 100.0, self.time_scoring_vec[3].as_secs_f64());
         }
     }
 
@@ -679,11 +870,21 @@ impl ChessAI {
         }
 
         self.nodes_expanded += 1;
+        let mut best_decision;
         
-        let mut best_decision = TreeDecision {
-            best_move: None,
-            score: score_board(&self.board, top_depth as i32 - depth as i32, false),
-        };
+        if self.perf_test {
+            let start = std::time::Instant::now();
+            best_decision = TreeDecision {
+                best_move: None,
+                score: score_board(&self.board, top_depth as i32 - depth as i32, false, &mut Some(&mut self.time_scoring_vec)),
+            };
+            self.time_scoring += start.elapsed();
+        } else {
+            best_decision = TreeDecision {
+                best_move: None,
+                score: score_board(&self.board, top_depth as i32 - depth as i32, false, &mut None),
+            };
+        }
 
         if self.use_tt {
             let tt_entry = self.get_from_tt_table(depth, self.board.get_hash());
@@ -707,7 +908,14 @@ impl ChessAI {
             return best_decision
         }
 
-        let moves = self.board.gen_legal_moves();
+        let moves;
+        if self.perf_test {
+            let start = std::time::Instant::now();
+            moves = self.board.gen_legal_moves();
+            self.time_legal_moves += start.elapsed();
+        } else {
+            moves = self.board.gen_legal_moves();
+        }
         if moves.len() == 0 {
             return best_decision
         }
@@ -770,8 +978,6 @@ mod tests {
     #[test]
     fn test_bad_position() {
         let mut ai = ChessAI::new();
-        //ai.import_position("3k2n1/p5p1/8/1n6/4BP2/r4P1P/1NR5/4K3 b - - 0 43").unwrap();
-        //ai.print_internal_board();
         let bmove = ai.best_move_iddfs(1.0).unwrap();
 
         println!("Best move: {}", bmove.best_move.unwrap().get_move_string());
@@ -784,7 +990,7 @@ mod tests {
 
         ai.print_internal_board();
         println!("");
-        let score = score_board(&ai.board, 4, true);
+        let score = score_board(&ai.board, 4, true, &mut None);
         println!("Score: {}", score);
     }
 }

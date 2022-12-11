@@ -234,6 +234,16 @@ pub struct Board {
 
     // The current zobrist hash of the board
     hash: u64,
+
+    // Cached legal moves
+    // This is used to speed up the legal moves function
+    // It is cleared whenever the board is modified
+    legal_move_cache: Option<Vec<Move>>,
+
+    // Cached has_check
+    // This is used to speed up the has_check function
+    // It is cleared whenever the board is modified
+    has_check_cache: Option<Vec<Square>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -420,6 +430,8 @@ impl Board {
             en_passant_file_keys: [0; 8],
             castling_keys: [0; 4],
             hash: 0,
+            legal_move_cache: None,
+            has_check_cache: None,
         }
     }
         
@@ -438,9 +450,22 @@ impl Board {
             self.piece_positions[BLACK_KNIGHT as usize].len() as i32;
     }
 
-    pub fn get_bishop_differential(&self) -> i32 {
-        return self.piece_positions[WHITE_BISHOP as usize].len() as i32 -
-            self.piece_positions[BLACK_BISHOP as usize].len() as i32;
+    pub fn get_bishop_differential(&self) -> (i32, f32) {
+        let white_bishops = self.piece_positions[WHITE_BISHOP as usize].len() as i32;
+        let black_bishops = self.piece_positions[BLACK_BISHOP as usize].len() as i32;
+
+        let bonus;
+
+        // If one side has two bishops and the other side has less than two, give a bonus
+        if white_bishops == 2 && black_bishops < 2 {
+            bonus = 0.5;
+        } else if black_bishops == 2 && white_bishops < 2 {
+            bonus = -0.5;
+        } else {
+            bonus = 0.0;
+        }
+
+        (white_bishops - black_bishops, bonus)
     }
 
     pub fn get_rook_differential(&self) -> i32 {
@@ -477,11 +502,11 @@ impl Board {
         self.piece_positions[if color { WHITE_KING } else { BLACK_KING } as usize][0]
     }
 
-    pub fn checkmate(&self) -> bool {
+    pub fn checkmate(&mut self) -> bool {
         self.has_check().is_some() && self.gen_legal_moves().len() == 0
     }
 
-    pub fn stalemate(&self) -> bool {
+    pub fn stalemate(&mut self) -> bool {
         self.has_check().is_none() && self.gen_legal_moves().len() == 0
     }
 
@@ -739,6 +764,8 @@ impl Board {
         self.castling = [false, false, false, false];
         self.halfmove_clock = 0;
         self.fullmove_number = 1;
+        self.legal_move_cache = None;
+        self.has_check_cache = None;
 
         const EMPTY_VEC: Vec<Square> = Vec::new();
         self.piece_positions = [EMPTY_VEC; 13];
@@ -1045,6 +1072,10 @@ impl Board {
     }
 
     fn set_square(&mut self, square: &Square, piece: u8) {
+        // Clear cache
+        self.legal_move_cache = None;
+        self.has_check_cache = None;
+
         // TODO Maybe there is a faster way to do this
         // Potentially could use a hash map?
 
@@ -1961,7 +1992,11 @@ impl Board {
 
     // There is a bug that allows us a pseudo legal move to slip through if
     // there is a double check on the king.
-    pub fn gen_legal_moves(& self) -> Vec<Move> {
+    pub fn gen_legal_moves(&mut self) -> Vec<Move> {
+        if self.legal_move_cache.is_some() {
+            return self.legal_move_cache.clone().unwrap();
+        }
+
         let moves = self.gen_psuedo_legal_moves();
         let mut legal_moves = Vec::new();
 
@@ -2043,6 +2078,8 @@ impl Board {
                 }
             }
         }
+
+        self.legal_move_cache = Some(legal_moves.clone());
 
         legal_moves
     }
@@ -2474,7 +2511,11 @@ impl Board {
      * Relies on the fact that the king is stored in the piece positions array.
      * Also relies on the fact that the turn is stored in the board struct.
      */
-    fn has_check(&self) -> Option<Vec<Square>> {
+    fn has_check(&mut self) -> Option<Vec<Square>> {
+        if self.has_check_cache.is_some() {
+            return self.has_check_cache.clone();
+        }
+
         let king_square;
 
         if self.turn {
@@ -2501,8 +2542,11 @@ impl Board {
             king_square = self.piece_positions[BLACK_KING as usize][0];
         }
         
+        let res = self.square_has_check(king_square);
 
-        self.square_has_check(king_square)
+        self.has_check_cache = res.clone();
+
+        res
     }
 
     fn square_has_check(&self, king_square: Square) -> Option<Vec<Square>> {
@@ -3110,11 +3154,11 @@ mod tests {
 
     #[test]
     fn test_new_legal_moves() {
-        let board = Board::new_from_fen("8/8/2K5/8/8/8/8/1k1n1Q2 b - - 0 1").unwrap();
+        let mut board = Board::new_from_fen("8/8/2K5/8/8/8/8/1k1n1Q2 b - - 0 1").unwrap();
         let legal_moves = board.gen_legal_moves();
         assert_eq!(legal_moves.len(), 5);
 
-        let board = Board::new_from_fen("8/8/2K5/1R6/8/8/8/1k1n1Q2 b - - 0 1").unwrap();
+        let mut board = Board::new_from_fen("8/8/2K5/1R6/8/8/8/1k1n1Q2 b - - 0 1").unwrap();
         let legal_moves = board.gen_legal_moves();
         assert_eq!(legal_moves.len(), 4);
     }
