@@ -448,7 +448,7 @@ pub fn pawn_structure_differential(board: &board::Board, debug: bool) -> i32 {
 }
 
 // High scores are good for white, low scores are good for black
-pub fn score_board(board: &board::Board, current_depth: i32, debug: bool, perf_time_vec: &mut Option<&mut Vec<std::time::Duration>>) -> i32 {
+pub fn score_board(board: &mut board::Board, current_depth: i32, debug: bool, perf_time_vec: &mut Option<&mut Vec<std::time::Duration>>) -> i32 {
     // Extremely basic scoring function
     let mut is_checkmate = false;
     match perf_time_vec {
@@ -475,28 +475,6 @@ pub fn score_board(board: &board::Board, current_depth: i32, debug: bool, perf_t
             if debug { println!("Returning 1000000 because black is checkmated") }
             return 1000000 - current_depth;
         }
-    }
-
-    let mut is_stalemate = false;
-    match perf_time_vec {
-        Some(vec) => {
-            let start_time = std::time::Instant::now();
-            if board.stalemate() {
-                is_stalemate = true;
-            }
-            let end_time = std::time::Instant::now();
-            vec[1] += end_time - start_time;
-            vec[5] += std::time::Duration::from_nanos(1);
-        },
-        None => {
-            if board.stalemate() {
-                is_stalemate = true;
-            }
-        }
-    }
-    if is_stalemate {
-        if debug { println!("Returning 0 because stalemate") }
-        return 0;
     }
 
     let mut is_repetition = false;
@@ -876,13 +854,13 @@ impl ChessAI {
             let start = std::time::Instant::now();
             best_decision = TreeDecision {
                 best_move: None,
-                score: score_board(&self.board, top_depth as i32 - depth as i32, false, &mut Some(&mut self.time_scoring_vec)),
+                score: score_board(&mut self.board, top_depth as i32 - depth as i32, false, &mut Some(&mut self.time_scoring_vec)),
             };
             self.time_scoring += start.elapsed();
         } else {
             best_decision = TreeDecision {
                 best_move: None,
-                score: score_board(&self.board, top_depth as i32 - depth as i32, false, &mut None),
+                score: score_board(&mut self.board, top_depth as i32 - depth as i32, false, &mut None),
             };
         }
 
@@ -990,7 +968,7 @@ mod tests {
 
         ai.print_internal_board();
         println!("");
-        let score = score_board(&ai.board, 4, true, &mut None);
+        let score = score_board(&mut ai.board, 4, true, &mut None);
         println!("Score: {}", score);
     }
 }

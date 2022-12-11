@@ -1931,7 +1931,7 @@ impl Board {
     // Private function to generate all pseudo-legal moves
     // for the current position. This function takes all the rules into
     // account except for any rules involving check on the king.
-    fn gen_psuedo_legal_moves(&self) -> Vec<Move> {
+    fn gen_psuedo_legal_moves(&mut self) -> Vec<Move> {
         // lmao in theory it works
         let mut moves: Vec<Move> = Vec::new();
 
@@ -3058,7 +3058,7 @@ mod tests {
     // Tests the psuedo legal move generation
     // We do not test this much at all, that is saved for the legal move tests
     fn test_psuedo_legal() {
-        let board = Board::new();
+        let mut board = Board::new();
 
         let moves = board.gen_psuedo_legal_moves();
         assert_eq!(moves.len(), 20);
@@ -3373,14 +3373,14 @@ mod tests {
 
     #[test]
     fn test_checkmate() {
-        let board = Board::new_from_fen("1k6/1Q6/2K5/8/8/8/8/8 b - - 1 1").unwrap();
+        let mut board = Board::new_from_fen("1k6/1Q6/2K5/8/8/8/8/8 b - - 1 1").unwrap();
         assert!(board.checkmate());
         assert_eq!(board.get_hash(), board.calculate_zobrist_hash());
     }
 
     #[test]
     fn test_stalemate() {
-        let board = Board::new_from_fen("k7/2Q5/1K6/8/8/8/8/8 b - - 3 2").unwrap();
+        let mut board = Board::new_from_fen("k7/2Q5/1K6/8/8/8/8/8 b - - 3 2").unwrap();
         assert!(board.stalemate());
         assert_eq!(board.get_hash(), board.calculate_zobrist_hash());
     }
@@ -3412,7 +3412,6 @@ mod tests {
         board.recache();
         assert!(!board.is_cache_desynced());
 
-
         let mut board = Board::new();
         // Cause a different desync
         board.piece_positions[BLACK_KING as usize].clear();
@@ -3425,7 +3424,7 @@ mod tests {
 
     #[test]
     fn recreate_king_bug() {
-        let board = Board::new_from_fen("r1b1r1n1/p7/1p1k4/2p5/4N3/4P3/PPK5/3R4 b - - 5 34").unwrap();
+        let mut board = Board::new_from_fen("r1b1r1n1/p7/1p1k4/2p5/4N3/4P3/PPK5/3R4 b - - 5 34").unwrap();
 
         let moves = board.gen_legal_moves();
 
