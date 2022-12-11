@@ -327,8 +327,6 @@ async fn play_on_lichess() {
                 println!("Made move");
             }
         }
-
-        break;
     }
 }
 
