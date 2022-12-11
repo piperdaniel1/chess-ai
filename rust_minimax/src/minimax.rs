@@ -436,6 +436,10 @@ impl ChessAI {
         self.board.print();
     }
 
+    pub fn reset_internal_board(&mut self) {
+        self.board = board::Board::new();
+    }
+
     #[allow(dead_code)]
     pub fn best_move(&mut self, depth: u8) -> Result<TreeDecision, Error> {
         if self.board.turn() != self.my_color {
@@ -446,6 +450,10 @@ impl ChessAI {
         let result = self.minimax(depth, depth, self.my_color, -1000000, 1000000);
 
         Ok(result)
+    }
+
+    pub fn get_board_turn(&self) -> bool {
+        self.board.turn()
     }
 
     pub fn best_move_iddfs(&mut self, time_allowed_secs: f64) -> Result<TreeDecision, Error> {

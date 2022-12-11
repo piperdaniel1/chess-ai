@@ -236,7 +236,23 @@ impl Lichess {
         panic!("No game start event received before stream ended");
     }
 
-    pub async fn get_game_stream(&self, game: Game) -> impl Stream<Item = Result<hyper::body::Bytes, reqwest::Error>> {
+    pub async fn make_move(&self, game: &Game, move_str: &str) -> Result<(), Error>  {
+        let mut req_header = HeaderMap::new();
+        let auth_header = HeaderValue::from_str(&format!("Bearer {}", self.token)).unwrap();
+        req_header.insert("Authorization", auth_header);
+
+        let res = self.client.post(format!("https://lichess.org/api/bot/game/{}/move/{}", game.game_id, move_str))
+            .headers(req_header)
+            .send()
+            .await;
+
+        match res {
+            Ok(_) => Ok(()),
+            Err(_) => Err(Error),
+        }
+    }
+
+    pub async fn get_game_stream(&self, game: &Game) -> impl Stream<Item = Result<hyper::body::Bytes, reqwest::Error>> {
         let mut req_header = HeaderMap::new();
         let auth_header = HeaderValue::from_str(&format!("Bearer {}", self.token)).unwrap();
         req_header.insert("Authorization", auth_header);

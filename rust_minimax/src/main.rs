@@ -277,7 +277,16 @@ async fn play_on_lichess() {
         // Get the game struct
         let game= api.block_until_game_start().await;
 
-        let mut stream = api.get_game_stream(game).await;
+        println!("Entering game against {}", game.opponent.username);
+
+        let bot_color = match game.color.as_str() {
+            "white" => board::WHITE,
+            "black" => board::BLACK,
+            _ => panic!("Invalid color")
+        };
+        let mut ai = minimax::ChessAI::new_with_color(bot_color);
+
+        let mut stream = api.get_game_stream(&game).await;
 
         // Play the game (game loop)
         // Handle stream events
@@ -298,8 +307,26 @@ async fn play_on_lichess() {
 
             // Print the state
             println!("State: {:#?}", state);
-        }
 
+            let move_vec = state.moves.split(" ").collect::<Vec<&str>>();
+
+            ai.reset_internal_board();
+
+            // Push all moves to the AI (this might fail if moves are sent twice)
+            for m in move_vec {
+                let m = board::Move::new_from_string(m).unwrap();
+                ai.push_move(m).unwrap();
+            }
+
+            // If it is our turn, make a move
+            if ai.get_board_turn() == bot_color {
+                let best_move = ai.best_move_iddfs(2.0).unwrap().best_move.unwrap();
+                println!("Best move: {}", best_move.get_move_string());
+
+                api.make_move(&game, &best_move.get_move_string()).await.unwrap();
+                println!("Made move");
+            }
+        }
 
         break;
     }
@@ -307,7 +334,7 @@ async fn play_on_lichess() {
 
 #[tokio::main]
 async fn main() {
-    //play_on_lichess().await;
-    start_tcp_server();
+    play_on_lichess().await;
+    //start_tcp_server();
     //play_against_ai(board::WHITE);
 }
