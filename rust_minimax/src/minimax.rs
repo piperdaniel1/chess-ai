@@ -476,6 +476,10 @@ pub fn score_board(board: &mut board::Board, current_depth: i32, debug: bool, pe
         }
     }
 
+    // assert!(board.has_check_cache());
+    // assert!(board.has_move_cache());
+    // println!("Passed asserts");
+
     let mut is_stalemate = false;
     match perf_time_vec {
         Some(vec) => {

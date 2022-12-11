@@ -243,7 +243,7 @@ pub struct Board {
     // Cached has_check
     // This is used to speed up the has_check function
     // It is cleared whenever the board is modified
-    has_check_cache: Option<Vec<Square>>,
+    has_check_cache: Option<Option<Vec<Square>>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -503,11 +503,21 @@ impl Board {
     }
 
     pub fn checkmate(&mut self) -> bool {
-        self.has_check().is_some() && self.gen_legal_moves().len() == 0
+        self.has_check_bool() && self.gen_num_legal_moves() == 0
     }
 
     pub fn stalemate(&mut self) -> bool {
-        self.has_check().is_none() && self.gen_legal_moves().len() == 0
+        !self.has_check_bool() && self.gen_num_legal_moves() == 0
+    }
+
+    #[allow(dead_code)]
+    pub fn has_move_cache(&self) -> bool {
+        self.legal_move_cache.is_some()
+    }
+
+    #[allow(dead_code)]
+    pub fn has_check_cache(&self) -> bool {
+        self.has_check_cache.is_some()
     }
 
     pub fn threefold_repetition(&self) -> bool {
@@ -1990,6 +2000,14 @@ impl Board {
         };
     }
 
+    pub fn gen_num_legal_moves(&mut self) -> i32 {
+        match &self.legal_move_cache {
+            Some(cache) => cache.len() as i32,
+            None => self.gen_legal_moves().len() as i32,
+            
+        }
+    }
+
     // There is a bug that allows us a pseudo legal move to slip through if
     // there is a double check on the king.
     pub fn gen_legal_moves(&mut self) -> Vec<Move> {
@@ -2504,6 +2522,13 @@ impl Board {
         return None
     }
 
+    pub fn has_check_bool(&mut self) -> bool {
+        match &self.has_check_cache {
+            Some(cache) => cache.is_some(),
+            None => return self.has_check().is_some(),
+        }
+    }
+
     /*
      * Board.has_check() returns true if the player whose turn it is is in check
      * Relies on three helper functions to check knight moves, diagonal moves, and straight moves.
@@ -2513,7 +2538,7 @@ impl Board {
      */
     fn has_check(&mut self) -> Option<Vec<Square>> {
         if self.has_check_cache.is_some() {
-            return self.has_check_cache.clone();
+            return self.has_check_cache.clone().unwrap();
         }
 
         let king_square;
@@ -2544,7 +2569,7 @@ impl Board {
         
         let res = self.square_has_check(king_square);
 
-        self.has_check_cache = res.clone();
+        self.has_check_cache = Some(res.clone());
 
         res
     }
@@ -3447,5 +3472,14 @@ mod tests {
         let board = Board::new();
         println!("{}", board.get_hash());
         assert_eq!(board.get_hash(), 7467127324528350544);
+    }
+
+    #[test]
+    fn test_move_caching() {
+        let mut board = Board::new();
+        assert!(!board.has_move_cache());
+        assert!(!board.has_check_cache());
+        board.checkmate();
+        assert!(board.has_check_cache());
     }
 }
