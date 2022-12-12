@@ -521,7 +521,7 @@ impl Board {
     }
 
     pub fn threefold_repetition(&self) -> bool {
-        let mut count = 0;
+        let mut count = 1;
 
         for i in 0..self.history.len() {
             if self.history[i].hash == self.hash {
@@ -926,6 +926,15 @@ impl Board {
         println!("Castling rights: {}", self.get_castling_rights());
         println!("En passant target square: {}", self.get_en_passant_square());
         println!("Halfmove clock: {}, Fullmove clock: {}", self.halfmove_clock, self.fullmove_number);
+
+        let mut count = 1; // start at one because we are in this position now
+        for i in 0..self.history.len() {
+            if self.history[i].hash == self.hash {
+                count += 1;
+            }
+        }
+
+        println!("This position has occurred {} time(s).", count);
     }
 
     fn get_en_passant_square(&self) -> String {
@@ -1184,7 +1193,7 @@ impl Board {
             prev_castling: self.castling.clone(),
             prev_en_passant: self.en_passant.clone(),
             prev_halfmove_clock: self.halfmove_clock,
-            hash: self.hash,
+            hash: self.hash, // this is the hash before the move was made
         };
 
         // Set the square we are leaving to empty
@@ -3564,5 +3573,27 @@ mod tests {
         assert!(!board.has_check_cache());
         board.checkmate();
         assert!(board.has_check_cache());
+    }
+
+    #[test]
+    fn test_threefold_repition() {
+        let mut board = Board::new();
+        board.push(Move::new_from_string("g1f3").unwrap()).unwrap();
+        board.push(Move::new_from_string("g8f6").unwrap()).unwrap();
+        board.print();
+        board.push(Move::new_from_string("f3g1").unwrap()).unwrap();
+        board.push(Move::new_from_string("f6g8").unwrap()).unwrap();
+        board.print();
+        board.push(Move::new_from_string("g1f3").unwrap()).unwrap();
+        board.push(Move::new_from_string("g8f6").unwrap()).unwrap();
+        board.print();
+        board.push(Move::new_from_string("f3g1").unwrap()).unwrap();
+        board.push(Move::new_from_string("f6g8").unwrap()).unwrap();
+        board.print();
+        board.push(Move::new_from_string("g1f3").unwrap()).unwrap();
+        board.push(Move::new_from_string("g8f6").unwrap()).unwrap();
+        board.print();
+
+        assert!(board.threefold_repetition());
     }
 }
