@@ -503,11 +503,11 @@ impl Board {
     }
 
     pub fn checkmate(&mut self) -> bool {
-        self.has_check_bool() && self.gen_num_legal_moves() == 0
+        self.has_check_bool() && !self.has_legal_moves()
     }
 
     pub fn stalemate(&mut self) -> bool {
-        !self.has_check_bool() && self.gen_num_legal_moves() == 0
+        !self.has_check_bool() && !self.has_legal_moves()
     }
 
     #[allow(dead_code)]
@@ -2000,6 +2000,7 @@ impl Board {
         };
     }
 
+    #[allow(dead_code)]
     pub fn gen_num_legal_moves(&mut self) -> i32 {
         match &self.legal_move_cache {
             Some(cache) => cache.len() as i32,
@@ -2008,14 +2009,68 @@ impl Board {
         }
     }
 
-    // There is a bug that allows us a pseudo legal move to slip through if
-    // there is a double check on the king.
-    pub fn gen_legal_moves(&mut self) -> Vec<Move> {
-        if self.legal_move_cache.is_some() {
-            return self.legal_move_cache.clone().unwrap();
+    // Returns True if the current player has at least one legal move.
+    pub fn has_legal_moves(&mut self) -> bool {
+        let mut moves: Vec<Move> = Vec::new();
+
+        // This weird system makes sure that we only add
+        // pseudo legal moves for the player that currently has
+        // their turn
+        
+        let piece_hierarchy = if self.turn == WHITE {
+            [1, 5, 2, 3, 4, 6]
+        } else {
+            [7, 11, 8, 9, 10, 12]
+        };
+
+        for i in piece_hierarchy.iter() {
+            for j in 0..self.piece_positions[*i].len() {
+                let curr_square = self.piece_positions[*i][j];
+
+                // Kings
+                if *i == 1 || *i == 7 {
+                    self.add_diagonal_moves(&mut moves, curr_square, 1);
+                    self.add_straight_moves(&mut moves, curr_square, 1);
+
+                    if self.has_check().is_none() {
+                        self.add_castling_moves(&mut moves);
+                    }
+                // Queens
+                } else if *i == 2 || *i == 8 {
+                    self.add_diagonal_moves(&mut moves, curr_square, 8);
+                    self.add_straight_moves(&mut moves, curr_square, 8);
+                // Rooks
+                } else if *i == 3 || *i == 9 {
+                    self.add_straight_moves(&mut moves, curr_square, 8);
+                // Bishops
+                } else if *i == 4 || *i == 10 {
+                    self.add_diagonal_moves(&mut moves, curr_square, 8);
+                // Knights
+                } else if *i == 5 || *i == 11 {
+                    self.add_knight_moves(&mut moves, curr_square);
+                // Pawns
+                } else if *i == 6 || *i == 12 {
+                    self.add_pawn_moves(&mut moves, curr_square);
+                }
+            }
+
+            // If we have at least one psuedo legal move, check if it is legal
+            if moves.len() > 0 {
+                moves = self.narrow_legal_moves(moves);
+                // If it is legal, return true
+                if moves.len() > 0 {
+                    return true;
+                }
+            }
         }
 
-        let moves = self.gen_psuedo_legal_moves();
+        // Otherwise, return false
+        false
+    }
+
+    // Narrows down the list of pseudo-legal moves to only legal moves.
+    // Used by gen legal moves.
+    pub fn narrow_legal_moves(&mut self, moves: Vec<Move>) -> Vec<Move> {
         let mut legal_moves = Vec::new();
 
         // If we are in check, we need to filter out all moves that don't
@@ -2097,8 +2152,20 @@ impl Board {
             }
         }
 
-        self.legal_move_cache = Some(legal_moves.clone());
+        legal_moves
+    }
 
+    // There is a bug that allows us a pseudo legal move to slip through if
+    // there is a double check on the king.
+    pub fn gen_legal_moves(&mut self) -> Vec<Move> {
+        if self.legal_move_cache.is_some() {
+            return self.legal_move_cache.clone().unwrap();
+        }
+
+        let moves = self.gen_psuedo_legal_moves();
+        let legal_moves = self.narrow_legal_moves(moves);
+
+        self.legal_move_cache = Some(legal_moves.clone());
         legal_moves
     }
 
