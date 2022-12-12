@@ -309,22 +309,9 @@ fn endgame_position_differential(board: &board::Board, debug: bool) -> i32 {
 // isolation
 pub fn pawn_structure_differential(board: &board::Board, debug: bool) -> i32 {
     let mut differential: i32 = 0;
-    let mut white_pawns = board.get_white_pawn_structure();
-    let mut black_pawns = board.get_black_pawn_structure();
 
-    white_pawns.sort_by(|a, b| if a.col != b.col { a.col.cmp(&b.col) } else { a.row.cmp(&b.row) });
-    black_pawns.sort_by(|a, b| if a.col != b.col { a.col.cmp(&b.col) } else { a.row.cmp(&b.row) });
-
-    let mut white_pawn_counts = [0, 0, 0, 0, 0, 0, 0, 0];
-
-    for pawn in &white_pawns {
-        white_pawn_counts[pawn.col as usize] += 1;
-    }
-
-    let mut black_pawn_counts = [0, 0, 0, 0, 0, 0, 0, 0];
-    for pawn in &black_pawns {
-        black_pawn_counts[pawn.col as usize] += 1;
-    }
+    let white_pawn_counts = board.get_white_pawn_cols();
+    let black_pawn_counts = board.get_black_pawn_cols();
 
     for i in 0..8 {
         if white_pawn_counts[i] > 1 {

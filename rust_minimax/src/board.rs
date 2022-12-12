@@ -532,6 +532,22 @@ impl Board {
         return count >= 3;
     }
 
+    pub fn get_white_pawn_cols(&self) -> [i32; 8] {
+        let mut cols = [0; 8];
+        for pawn in self.piece_positions[WHITE_PAWN as usize].iter() {
+            cols[pawn.col as usize] += 1;
+        }
+        cols
+    }
+
+    pub fn get_black_pawn_cols(&self) -> [i32; 8] {
+        let mut cols = [0; 8];
+        for pawn in self.piece_positions[BLACK_PAWN as usize].iter() {
+            cols[pawn.col as usize] += 1;
+        }
+        cols
+    }
+
     pub fn get_white_pawn_structure(&self) -> Vec<Square> {
         self.piece_positions[WHITE_PAWN as usize].clone()
     }
