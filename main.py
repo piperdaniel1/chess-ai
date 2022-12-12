@@ -422,7 +422,7 @@ def main():
         state = State(chess.WHITE, False)
 
     #state.get_board().set_fen("8/8/3k4/4r3/8/5K2/8/8 w - - 0 1")
-    state.get_board().set_fen("8/P4k2/5p2/7q/4P3/3PK3/R7/8 w - - 12 64")
+    state.get_board().set_fen("8/1pB5/8/1p6/4k3/1P6/P1P4p/1K6 b - - 0 44")
     width = BORDER_WIDTH * 2 + BOARD_SIZE + TIMER_AREA_WIDTH + \
             EVAL_BAR_HORZ_PADDING * 2 + EVAL_BAR_WIDTH
     height = BORDER_WIDTH * 2 + BOARD_SIZE
