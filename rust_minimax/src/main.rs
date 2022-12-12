@@ -319,7 +319,15 @@ async fn play_on_lichess() {
 
             // If it is our turn, make a move
             if ai.get_board_turn() == bot_color {
-                let best_move = ai.best_move_iddfs(2.0).unwrap().best_move.unwrap();
+                let time_rem: u32;
+                if bot_color == board::WHITE {
+                    time_rem = state.wtime;
+                } else {
+                    time_rem = state.btime;
+                }
+
+                let move_time = (time_rem as f64 / 40.0) / 1000.0;
+                let best_move = ai.best_move_iddfs(move_time as f64).unwrap().best_move.unwrap();
                 println!("Best move: {}", best_move.get_move_string());
 
                 api.make_move(&game, &best_move.get_move_string()).await.unwrap();
