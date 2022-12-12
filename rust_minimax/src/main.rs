@@ -124,11 +124,11 @@ fn start_tcp_server() {
                     // or if the client specifies a time limit that fails to parse
                     let time_limit = match time_limit {
                         Some(t) => t.parse::<f64>(),
-                        None => Ok(2.0)
+                        None => Ok(20.0)
                     };
                     let time_limit = match time_limit {
                         Ok(t) => t,
-                        Err(_) => 2.0
+                        Err(_) => 20.0
                     };
 
                     match ai {
@@ -316,7 +316,6 @@ async fn play_on_lichess() {
                     ai.push_move(m).unwrap();
                 }
             }
-
 
             // If it is our turn, make a move
             if ai.get_board_turn() == bot_color {

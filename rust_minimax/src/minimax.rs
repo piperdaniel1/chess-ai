@@ -17,6 +17,7 @@ pub struct ChessAI {
     // 2: Repitition test
     // 3: Other tests
     time_scoring_vec: Vec<std::time::Duration>,
+    cutoff_search: bool,
 }
 
 #[derive(Copy, Clone)]
@@ -583,6 +584,7 @@ impl ChessAI {
             time_scoring: std::time::Duration::from_secs(0),
             time_legal_moves: std::time::Duration::from_secs(0),
             time_scoring_vec: vec![std::time::Duration::from_secs(0); 8],
+            cutoff_search: false,
         }
     }
 
@@ -599,6 +601,7 @@ impl ChessAI {
             time_scoring: std::time::Duration::from_secs(0),
             time_legal_moves: std::time::Duration::from_secs(0),
             time_scoring_vec: vec![std::time::Duration::from_secs(0); 8],
+            cutoff_search: false,
         }
     }
 
@@ -643,7 +646,7 @@ impl ChessAI {
         }
 
         // Iterative deepening
-        let result = self.minimax(depth, depth, self.my_color, -1000000, 1000000);
+        let result = self.minimax(depth, depth, self.my_color, -1000000, 1000000, std::time::Instant::now() + std::time::Duration::from_secs(3600));
 
         Ok(result)
     }
@@ -656,6 +659,9 @@ impl ChessAI {
         let initial_start_time = Some(std::time::Instant::now()).unwrap();
         self.time_scoring = std::time::Duration::from_secs(0);
         self.time_legal_moves = std::time::Duration::from_secs(0);
+        self.cutoff_search = false;
+
+        let cutoff_time = initial_start_time + std::time::Duration::from_secs_f64(time_allowed_secs);
 
         // Iterative deepening
         let mut result = TreeDecision {
@@ -671,7 +677,15 @@ impl ChessAI {
 
         for i in 1..depth {
             let start_time = Some(std::time::Instant::now()).unwrap();
-            score_vec = Some(self.iddfs(i, self.board.turn(), score_vec));
+            let new_vec = Some(self.iddfs(i, self.board.turn(), &score_vec, cutoff_time));
+
+            if self.cutoff_search {
+                println!("Breaking during depth {} with evaluation {}", i, score_vec.as_ref().unwrap()[0].score);
+
+                break;
+            }
+            
+            score_vec = new_vec;
             let end_time = Some(std::time::Instant::now()).unwrap();
 
             let elapsed = end_time.duration_since(start_time).as_millis();
@@ -682,7 +696,7 @@ impl ChessAI {
             let next_end_time = end_time + std::time::Duration::from_millis(projected_ms as u64);
 
             if next_end_time.duration_since(initial_start_time).as_secs() as f64 > time_allowed_secs {
-                println!("Breaking after depth {} with evaluation {}", i, score_vec.as_ref().unwrap()[0].score);
+                println!("Breaking after depth {} with evaluation {} (pred: {}s) ", i, score_vec.as_ref().unwrap()[0].score, next_end_time.duration_since(initial_start_time).as_secs() as f64);
 
                 break;
             }
@@ -769,7 +783,7 @@ impl ChessAI {
     // This is always the top depth
     // Modified version of minimax function that will return a vector of all the moves
     // that are possible at the top level, sorted by their score (best to worst)
-    fn iddfs(&mut self, depth: u8, maximizing_player: bool, scored_moves: Option<Vec<TreeDecision>>) -> Vec<TreeDecision> {
+    fn iddfs(&mut self, depth: u8, maximizing_player: bool, scored_moves: &Option<Vec<TreeDecision>>, cutoff_time: std::time::Instant) -> Vec<TreeDecision> {
         let mut alpha = -1000000;
         let mut beta = 1000000;
 
@@ -799,7 +813,7 @@ impl ChessAI {
 
             for m in moves {
                 self.board.push(m).unwrap();
-                let decision = self.minimax(depth - 1, depth, false, alpha, beta);
+                let decision = self.minimax(depth - 1, depth, false, alpha, beta, cutoff_time);
                 self.board.pop().unwrap();
 
                 scored_moves.push(TreeDecision { best_move: Some(m), score: decision.score });
@@ -816,7 +830,7 @@ impl ChessAI {
             best_decision.score = 1000000;
             for m in moves {
                 self.board.push(m).unwrap();
-                let decision = self.minimax(depth - 1, depth, true, alpha, beta);
+                let decision = self.minimax(depth - 1, depth, true, alpha, beta, cutoff_time);
                 self.board.pop().unwrap();
 
                 scored_moves.push(TreeDecision { best_move: Some(m), score: decision.score });
@@ -871,7 +885,7 @@ impl ChessAI {
         return scored_moves;
     }
 
-    fn minimax(&mut self, depth: u8, top_depth: u8, maximizing_player: bool, mut alpha: i32, mut beta: i32) -> TreeDecision {
+    fn minimax(&mut self, depth: u8, top_depth: u8, maximizing_player: bool, mut alpha: i32, mut beta: i32, cutoff_time: std::time::Instant) -> TreeDecision {
         if depth == top_depth {
             self.start_time = Some(std::time::Instant::now());
             self.nodes_expanded = 0;
@@ -916,6 +930,11 @@ impl ChessAI {
             return best_decision
         }
 
+        if self.cutoff_search || std::time::Instant::now() > cutoff_time {
+            self.cutoff_search = true;
+            return best_decision;
+        }
+
         let moves;
         if self.perf_test {
             let start = std::time::Instant::now();
@@ -933,7 +952,7 @@ impl ChessAI {
 
             for m in moves {
                 self.board.push(m).unwrap();
-                let decision = self.minimax(depth - 1, top_depth, false, alpha, beta);
+                let decision = self.minimax(depth - 1, top_depth, false, alpha, beta, cutoff_time);
                 self.board.pop().unwrap();
 
                 if decision.score > best_decision.score {
@@ -953,7 +972,7 @@ impl ChessAI {
             best_decision.score = 1000000;
             for m in moves {
                 self.board.push(m).unwrap();
-                let decision = self.minimax(depth - 1, top_depth, true, alpha, beta);
+                let decision = self.minimax(depth - 1, top_depth, true, alpha, beta, cutoff_time);
                 self.board.pop().unwrap();
 
                 if decision.score < best_decision.score {
