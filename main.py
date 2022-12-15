@@ -422,7 +422,7 @@ def main():
         state = State(chess.WHITE, False)
 
     #state.get_board().set_fen("8/8/3k4/4r3/8/5K2/8/8 w - - 0 1")
-    state.get_board().set_fen("8/1pB5/8/1p6/4k3/1P6/P1P4p/1K6 b - - 0 44")
+    state.get_board().set_fen("5q1k/p5p1/8/1p6/8/1N2R3/2p1Br2/5NK1 b - - 1 89")
     width = BORDER_WIDTH * 2 + BOARD_SIZE + TIMER_AREA_WIDTH + \
             EVAL_BAR_HORZ_PADDING * 2 + EVAL_BAR_WIDTH
     height = BORDER_WIDTH * 2 + BOARD_SIZE
@@ -444,7 +444,7 @@ def main():
 
     minimax_conn.push_to_queue("init b fen " + state.get_board().fen())
 
-    minimax_conn.push_to_queue("query")
+    # minimax_conn.push_to_queue("query")
 
     waiting_on_ai = False
 

@@ -6,6 +6,7 @@ use futures_util::Stream;
 use std::io::Read;
 use serde::Deserialize;
 use core::fmt::Error;
+use serde_json::json;
 
 #[derive(Debug)]
 pub struct Lichess {
@@ -235,20 +236,51 @@ impl Lichess {
         panic!("No game start event received before stream ended");
     }
 
-    pub async fn make_move(&self, game: &Game, move_str: &str) -> Result<(), Error>  {
+    pub async fn create_challenge(&self, username: &str) {
         let mut req_header = HeaderMap::new();
         let auth_header = HeaderValue::from_str(&format!("Bearer {}", self.token)).unwrap();
         req_header.insert("Authorization", auth_header);
 
-        let res = self.client.post(format!("https://lichess.org/api/bot/game/{}/move/{}", game.game_id, move_str))
-            .headers(req_header)
-            .send()
-            .await;
+        let json_body = json!(
+            {
+                "clock.limit": 60,
+                "clock.increment": 0,
+                "color": "random",
+                "rated": true,
+                "variant": "standard",
+                "mode": "casual",
+            }
+        );
 
-        match res {
-            Ok(_) => Ok(()),
-            Err(_) => Err(Error),
+        let res = self.client.post(format!("https://lichess.org/api/challenge/{}", username))
+            .headers(req_header)
+            .json(&json_body)
+            .send()
+            .await
+            .unwrap();
+
+        println!("Response: {:?}", res.text().await);
+    }
+
+    pub async fn make_move(&self, game: &Game, move_str: &str) -> Result<(), Error>  {
+        for i in 0..10 {
+            let mut req_header = HeaderMap::new();
+            let auth_header = HeaderValue::from_str(&format!("Bearer {}", self.token)).unwrap();
+            req_header.insert("Authorization", auth_header);
+            let res = self.client.post(format!("https://lichess.org/api/bot/game/{}/move/{}", game.game_id, move_str))
+                .headers(req_header)
+                .send()
+                .await;
+
+            match res {
+                Ok(_) => return Ok(()),
+                Err(e) => {
+                    println!("Error making a move on attempt #{}: {}", i, e);
+                },
+            };
         }
+
+        Err(Error)
     }
 
     pub async fn get_game_stream(&self, game: &Game) -> impl Stream<Item = Result<hyper::body::Bytes, reqwest::Error>> {

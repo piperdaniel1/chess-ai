@@ -18,6 +18,8 @@ pub struct ChessAI {
     // 3: Other tests
     time_scoring_vec: Vec<std::time::Duration>,
     cutoff_search: bool,
+    hash_errs: i64,
+    hash_success: i64,
 }
 
 #[derive(Copy, Clone)]
@@ -585,6 +587,8 @@ impl ChessAI {
             time_legal_moves: std::time::Duration::from_secs(0),
             time_scoring_vec: vec![std::time::Duration::from_secs(0); 8],
             cutoff_search: false,
+            hash_errs: 0,
+            hash_success: 0,
         }
     }
 
@@ -602,6 +606,8 @@ impl ChessAI {
             time_legal_moves: std::time::Duration::from_secs(0),
             time_scoring_vec: vec![std::time::Duration::from_secs(0); 8],
             cutoff_search: false,
+            hash_errs: 0,
+            hash_success: 0,
         }
     }
 
@@ -990,7 +996,7 @@ impl ChessAI {
             }
         }
 
-        if self.use_tt {
+        if self.use_tt && !self.cutoff_search {
             self.save_to_tt_table(depth, best_decision.score, self.board.get_hash());
         }
 

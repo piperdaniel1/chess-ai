@@ -124,11 +124,11 @@ fn start_tcp_server() {
                     // or if the client specifies a time limit that fails to parse
                     let time_limit = match time_limit {
                         Some(t) => t.parse::<f64>(),
-                        None => Ok(20.0)
+                        None => Ok(5.0)
                     };
                     let time_limit = match time_limit {
                         Ok(t) => t,
-                        Err(_) => 20.0
+                        Err(_) => 5.0
                     };
 
                     match ai {
@@ -321,12 +321,13 @@ async fn play_on_lichess() {
             if ai.get_board_turn() == bot_color {
                 let time_rem: u32;
                 if bot_color == board::WHITE {
-                    time_rem = state.wtime;
+                    time_rem = state.wtime + 5*state.winc;
                 } else {
-                    time_rem = state.btime;
+                    time_rem = state.btime + 5*state.binc;
                 }
 
-                let move_time = (time_rem as f64 / 40.0) / 1000.0;
+                let move_time = (time_rem as f64 / 30.0) / 1000.0;
+                let move_time = std::cmp::min_by(move_time, 10.0, |a, b| a.partial_cmp(b).unwrap());
                 let best_move = ai.best_move_iddfs(move_time as f64).unwrap().best_move.unwrap();
                 println!("Best move: {}", best_move.get_move_string());
 
@@ -335,6 +336,11 @@ async fn play_on_lichess() {
             }
         }
     }
+}
+
+async fn challenge_lichess(username: &str) {
+    let api = lichess_api::Lichess::new(get_lichess_token());
+    api.create_challenge(&username).await;
 }
 
 fn test_ai() {
@@ -374,6 +380,14 @@ async fn main() {
         },
         "test" => {
             test_ai();
+        },
+        "challenge" => {
+            if args.len() != 3 {
+                println!("Usage: {} challenge <username>", args[0]);
+                return;
+            }
+
+            challenge_lichess(&args[2]).await;
         },
         _ => {
             println!("Usage: {} [server|client|lichess]", args[0]);

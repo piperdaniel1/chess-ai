@@ -321,7 +321,8 @@ fn get_char_from_piece(piece: u8) -> Result<char, Error> {
 }
 
 fn get_zobrist_keys() -> [u64; 793] {
-    let seed: u64 = 8675309_2357_31415926;
+    let seed: u64 = 13249823792837422923;
+        //8675309_2357_31415926;
     let mut gen = rand_chacha::ChaCha8Rng::seed_from_u64(seed);
 
     let mut keys = [0; 793];
