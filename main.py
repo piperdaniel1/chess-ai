@@ -3,7 +3,7 @@ import chess
 import chess.pgn
 import collections
 from socket_interface import Connection
-from typing import List, Tuple, Union
+from typing import Tuple, Union
 import time
 import sys
 
@@ -25,7 +25,7 @@ BORDER_COLOR = (50, 50, 50)
 # Pixel Sizes
 BORDER_WIDTH = 5
 BOARD_SIZE = 960
-assert(BOARD_SIZE % 8 == 0)
+assert (BOARD_SIZE % 8 == 0)
 SQUARE_SIZE = BOARD_SIZE // 8
 TIMER_AREA_WIDTH = 0
 
@@ -92,12 +92,14 @@ PIECE_MAP = {
     'K': WHITE_KING,
 }
 
+
 # Initializes pygame and returns the screen object
 def init_pygame(width, height):
     pygame.init()
     pygame.display.set_caption("Chess vs. AI")
 
     return pygame.display.set_mode((width, height))
+
 
 def render_board_squares(screen):
     for i in range(8):
@@ -107,10 +109,17 @@ def render_board_squares(screen):
             else:
                 color = BLACK_SQUARE_COLOR
 
-            pygame.draw.rect(screen, color, (i * SQUARE_SIZE + BORDER_WIDTH, j * SQUARE_SIZE + BORDER_WIDTH, SQUARE_SIZE, SQUARE_SIZE))
+            pygame.draw.rect(screen, color,
+                             (i * SQUARE_SIZE + BORDER_WIDTH, j * SQUARE_SIZE +
+                              BORDER_WIDTH, SQUARE_SIZE, SQUARE_SIZE))
+
 
 def render_board_border(screen):
-    pygame.draw.rect(screen, BORDER_COLOR, (0, 0, BOARD_SIZE + BORDER_WIDTH * 2 + EVAL_BAR_HORZ_PADDING * 2 + EVAL_BAR_WIDTH, BOARD_SIZE + BORDER_WIDTH * 2), BORDER_WIDTH)
+    pygame.draw.rect(screen, BORDER_COLOR,
+                     (0, 0, BOARD_SIZE + BORDER_WIDTH * 2 +
+                      EVAL_BAR_HORZ_PADDING * 2 + EVAL_BAR_WIDTH, BOARD_SIZE +
+                      BORDER_WIDTH * 2), BORDER_WIDTH)
+
 
 def render_eval_bar(screen, eval):
     if eval > 1500:
@@ -123,12 +132,19 @@ def render_eval_bar(screen, eval):
     EVAL_START = BORDER_WIDTH + BOARD_SIZE
     EVAL_BAR_START_X = EVAL_START + EVAL_BAR_HORZ_PADDING
 
-    pygame.draw.rect(screen, EVAL_BG_COLOR, (EVAL_START, BORDER_WIDTH, EVAL_BAR_WIDTH + EVAL_BAR_HORZ_PADDING * 2, BOARD_SIZE))
-    pygame.draw.rect(screen, EVAL_BLACK_COLOR, (EVAL_BAR_START_X, BORDER_WIDTH + EVAL_BAR_VERT_PADDING, EVAL_BAR_WIDTH, EVAL_BAR_HEIGHT))
+    pygame.draw.rect(screen, EVAL_BG_COLOR,
+                     (EVAL_START, BORDER_WIDTH, EVAL_BAR_WIDTH +
+                      EVAL_BAR_HORZ_PADDING * 2, BOARD_SIZE))
+    pygame.draw.rect(screen, EVAL_BLACK_COLOR,
+                     (EVAL_BAR_START_X, BORDER_WIDTH + EVAL_BAR_VERT_PADDING,
+                      EVAL_BAR_WIDTH, EVAL_BAR_HEIGHT))
 
     eval_px = int(EVAL_BAR_HEIGHT * eval)
 
-    pygame.draw.rect(screen, EVAL_WHITE_COLOR, (EVAL_BAR_START_X, BORDER_WIDTH + EVAL_BAR_VERT_PADDING + EVAL_BAR_HEIGHT - eval_px, EVAL_BAR_WIDTH, eval_px))
+    pygame.draw.rect(screen, EVAL_WHITE_COLOR,
+                     (EVAL_BAR_START_X, BORDER_WIDTH + EVAL_BAR_VERT_PADDING +
+                      EVAL_BAR_HEIGHT - eval_px, EVAL_BAR_WIDTH, eval_px))
+
 
 def render_selected_square(screen, square):
     if square is None:
@@ -140,7 +156,10 @@ def render_selected_square(screen, square):
     else:
         color = BLACK_SEL_SQUARE_COLOR
 
-    pygame.draw.rect(screen, color, (i * SQUARE_SIZE + BORDER_WIDTH, j * SQUARE_SIZE + BORDER_WIDTH, SQUARE_SIZE, SQUARE_SIZE))
+    pygame.draw.rect(screen, color,
+                     (i * SQUARE_SIZE + BORDER_WIDTH, j * SQUARE_SIZE +
+                      BORDER_WIDTH, SQUARE_SIZE, SQUARE_SIZE))
+
 
 def render_move_option(screen, square):
     i, j = square
@@ -149,7 +168,10 @@ def render_move_option(screen, square):
     else:
         color = BLACK_MOVE_OPTION_COLOR
 
-    pygame.draw.rect(screen, color, (i * SQUARE_SIZE + BORDER_WIDTH, j * SQUARE_SIZE + BORDER_WIDTH, SQUARE_SIZE, SQUARE_SIZE))
+    pygame.draw.rect(screen, color,
+                     (i * SQUARE_SIZE + BORDER_WIDTH, j * SQUARE_SIZE +
+                      BORDER_WIDTH, SQUARE_SIZE, SQUARE_SIZE))
+
 
 def render_check(screen, square):
     i, j = square
@@ -158,7 +180,10 @@ def render_check(screen, square):
     else:
         color = BLACK_SQUARE_IN_CHECK
 
-    pygame.draw.rect(screen, color, (i * SQUARE_SIZE + BORDER_WIDTH, j * SQUARE_SIZE + BORDER_WIDTH, SQUARE_SIZE, SQUARE_SIZE))
+    pygame.draw.rect(screen, color,
+                     (i * SQUARE_SIZE + BORDER_WIDTH, j * SQUARE_SIZE +
+                      BORDER_WIDTH, SQUARE_SIZE, SQUARE_SIZE))
+
 
 def render_capture_option(screen, square):
     i, j = square
@@ -167,10 +192,15 @@ def render_capture_option(screen, square):
     else:
         color = BLACK_CAPTURE_OPTION_COLOR
 
-    pygame.draw.rect(screen, color, (i * SQUARE_SIZE + BORDER_WIDTH, j * SQUARE_SIZE + BORDER_WIDTH, SQUARE_SIZE, SQUARE_SIZE))
+    pygame.draw.rect(screen, color,
+                     (i * SQUARE_SIZE + BORDER_WIDTH, j * SQUARE_SIZE +
+                      BORDER_WIDTH, SQUARE_SIZE, SQUARE_SIZE))
+
 
 def render_piece(screen, piece, square):
-    screen.blit(piece, (square[0] * SQUARE_SIZE + BORDER_WIDTH, square[1] * SQUARE_SIZE + BORDER_WIDTH))
+    screen.blit(piece, (square[0] * SQUARE_SIZE + BORDER_WIDTH, square[1] *
+                        SQUARE_SIZE + BORDER_WIDTH))
+
 
 def rerender(screen, state: 'State'):
     screen.fill((255, 255, 255))
@@ -196,6 +226,7 @@ def rerender(screen, state: 'State'):
 
     pygame.display.flip()
 
+
 def convert_pixels_to_square(x, y) -> Union[Tuple[int, int], None]:
     x -= BORDER_WIDTH
     y -= BORDER_WIDTH
@@ -207,6 +238,7 @@ def convert_pixels_to_square(x, y) -> Union[Tuple[int, int], None]:
 
     return (x, y)
 
+
 class Game:
     def __init__(self):
         self.board = chess.Board()
@@ -214,23 +246,25 @@ class Game:
 
     def __conv_square(self, square):
         return (square % 8, (63 - square) // 8)
-    
+
     def __reverse_conv_square(self, square):
         return square[0] + (7 - square[1]) * 8
-    
+
     def push_move(self, from_square, to_square):
         """
         Pushes a move to the board.
         Takes care of promotion (auto picks queen).
         """
-        derived_move = chess.Move(self.__reverse_conv_square(from_square), self.__reverse_conv_square(to_square))
+        derived_move = chess.Move(self.__reverse_conv_square(from_square),
+                                  self.__reverse_conv_square(to_square))
 
-        if self.board.piece_type_at(self.__reverse_conv_square(from_square)) == chess.PAWN and (to_square[1] == 0 or to_square[1] == 7):
+        if self.board.piece_type_at(self.__reverse_conv_square(from_square))\
+                == chess.PAWN and (to_square[1] == 0 or to_square[1] == 7):
             derived_move.promotion = chess.QUEEN
 
         self.board.push(derived_move)
         return derived_move
-    
+
     def push_uci(self, uci):
         self.board.push_uci(uci)
 
@@ -238,12 +272,18 @@ class Game:
 
     def get_standard_moves_from_square(self, square):
         # yayayay readibility
-        return [self.__conv_square(move.to_square) for move in self.board.legal_moves if self.__conv_square(move.from_square) == square and self.board.color_at(move.to_square) == None]
+        return [self.__conv_square(move.to_square)
+                for move in self.board.legal_moves
+                if self.__conv_square(move.from_square) == square
+                and self.board.color_at(move.to_square) is None]
 
     def get_attack_moves_from_square(self, square):
         # yayayay readibility pt. 2
-        return [self.__conv_square(move.to_square) for move in self.board.legal_moves if self.__conv_square(move.from_square) == square and self.board.color_at(move.to_square) != None]
-    
+        return [self.__conv_square(move.to_square)
+                for move in self.board.legal_moves
+                if self.__conv_square(move.from_square) == square and
+                self.board.color_at(move.to_square) is not None]
+
     def get_color_at(self, square):
         return self.board.color_at(self.__reverse_conv_square(square))
 
@@ -255,6 +295,7 @@ class Game:
 
         return list(zip(pieces, squares))
 
+
 # Represents the complete state of the UI
 # Also has functions for progressing the UI state based on input events
 class State:
@@ -265,7 +306,6 @@ class State:
         self.__selected_square = None
         self.__move_options = []
         self.__capture_options = []
-        self.__check_squares = []
         self.__move_buffer = []
         self.__is_busy = False
         self.__ani_mode = 0
@@ -275,31 +315,31 @@ class State:
 
     def is_busy(self):
         return self.__is_busy
-    
+
     def get_piece_list(self):
         return self.__game.get_piece_list()
-    
+
     def get_selected_square(self):
         return self.__selected_square
-    
+
     def get_move_options(self):
         return self.__move_options
-    
+
     def get_attack_options(self):
         return self.__capture_options
-    
+
     def pop_move_buffer(self):
         if len(self.__move_buffer) == 0:
             return None
         else:
             return self.__move_buffer.pop(0)
-    
+
     def is_players_turn(self):
         if self.ai_only:
             return False
-        
+
         return self.__game.board.turn == self.player_color
-    
+
     def push_move(self, uci):
         self.__move_buffer.append(self.__game.push_uci(uci))
 
@@ -321,13 +361,13 @@ class State:
                 self.__ani_uci = None
                 self.__set_selected_square(None)
                 self.__is_busy = False
-    
+
     def get_board(self):
         return self.__game.board
 
     def get_eval(self):
         return self.__eval
-    
+
     def set_eval(self, eval):
         self.__eval = eval
 
@@ -339,31 +379,35 @@ class State:
 
             if result is None:
                 return
-            
+
             self.__handle_selection_change(result)
-    
+
     def __handle_selection_change(self, square):
         # We are moving a piece
         if square in self.__move_options or square in self.__capture_options:
-            self.__move_buffer.append(self.__game.push_move(self.__selected_square, square))
+            self.__move_buffer.append(
+                    self.__game.push_move(self.__selected_square, square))
             self.__set_selected_square(None)
             return
 
         self.__set_selected_square(square)
-    
+
     def __set_standard_moves(self, square):
-        self.__move_options = self.__game.get_standard_moves_from_square(square)
-    
+        self.__move_options = \
+                self.__game.get_standard_moves_from_square(square)
+
     def __set_attack_moves(self, square):
-        self.__capture_options = self.__game.get_attack_moves_from_square(square)
-    
+        self.__capture_options = \
+                self.__game.get_attack_moves_from_square(square)
+
     def __clear_selected_square(self):
         self.__selected_square = None
         self.__move_options = []
         self.__capture_options = []
-    
+
     def __is_square_friendly(self, square):
-        return False if square == None else self.__game.get_color_at(square) == self.player_color
+        return False if square is None \
+                else self.__game.get_color_at(square) == self.player_color
 
     def __set_selected_square(self, square):
         # We an select for animation purposes
@@ -373,7 +417,8 @@ class State:
             self.__set_attack_moves(square)
             return
 
-        # We can only select a square if it is friendly to us (the human player)
+        # We can only select a square
+        # if it is friendly to us (the human player)
         if not self.__is_square_friendly(square):
             self.__clear_selected_square()
             return
@@ -386,6 +431,7 @@ class State:
         self.__selected_square = square
         self.__set_standard_moves(square)
         self.__set_attack_moves(square)
+
 
 def board_to_game(board):
     game = chess.pgn.Game()
@@ -407,6 +453,7 @@ def board_to_game(board):
     game.headers["Result"] = board.result()
     return game
 
+
 def main():
     if len(sys.argv) > 1:
         if sys.argv[1] == "white":
@@ -421,10 +468,12 @@ def main():
     else:
         state = State(chess.WHITE, False)
 
-    #state.get_board().set_fen("8/8/3k4/4r3/8/5K2/8/8 w - - 0 1")
-    state.get_board().set_fen("5q1k/p5p1/8/1p6/8/1N2R3/2p1Br2/5NK1 b - - 1 89")
+    # state.get_board().set_fen("8/8/3k4/4r3/8/5K2/8/8 w - - 0 1")
+    # state.get_board()
+    #      .set_fen("5q1k/p5p1/8/1p6/8/1N2R3/2p1Br2/5NK1 b - - 1 89")
     width = BORDER_WIDTH * 2 + BOARD_SIZE + TIMER_AREA_WIDTH + \
-            EVAL_BAR_HORZ_PADDING * 2 + EVAL_BAR_WIDTH
+        EVAL_BAR_HORZ_PADDING * 2 + EVAL_BAR_WIDTH
+
     height = BORDER_WIDTH * 2 + BOARD_SIZE
     screen = init_pygame(width, height)
 
@@ -456,39 +505,41 @@ def main():
                     break
                 else:
                     state.next(event)
-            
+
             pmove = state.pop_move_buffer()
             if pmove is not None:
                 minimax_conn.push_to_queue('push ' + pmove.uci())
-            
+
             # We need to ask the AI for a move
-            if not state.is_players_turn() and not waiting_on_ai and not state.is_busy():
+            if not state.is_players_turn() \
+                    and not waiting_on_ai and not state.is_busy():
                 minimax_conn.push_to_queue(message='query')
                 waiting_on_ai = True
-            
+
             minimax_conn.handle_queue()
 
             status, result = minimax_conn.receive()
 
             if not state.is_players_turn() and waiting_on_ai:
                 if status:
-                    assert(result is not None and result != -1)
+                    assert (result is not None and result != -1)
                     result = result.decode('utf-8')
 
                     if "bestmove" in result:
-                        result, eval = result.split(' ')[1], float(result.split(' ')[2])
+                        result, eval = result.split(' ')[1], \
+                                float(result.split(' ')[2])
                         state.set_eval(eval)
                         state.ani_push_move(result)
                         waiting_on_ai = False
             else:
                 if status:
-                    assert(result is not None and result != -1)
+                    assert (result is not None and result != -1)
                     result = result.decode('utf-8')
 
                     if "bestmove" in result:
-                        result, eval = result.split(' ')[1], float(result.split(' ')[2])
+                        result, eval = result.split(' ')[1], \
+                                float(result.split(' ')[2])
                         state.set_eval(eval)
-
 
             state.update_ani()
 
@@ -499,7 +550,6 @@ def main():
 
         # print pgn game to stdout
         print(pgn_game)
-        
 
 
 # This code will always run as main

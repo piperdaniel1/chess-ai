@@ -243,9 +243,9 @@ impl Lichess {
 
         let json_body = json!(
             {
-                "clock.limit": 60,
-                "clock.increment": 0,
-                "color": "random",
+                "clock.limit": 180,
+                "clock.increment": 2,
+                "color": "white",
                 "rated": true,
                 "variant": "standard",
                 "mode": "casual",
@@ -366,6 +366,33 @@ impl Lichess {
         let game: Game = serde_json::from_value(game_json).unwrap();
 
         Some(game)
+    }
+
+    pub async fn get_bot_to_challenge(&self) -> String {
+        // let nb = json!({"nb": 50});
+
+        let mut res = self.client.get("https://lichess.org/api/bot/online")
+            .send()
+            .await
+            .unwrap()
+            .bytes_stream();
+
+        while let Some(chunk) = res.next().await {
+            let chunk = chunk.unwrap();
+            let s = String::from_utf8(chunk.to_vec()).unwrap();
+
+            match serde_json::from_str::<serde_json::Value>(&s) {
+                Ok(json_chunk) => {
+                    println!("json_chunk: {:#?}", json_chunk);
+                },
+                Err(e) => {
+                    println!("Error: {}", e);
+                }
+            }
+
+        }
+
+        todo!()
     }
 }
 

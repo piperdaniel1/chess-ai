@@ -124,11 +124,11 @@ fn start_tcp_server() {
                     // or if the client specifies a time limit that fails to parse
                     let time_limit = match time_limit {
                         Some(t) => t.parse::<f64>(),
-                        None => Ok(5.0)
+                        None => Ok(0.75)
                     };
                     let time_limit = match time_limit {
                         Ok(t) => t,
-                        Err(_) => 5.0
+                        Err(_) => 0.75
                     };
 
                     match ai {
@@ -382,6 +382,9 @@ async fn main() {
             test_ai();
         },
         "challenge" => {
+            // let api = lichess_api::Lichess::new(get_lichess_token());
+            // api.get_bot_to_challenge().await;
+
             if args.len() != 3 {
                 println!("Usage: {} challenge <username>", args[0]);
                 return;

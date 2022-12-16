@@ -532,28 +532,28 @@ pub fn score_board(board: &mut board::Board, current_depth: i32, debug: bool, pe
 
     if phase == 0 {
         score += opening_position_differential(board, debug) as i32;
-        match perf_time_vec {
-            Some(vec) => {
-                let inner_stime = std::time::Instant::now();
-                score += pawn_structure_differential(board, debug) as i32;
-                vec[4] += std::time::Instant::now() - inner_stime;
-            },
-            None => {
-                score += pawn_structure_differential(board, debug) as i32;
-            }
-        }
+        // match perf_time_vec {
+        //     Some(vec) => {
+        //         let inner_stime = std::time::Instant::now();
+        //         score += pawn_structure_differential(board, debug) as i32;
+        //         vec[4] += std::time::Instant::now() - inner_stime;
+        //     },
+        //     None => {
+        //         score += pawn_structure_differential(board, debug) as i32 / 3;
+        //     }
+        // }
     } else if phase == 1 {
         score += opening_position_differential(board, debug) as i32 / 2;
-        match perf_time_vec {
-            Some(vec) => {
-                let inner_stime = std::time::Instant::now();
-                score += pawn_structure_differential(board, debug) as i32;
-                vec[4] += std::time::Instant::now() - inner_stime;
-            },
-            None => {
-                score += pawn_structure_differential(board, debug) as i32;
-            }
-        }
+        // match perf_time_vec {
+        //     Some(vec) => {
+        //         let inner_stime = std::time::Instant::now();
+        //         score += pawn_structure_differential(board, debug) as i32;
+        //         vec[4] += std::time::Instant::now() - inner_stime;
+        //     },
+        //     None => {
+        //         score += pawn_structure_differential(board, debug) as i32 / 3;
+        //     }
+        // }
     } else if phase == 2 {
         score += endgame_position_differential(board, debug) as i32;
     }
