@@ -844,6 +844,10 @@ impl Board {
             col += 1;
         }
 
+        if fen_parts.len() < 6 {
+            return Err(Error);
+        }
+
         // Set the turn
         self.turn = match fen_parts[1] {
             "w" => true,

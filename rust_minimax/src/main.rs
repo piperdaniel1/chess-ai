@@ -178,7 +178,14 @@ fn start_tcp_server() {
 
                     let fen = req_string.split_at(11).1;
 
-                    ai.as_mut().unwrap().import_position(fen).unwrap();
+                    match ai.as_mut().unwrap().import_position(fen) {
+                        Ok(_) => {},
+                        Err(_) => {
+                            println!("Responding with: 400 error-invalid-fen");
+                            stream.write("400 err-invalid-fen".as_bytes()).unwrap();
+                            continue;
+                        }
+                    }
 
                     println!("Responding with 200 ok");
                     stream.write("200 ok".as_bytes()).unwrap();
@@ -187,7 +194,14 @@ fn start_tcp_server() {
 
                     let fen = req_string.split_at(11).1;
 
-                    ai.as_mut().unwrap().import_position(fen).unwrap();
+                    match ai.as_mut().unwrap().import_position(fen) {
+                        Ok(_) => {},
+                        Err(_) => {
+                            println!("Responding with: 400 error-invalid-fen");
+                            stream.write("400 err-invalid-fen".as_bytes()).unwrap();
+                            continue;
+                        }
+                    }
 
                     println!("Responding with 200 ok");
                     stream.write("200 ok".as_bytes()).unwrap();
